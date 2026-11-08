@@ -5,8 +5,7 @@ import {
   Receipt,
   Boxes,
   CheckCircle2,
-  Users,
-  AlertTriangle
+  Users
 } from 'lucide-react';
 import { RouteName } from '../../routes/RouteName';
 
@@ -155,23 +154,6 @@ export const Sidebar: React.FC = () => {
               </NavLink>
             ))}
           </nav>
-        </div>
-      </div>
-
-      {/* Strict Policy Enforcement Banner */}
-      <div className="p-2 border-t border-slate-100">
-        <div className="bg-amber-50/80 border border-amber-200 rounded p-2 text-amber-900">
-          <div className="flex items-start space-x-1.5">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-tight text-amber-800">
-                Policy Enforcement
-              </p>
-              <p className="text-[10px] leading-tight text-amber-900 mt-0.5">
-                Immediate Cash & Pay-First Policy Only. No Credit (ادھار) Allowed on Terminal.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </aside>
