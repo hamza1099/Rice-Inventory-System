@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Users, UserPlus, Shield, Check, X, Mail, Key } from 'lucide-react';
 import { AddUserModal, type TerminalUser } from '../components/users/AddUserModal';
+import { ResetPasswordModal } from '../components/users/ResetPasswordModal';
 import { notifySuccess, notifyInfo } from '../utils/toast';
 
 export const UserManagementScreen: React.FC = () => {
@@ -52,6 +53,7 @@ export const UserManagementScreen: React.FC = () => {
   ]);
 
   const [isAddUserOpen, setIsAddUserOpen] = useState<boolean>(false);
+  const [selectedUserForPassword, setSelectedUserForPassword] = useState<TerminalUser | null>(null);
 
   const handleAddUser = (newUser: TerminalUser) => {
     setUsers([...users, newUser]);
@@ -61,12 +63,8 @@ export const UserManagementScreen: React.FC = () => {
     setUsers(users.map((u) => (u.id === id ? { ...u, status: u.status === 'Active' ? 'Inactive' : 'Active' } : u)));
   };
 
-  const handleResetPassword = (user: TerminalUser) => {
-    const newPass = prompt(`Enter new password for ${user.name} (${user.email}):`);
-    if (newPass) {
-      setUsers(users.map((u) => (u.id === user.id ? { ...u, password: newPass } : u)));
-      notifySuccess(`Password for ${user.email} updated successfully! (پاس ورڈ تبدیل ہو گیا)`);
-    }
+  const handleSavePassword = (userId: string, newPassword: string) => {
+    setUsers(users.map((u) => (u.id === userId ? { ...u, password: newPassword } : u)));
   };
 
   return (
@@ -175,7 +173,7 @@ export const UserManagementScreen: React.FC = () => {
                 {/* Action Password Reset */}
                 <td className="py-3 px-3 text-center font-sans">
                   <button 
-                    onClick={() => handleResetPassword(u)}
+                    onClick={() => setSelectedUserForPassword(u)}
                     className="inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold border border-slate-200 cursor-pointer transition-colors"
                   >
                     <Key className="w-3 h-3 text-slate-500" />
@@ -193,6 +191,14 @@ export const UserManagementScreen: React.FC = () => {
         isOpen={isAddUserOpen}
         onClose={() => setIsAddUserOpen(false)}
         onAddUser={handleAddUser}
+      />
+
+      {/* Dedicated Reset Password Modal */}
+      <ResetPasswordModal
+        isOpen={!!selectedUserForPassword}
+        user={selectedUserForPassword}
+        onClose={() => setSelectedUserForPassword(null)}
+        onSave={handleSavePassword}
       />
     </div>
   );

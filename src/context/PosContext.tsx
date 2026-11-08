@@ -131,7 +131,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     'All spot memos cleared, zero credit given. Cash ready for godown safe handover.'
   );
   const [isDayClosed, setIsDayClosed] = useState<boolean>(false);
-  const [isTerminalLocked, setIsTerminalLocked] = useState<boolean>(false);
+  const [isTerminalLocked, setIsTerminalLocked] = useState<boolean>(true);
   const [isMandiChitOpen, setIsMandiChitOpen] = useState<boolean>(false);
 
   const addToCart = (newItem: CartItem) => {

@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Clock, User, LogOut, Wifi } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
+import { RouteName } from '../../routes/RouteName';
+import { notifyInfo } from '../../utils/toast';
 
 export const Header: React.FC = () => {
+  const navigate = useNavigate();
   const { setIsTerminalLocked } = usePos();
   const [timeStr, setTimeStr] = useState<string>('14:32:00 PKT');
 
@@ -18,6 +22,12 @@ export const Header: React.FC = () => {
     const interval = setInterval(updateClock, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleLogout = () => {
+    setIsTerminalLocked(true);
+    navigate(RouteName.LOGIN);
+    notifyInfo('Terminal locked. Sign in with email to resume access.');
+  };
 
   return (
     <header className="shrink-0 bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between text-xs sticky top-0 z-30 shadow-xs">
@@ -71,7 +81,7 @@ export const Header: React.FC = () => {
 
         {/* Logout Button with Icon */}
         <button 
-          onClick={() => setIsTerminalLocked(true)}
+          onClick={handleLogout}
           className="flex items-center space-x-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3 py-1 rounded font-semibold text-[11px] transition-colors cursor-pointer"
         >
           <LogOut className="w-3.5 h-3.5" />

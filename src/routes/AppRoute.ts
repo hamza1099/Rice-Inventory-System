@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import { RouteName } from "./RouteName";
+import { LoginScreen } from "../screens/LoginScreen";
 import { PosCounterScreen } from "../screens/PosCounterScreen";
 import { DailyMemoScreen } from "../screens/DailyMemoScreen";
 import { StockInventoryScreen } from "../screens/StockInventoryScreen";
@@ -13,6 +14,10 @@ export interface RouteConfig {
 }
 
 export const AppRoute: RouteConfig[] = [
+  {
+    path: RouteName.LOGIN,
+    element: LoginScreen,
+  },
   {
     path: RouteName.HOME,
     element: PosCounterScreen,

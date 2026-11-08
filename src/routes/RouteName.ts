@@ -1,5 +1,6 @@
 export const RouteName = {
   HOME: "/",
+  LOGIN: "/login",
   POS_COUNTER: "/",
   DAILY_MEMO: "/daily-memo",
   STOCK_INVENTORY: "/stock-inventory",
