@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, UserPlus, Mail, Lock, Eye, EyeOff, Shield } from 'lucide-react';
+import { X, UserPlus, Mail, Lock, Eye, EyeOff, Shield, Sparkles } from 'lucide-react';
+import { transliterateEnglishToUrduName } from '../../utils/urduTransliterator';
 
 export interface TerminalUser {
   id: string;
@@ -27,6 +28,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
 }) => {
   const [name, setName] = useState<string>('');
   const [urduName, setUrduName] = useState<string>('');
+  const [isUrduManuallyEdited, setIsUrduManuallyEdited] = useState<boolean>(false);
   const [email, setEmail] = useState<string>('');
   const [role, setRole] = useState<'Cashier' | 'Supervisor' | 'Admin' | 'Munshi'>('Cashier');
   const [password, setPassword] = useState<string>('');
@@ -36,6 +38,19 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
   const [phone, setPhone] = useState<string>('');
 
   if (!isOpen) return null;
+
+  const handleNameChange = (val: string) => {
+    setName(val);
+    if (!isUrduManuallyEdited || !urduName.trim()) {
+      const autoUrdu = transliterateEnglishToUrduName(val);
+      setUrduName(autoUrdu);
+    }
+  };
+
+  const handleUrduNameChange = (val: string) => {
+    setUrduName(val);
+    setIsUrduManuallyEdited(val.trim().length > 0);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +70,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
     const newUser: TerminalUser = {
       id: `usr-${Date.now()}`,
       name,
-      urduName: urduName || name,
+      urduName: urduName || transliterateEnglishToUrduName(name) || name,
       email: email.trim().toLowerCase(),
       role,
       terminal,
@@ -69,6 +84,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
     // Reset fields
     setName('');
     setUrduName('');
+    setIsUrduManuallyEdited(false);
     setEmail('');
     setPassword('');
     onClose();
@@ -105,23 +121,39 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                 type="text"
                 required
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => handleNameChange(e.target.value)}
                 placeholder="e.g. Asif Ali"
                 className="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-emerald-600 focus:outline-hidden"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                Urdu Name (اردو نام):
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] font-bold text-slate-700">
+                  Urdu Name (اردو نام):
+                </label>
+                {name && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUrduName(transliterateEnglishToUrduName(name));
+                      setIsUrduManuallyEdited(false);
+                    }}
+                    className="text-[10px] text-emerald-700 hover:text-emerald-900 font-semibold cursor-pointer flex items-center gap-0.5"
+                    title="خودکار ترجمہ کریں"
+                  >
+                    <Sparkles className="w-2.5 h-2.5" />
+                    <span>Auto</span>
+                  </button>
+                )}
+              </div>
               <input
                 type="text"
                 value={urduName}
-                onChange={(e) => setUrduName(e.target.value)}
-                placeholder="آصف علی"
+                onChange={(e) => handleUrduNameChange(e.target.value)}
+                placeholder="خودکار اردو نام"
                 dir="rtl"
-                className="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-emerald-600 focus:outline-hidden urdu-text"
+                className="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-emerald-600 focus:outline-hidden urdu-text text-sm font-medium"
               />
             </div>
           </div>
