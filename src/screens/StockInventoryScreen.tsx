@@ -25,6 +25,7 @@ export const StockInventoryScreen: React.FC = () => {
 
   // Modals state
   const [inwardItem, setInwardItem] = useState<InventoryItem | null>(null);
+  const [isInwardOpen, setIsInwardOpen] = useState<boolean>(false);
   const [rateEditItem, setRateEditItem] = useState<InventoryItem | null>(null);
   const [isAddVarietyOpen, setIsAddVarietyOpen] = useState<boolean>(false);
 
@@ -72,7 +73,10 @@ export const StockInventoryScreen: React.FC = () => {
       <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-xs flex items-center justify-between text-xs flex-wrap gap-2">
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => setInwardItem(inventory[0])}
+            onClick={() => {
+              setInwardItem(null); // Clean state: prompt user to select variety
+              setIsInwardOpen(true);
+            }}
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -190,7 +194,10 @@ export const StockInventoryScreen: React.FC = () => {
       {/* Live Godown Table */}
       <InventoryTable
         inventory={filteredInventory}
-        onOpenInward={(item) => setInwardItem(item)}
+        onOpenInward={(item) => {
+          setInwardItem(item);
+          setIsInwardOpen(true);
+        }}
         onOpenRateEdit={(item) => setRateEditItem(item)}
         onDeleteItem={(id) => deleteInventoryItem(id)}
       />
@@ -199,7 +206,14 @@ export const StockInventoryScreen: React.FC = () => {
       <GodownStats />
 
       {/* Modals */}
-      <StockInwardModal item={inwardItem} onClose={() => setInwardItem(null)} />
+      <StockInwardModal
+        isOpen={isInwardOpen}
+        item={inwardItem}
+        onClose={() => {
+          setIsInwardOpen(false);
+          setInwardItem(null);
+        }}
+      />
       <EditVarietyModal
         item={rateEditItem}
         onClose={() => setRateEditItem(null)}
