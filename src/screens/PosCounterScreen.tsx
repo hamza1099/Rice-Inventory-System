@@ -5,7 +5,7 @@ import { ScaleTerminal } from '../components/pos/ScaleTerminal';
 import { CashMemoBill } from '../components/pos/CashMemoBill';
 import { WeightEntryModal } from '../components/pos/WeightEntryModal';
 import { ReceiptPrintModal } from '../components/pos/ReceiptPrintModal';
-import { Search, Filter, ShieldCheck, Scale, Cpu } from 'lucide-react';
+import { Search, Filter, ShieldCheck, Cpu } from 'lucide-react';
 
 export const PosCounterScreen: React.FC = () => {
   const { products } = usePos();
@@ -45,23 +45,6 @@ export const PosCounterScreen: React.FC = () => {
             <span className="urdu-text text-slate-500 font-bold" dir="rtl">
               (فوری نقد اور راست ادائیگی - ادھار مکمل بند ہے)
             </span>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-4 font-mono-num text-[11px] text-slate-600">
-          <div>
-            <span>Lot: </span>
-            <strong className="text-slate-900">LHR-RICE-2024-B4</strong>
-          </div>
-          <span>•</span>
-          <div>
-            <span>Moisture Index: </span>
-            <strong className="text-emerald-800">11.8% Std</strong>
-          </div>
-          <span>•</span>
-          <div className="flex items-center space-x-1 text-emerald-700 font-bold">
-            <Scale className="w-3 h-3" />
-            <span>Auto-Tare Synced</span>
           </div>
         </div>
       </div>
