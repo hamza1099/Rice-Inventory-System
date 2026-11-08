@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Users, UserPlus, Shield, KeyRound, Check, X } from 'lucide-react';
+import { Users, UserPlus, Shield, Check, X, KeyRound } from 'lucide-react';
+import { AddUserModal } from '../components/users/AddUserModal';
 
 interface TerminalUser {
   id: string;
@@ -61,10 +62,27 @@ export const UserManagementScreen: React.FC = () => {
     }
   ]);
 
+  const [isAddUserOpen, setIsAddUserOpen] = useState<boolean>(false);
+
+  const handleAddUser = (newUser: TerminalUser) => {
+    setUsers([...users, newUser]);
+  };
+
+  const handleToggleStatus = (id: string) => {
+    setUsers(users.map(u => u.id === id ? { ...u, status: u.status === 'Active' ? 'Inactive' : 'Active' } : u));
+  };
+
+  const handleResetPin = (name: string) => {
+    const newPin = prompt(`Enter new 4-digit PIN for ${name}:`, '1234');
+    if (newPin) {
+      alert(`PIN for ${name} has been updated to: ${newPin}`);
+    }
+  };
+
   return (
     <div className="space-y-3 text-xs">
       {/* Top Header */}
-      <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs flex items-center justify-between">
+      <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs flex items-center justify-between flex-wrap gap-2">
         <div>
           <div className="flex items-center space-x-2">
             <Users className="w-5 h-5 text-emerald-800" />
@@ -81,8 +99,8 @@ export const UserManagementScreen: React.FC = () => {
         </div>
 
         <button 
-          onClick={() => alert("Add User modal ready")}
-          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-xs"
+          onClick={() => setIsAddUserOpen(true)}
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-xs cursor-pointer transition-colors"
         >
           <UserPlus className="w-4 h-4" />
           <span>+ Add New User (نیا صارف)</span>
@@ -141,16 +159,24 @@ export const UserManagementScreen: React.FC = () => {
                 </td>
 
                 <td className="py-3 px-3 text-center">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                    <Check className="w-2.5 h-2.5 mr-1" />
+                  <button
+                    onClick={() => handleToggleStatus(u.id)}
+                    title="Click to toggle Active / Inactive"
+                    className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors ${
+                      u.status === 'Active'
+                        ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                    }`}
+                  >
+                    {u.status === 'Active' ? <Check className="w-2.5 h-2.5 mr-1" /> : <X className="w-2.5 h-2.5 mr-1" />}
                     {u.status}
-                  </span>
+                  </button>
                 </td>
 
                 <td className="py-3 px-3 text-center font-sans">
                   <button 
-                    onClick={() => alert(`Resetting PIN for ${u.name}`)}
-                    className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold border border-slate-200"
+                    onClick={() => handleResetPin(u.name)}
+                    className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold border border-slate-200 cursor-pointer transition-colors"
                   >
                     Reset PIN
                   </button>
@@ -160,6 +186,13 @@ export const UserManagementScreen: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Add User Modal */}
+      <AddUserModal
+        isOpen={isAddUserOpen}
+        onClose={() => setIsAddUserOpen(false)}
+        onAddUser={handleAddUser}
+      />
     </div>
   );
 };

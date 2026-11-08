@@ -6,7 +6,6 @@ import {
   Boxes,
   CheckCircle2,
   Users,
-  Settings,
   AlertTriangle
 } from 'lucide-react';
 import { RouteName } from '../../routes/RouteName';
@@ -14,7 +13,7 @@ import { RouteName } from '../../routes/RouteName';
 export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
 
-  // Keyboard shortcut listener for F1, F2, F3, F4, F8, F9
+  // Keyboard shortcut listener for F1, F2, F3, F4, F8
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'F1') {
@@ -32,9 +31,6 @@ export const Sidebar: React.FC = () => {
       } else if (e.key === 'F8') {
         e.preventDefault();
         navigate(RouteName.USER_MANAGEMENT);
-      } else if (e.key === 'F9') {
-        e.preventDefault();
-        navigate(RouteName.SYSTEM_SETTINGS);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -79,13 +75,6 @@ export const Sidebar: React.FC = () => {
       urdu: 'صارفین',
       key: 'F8',
       icon: Users
-    },
-    {
-      to: RouteName.SYSTEM_SETTINGS,
-      label: 'System Settings',
-      urdu: 'سیٹنگز',
-      key: 'F9',
-      icon: Settings
     }
   ];
 
@@ -169,7 +158,7 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
 
-      {/* Strict Policy Enforcement Banner (Exact from Screenshots) */}
+      {/* Strict Policy Enforcement Banner */}
       <div className="p-2 border-t border-slate-100">
         <div className="bg-amber-50/80 border border-amber-200 rounded p-2 text-amber-900">
           <div className="flex items-start space-x-1.5">
