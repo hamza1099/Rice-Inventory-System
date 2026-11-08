@@ -8,10 +8,6 @@ export const WeightEntryModal: React.FC = () => {
 
   const [mode, setMode] = useState<EntryMode>('kg');
   const [inputValue, setInputValue] = useState<string>('10.00');
-  const [tareOption, setTareOption] = useState<{ name: string; weight: number }>({
-    name: 'پلاسٹک تھیلی',
-    weight: 0.10
-  });
 
   const product = selectedProductForModal;
 
@@ -19,22 +15,18 @@ export const WeightEntryModal: React.FC = () => {
     if (product) {
       setMode('kg');
       setInputValue('10.00');
-      setTareOption({ name: 'پلاسٹک تھیلی', weight: 0.10 });
     }
   }, [product]);
 
-  // Handle mode switch presets and tare
+  // Handle mode switch presets
   const handleModeChange = (newMode: EntryMode) => {
     setMode(newMode);
     if (newMode === 'kg') {
       setInputValue('10.00');
-      setTareOption({ name: 'پلاسٹک تھیلی', weight: 0.10 });
     } else if (newMode === 'bags') {
       setInputValue('1');
-      setTareOption({ name: 'پٹ سن بوری', weight: 0.95 });
     } else if (newMode === 'mund') {
       setInputValue('1');
-      setTareOption({ name: 'پٹ سن بوری', weight: 0.95 });
     }
   };
 
@@ -50,7 +42,7 @@ export const WeightEntryModal: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedProductForModal, inputValue, mode, tareOption]);
+  }, [selectedProductForModal, inputValue, mode]);
 
   if (!product) return null;
 
@@ -66,7 +58,6 @@ export const WeightEntryModal: React.FC = () => {
 
   // Calculate Subtotal
   const subtotal = netWeightKg * product.ratePerKg;
-  const grossWeight = netWeightKg + tareOption.weight;
 
   const handleSave = () => {
     if (netWeightKg <= 0) return;
@@ -75,9 +66,9 @@ export const WeightEntryModal: React.FC = () => {
       id: `cart-${Date.now()}`,
       product,
       mode,
-      grossWeight,
-      tareWeight: tareOption.weight,
-      tareName: tareOption.name,
+      grossWeight: netWeightKg,
+      tareWeight: 0,
+      tareName: 'کاٹ نہیں',
       netWeight: netWeightKg,
       ratePerKg: product.ratePerKg,
       subtotal
@@ -205,46 +196,24 @@ export const WeightEntryModal: React.FC = () => {
             </div>
           </div>
 
-          {/* Input field & Tare subtraction */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
-              <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                {mode === 'bags' ? 'تعداد بوری (Number of Bags):' : mode === 'mund' ? 'تعداد من (Mund 40kg):' : 'صاف وزن (Net Weight):'}
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  step={mode === 'kg' ? '0.01' : '1'}
-                  min="0"
-                  autoFocus
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  className="w-full text-xl font-bold font-mono-num px-3 py-2 bg-white border-2 border-emerald-600 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
-                />
-                <span className="absolute right-3 top-2.5 font-bold text-xs text-slate-500 uppercase">
-                  {mode === 'bags' ? 'Bori (50kg)' : mode === 'mund' ? 'Mund (40kg)' : 'KG'}
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                کاٹ / بوری (Tare/Bori):
-              </label>
-              <select
-                value={tareOption.weight}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  const name = val === 0.95 ? 'پٹ سن بوری' : val === 0.12 ? 'PP بوری' : val === 0.10 ? 'پلاسٹک تھیلی' : 'کاٹ نہیں';
-                  setTareOption({ name, weight: val });
-                }}
-                className="w-full text-xs font-semibold px-2 py-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:outline-hidden"
-              >
-                <option value={0.10}>[-0.10] تھیلی</option>
-                <option value={0.12}>[-0.12] PP بوری</option>
-                <option value={0.95}>[-0.95] پٹ سن بوری</option>
-                <option value={0.00}>[0.00] کاٹ نہیں</option>
-              </select>
+          {/* Input field (Full Width) */}
+          <div>
+            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+              {mode === 'bags' ? 'تعداد بوری (Number of Bags):' : mode === 'mund' ? 'تعداد من (Mund 40kg):' : 'صاف وزن (Net Weight):'}
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                step={mode === 'kg' ? '0.01' : '1'}
+                min="0"
+                autoFocus
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                className="w-full text-xl font-bold font-mono-num px-3 py-2 bg-white border-2 border-emerald-600 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
+              />
+              <span className="absolute right-3 top-2.5 font-bold text-xs text-slate-500 uppercase">
+                {mode === 'bags' ? 'Bori (50kg)' : mode === 'mund' ? 'Mund (40kg)' : 'KG'}
+              </span>
             </div>
           </div>
 
