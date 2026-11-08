@@ -1,22 +1,30 @@
 import React from 'react';
-import { Download, FileSpreadsheet, Printer, Search, Calendar, Filter } from 'lucide-react';
+import { Download, FileSpreadsheet, Printer, Search, Calendar } from 'lucide-react';
 
 interface MemoFilterBarProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   activePeriod: string;
-  setActivePeriod: (p: string) => void;
+  onPresetClick: (periodId: string) => void;
   selectedPayment: string;
   setSelectedPayment: (m: string) => void;
+  dateRangeLabel: string;
+  onOpenCalendar: () => void;
+  onExportCSV?: () => void;
+  onDownloadPDF?: () => void;
 }
 
 export const MemoFilterBar: React.FC<MemoFilterBarProps> = ({
   searchTerm,
   setSearchTerm,
   activePeriod,
-  setActivePeriod,
+  onPresetClick,
   selectedPayment,
-  setSelectedPayment
+  setSelectedPayment,
+  dateRangeLabel,
+  onOpenCalendar,
+  onExportCSV,
+  onDownloadPDF
 }) => {
   const periods = [
     { id: 'today', label: 'Today (آج)' },
@@ -50,22 +58,22 @@ export const MemoFilterBar: React.FC<MemoFilterBarProps> = ({
         {/* Action Buttons */}
         <div className="flex items-center space-x-2">
           <button 
-            onClick={() => alert('Exporting Daily Roznamcha CSV...')}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded border border-slate-200 transition-colors"
+            onClick={onExportCSV}
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded border border-slate-200 transition-colors cursor-pointer"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700" />
             <span>Export CSV</span>
           </button>
           <button 
-            onClick={() => alert('Downloading PDF Audit Report...')}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded border border-slate-200 transition-colors"
+            onClick={onDownloadPDF}
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded border border-slate-200 transition-colors cursor-pointer"
           >
             <Download className="w-3.5 h-3.5 text-blue-700" />
             <span>Download PDF Report</span>
           </button>
           <button 
             onClick={() => window.print()}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded shadow-xs transition-colors"
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded shadow-xs transition-colors cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Print Period Roznamcha [F5]</span>
@@ -76,13 +84,13 @@ export const MemoFilterBar: React.FC<MemoFilterBarProps> = ({
       {/* Date Range Quick Presets */}
       <div className="flex items-center space-x-1 border-t border-slate-100 pt-2.5 overflow-x-auto">
         <span className="text-[10px] uppercase font-bold text-slate-400 mr-2 shrink-0">
-          Quick Presets:
+          QUICK PRESETS:
         </span>
         {periods.map((p) => (
           <button
             key={p.id}
-            onClick={() => setActivePeriod(p.id)}
-            className={`px-3 py-1 rounded-md font-bold text-[11px] transition-all whitespace-nowrap ${
+            onClick={() => onPresetClick(p.id)}
+            className={`px-3 py-1 rounded-md font-bold text-[11px] transition-all whitespace-nowrap cursor-pointer ${
               activePeriod === p.id
                 ? 'bg-emerald-800 text-white shadow-xs'
                 : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
@@ -94,14 +102,21 @@ export const MemoFilterBar: React.FC<MemoFilterBarProps> = ({
       </div>
 
       {/* Dropdown Filters & Search Input */}
-      <div className="grid grid-cols-12 gap-3 pt-1">
-        <div className="col-span-3 flex items-center space-x-2 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-mono-num">
-          <Calendar className="w-4 h-4 text-emerald-700 shrink-0" />
-          <div className="leading-tight">
-            <span className="text-[9px] uppercase font-bold text-slate-400 block">
+      <div className="grid grid-cols-12 gap-3 pt-1 items-center">
+        {/* Dynamic Clickable Date Range Box */}
+        <div 
+          onClick={onOpenCalendar}
+          title="Click to change date range via calendar"
+          className="col-span-3 flex items-center space-x-2 bg-slate-50 hover:bg-emerald-50/50 hover:border-emerald-300 transition-all px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-mono-num cursor-pointer group"
+        >
+          <Calendar className="w-4 h-4 text-emerald-700 shrink-0 group-hover:scale-110 transition-transform" />
+          <div className="leading-tight overflow-hidden">
+            <span className="text-[9px] uppercase font-bold text-slate-400 block group-hover:text-emerald-700">
               SELECTED DATE RANGE
             </span>
-            <span className="text-[11px] font-bold">18 OCT 2024 to 24 OCT 2024 (7 Days)</span>
+            <span className="text-[11px] font-bold text-slate-900 truncate block">
+              {dateRangeLabel}
+            </span>
           </div>
         </div>
 

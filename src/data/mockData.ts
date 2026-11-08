@@ -164,6 +164,57 @@ export const INITIAL_MEMOS: MemoRecord[] = [
     cashier: 'S. Bukhari',
     counterId: 'Counter 01',
     items: []
+  },
+  {
+    id: 'memo-1055',
+    memoNo: '#1055',
+    dateStr: '15 Oct 2024',
+    timeStr: '11:15:00 PKT',
+    customerName: 'Sultan Rice Mart',
+    customerMeta: 'Circular Road Retailer • Cash Voucher',
+    itemsSummary: 'Kainat 1121 Steam (4 Bags)',
+    weightSummary: '4 Bags (200 KG)',
+    paymentMode: 'SPOT CASH',
+    grossAmount: 68000,
+    discount: 500,
+    netAmount: 67500,
+    cashier: 'S. Bukhari',
+    counterId: 'Counter 01',
+    items: []
+  },
+  {
+    id: 'memo-1048',
+    memoNo: '#1048',
+    dateStr: '08 Oct 2024',
+    timeStr: '17:20:45 PKT',
+    customerName: 'Anarkali Food Point',
+    customerMeta: 'Commercial Kitchen Delivery • Bank QR',
+    itemsSummary: 'White Broken Tota + Super Basmati',
+    weightSummary: '6 Bags (300 KG)',
+    paymentMode: 'RAAST ONLINE',
+    grossAmount: 84000,
+    discount: 600,
+    netAmount: 83400,
+    cashier: 'S. Bukhari',
+    counterId: 'Counter 01',
+    items: []
+  },
+  {
+    id: 'memo-1022',
+    memoNo: '#1022',
+    dateStr: '25 Sep 2024',
+    timeStr: '15:10:20 PKT',
+    customerName: 'Chaudhry & Sons Rice Traders',
+    customerMeta: 'Mandi Outstation Lot Dispatch',
+    itemsSummary: 'Super Kernel Basmati Vintage',
+    weightSummary: '10 Bags (500 KG)',
+    paymentMode: 'RAAST ONLINE',
+    grossAmount: 210000,
+    discount: 1500,
+    netAmount: 208500,
+    cashier: 'S. Bukhari',
+    counterId: 'Counter 01',
+    items: []
   }
 ];
 
