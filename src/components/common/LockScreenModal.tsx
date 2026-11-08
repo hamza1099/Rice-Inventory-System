@@ -1,114 +1,116 @@
 import React, { useState } from 'react';
-import { Lock, Unlock, ShieldAlert, KeyRound } from 'lucide-react';
+import { Lock, Unlock, Mail, Eye, EyeOff, User } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 
 export const LockScreenModal: React.FC = () => {
   const { isTerminalLocked, setIsTerminalLocked } = usePos();
-  const [pin, setPin] = useState<string>('');
+  const [email, setEmail] = useState<string>('s.bukhari@bukharirice.com');
+  const [password, setPassword] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
 
   if (!isTerminalLocked) return null;
 
-  const handleUnlock = () => {
-    if (pin === '9921' || pin === '1234' || pin.length === 4) {
-      setIsTerminalLocked(false);
-      setPin('');
-      setErrorMsg('');
-    } else {
-      setErrorMsg('Incorrect PIN! Try 9921 or 1234');
-      setPin('');
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !email.includes('@')) {
+      setErrorMsg('Please enter a valid email address.');
+      return;
     }
-  };
+    if (!password) {
+      setErrorMsg('Please enter password.');
+      return;
+    }
 
-  const handleKeyPress = (num: string) => {
-    if (pin.length < 4) {
-      const nextPin = pin + num;
-      setPin(nextPin);
-      if (nextPin.length === 4) {
-        if (nextPin === '9921' || nextPin === '1234' || nextPin.length === 4) {
-          setIsTerminalLocked(false);
-          setPin('');
-          setErrorMsg('');
-        }
-      }
-    }
+    // Success login
+    setIsTerminalLocked(false);
+    setPassword('');
+    setErrorMsg('');
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full p-6 text-center space-y-4 animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200 text-xs">
+        {/* Top Avatar Icon */}
         <div className="w-14 h-14 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center mx-auto shadow-inner">
           <Lock className="w-7 h-7" />
         </div>
 
-        <div>
+        <div className="text-center">
           <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
             Terminal Locked
           </h2>
           <p className="urdu-text text-xs text-emerald-900 font-bold" dir="rtl">
-            بخاری رائس ٹریڈرز - کاؤنٹر لاک
+            بخاری رائس ٹریڈرز - کاؤنٹر لاگ ان
           </p>
-          <p className="text-[11px] text-slate-500 mt-1 font-mono-num">
-            Terminal #01 • Cashier: S. Bukhari
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            Please sign in with your email and password to resume.
           </p>
         </div>
 
-        {/* PIN Display */}
-        <div className="py-2">
-          <div className="flex justify-center space-x-3">
-            {[0, 1, 2, 3].map((idx) => (
-              <div
-                key={idx}
-                className={`w-3.5 h-3.5 rounded-full border-2 transition-all ${
-                  pin.length > idx
-                    ? 'bg-emerald-700 border-emerald-700 scale-110'
-                    : 'border-slate-300 bg-slate-100'
-                }`}
-              />
-            ))}
+        {/* Error message */}
+        {errorMsg && (
+          <div className="p-2 rounded bg-red-50 border border-red-200 text-red-700 text-center font-bold text-[11px]">
+            {errorMsg}
           </div>
-          {errorMsg && (
-            <p className="text-[11px] text-red-600 font-bold mt-2 animate-bounce">
-              {errorMsg}
-            </p>
-          )}
-        </div>
+        )}
 
-        {/* Numeric Keypad */}
-        <div className="grid grid-cols-3 gap-2 font-mono text-base font-bold">
-          {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
-            <button
-              key={digit}
-              onClick={() => handleKeyPress(digit)}
-              className="py-3 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 transition-all font-mono-num cursor-pointer"
-            >
-              {digit}
-            </button>
-          ))}
+        {/* Login Form */}
+        <form onSubmit={handleLogin} className="space-y-3">
+          <div>
+            <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
+              <Mail className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Login Email (ای میل ایڈریس):</span>
+            </label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="s.bukhari@bukharirice.com"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-emerald-600 focus:outline-hidden font-mono"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
+              <Lock className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Password (پاس ورڈ):</span>
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                autoFocus
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password"
+                className="w-full px-3 py-2 pr-9 border border-slate-300 rounded-lg focus:border-emerald-600 focus:outline-hidden font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
           <button
-            onClick={() => setPin('')}
-            className="py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-all cursor-pointer"
-          >
-            Clear
-          </button>
-          <button
-            onClick={() => handleKeyPress('0')}
-            className="py-3 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 transition-all font-mono-num cursor-pointer"
-          >
-            0
-          </button>
-          <button
-            onClick={handleUnlock}
-            className="py-3 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center space-x-1"
+            type="submit"
+            className="w-full py-2.5 px-4 rounded-lg bg-emerald-800 hover:bg-emerald-900 active:scale-98 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow-xs transition-all cursor-pointer mt-2"
           >
             <Unlock className="w-4 h-4" />
-            <span>Enter</span>
+            <span>Unlock Terminal (لاگ ان کریں)</span>
           </button>
-        </div>
+        </form>
 
-        <p className="text-[10px] text-slate-400">
-          Enter 4-digit Cashier or Supervisor PIN (Default: 9921)
-        </p>
+        {/* Quick Accounts Hint */}
+        <div className="pt-2 border-t border-slate-100 text-center text-[10px] text-slate-400">
+          <span>Active Session: </span>
+          <strong className="text-slate-600">S. Bukhari (Terminal #01)</strong>
+        </div>
       </div>
     </div>
   );

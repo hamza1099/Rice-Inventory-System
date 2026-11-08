@@ -39,27 +39,26 @@ export const HandoverAuthCard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-12 gap-4">
-        {/* Supervisor PIN */}
+        {/* Supervisor Password */}
         <div className="col-span-4">
           <label className="block text-[11px] font-bold text-slate-700 mb-1">
-            Supervisor PIN Authorization (سپروائزر پن کوڈ):
+            Supervisor Password (سپروائزر پاس ورڈ):
           </label>
           <div className="relative">
             <input
               type="password"
-              maxLength={4}
               value={supervisorPin}
               onChange={(e) => setSupervisorPin(e.target.value)}
-              placeholder="••••"
+              placeholder="Enter password"
               disabled={isDayClosed}
-              className="w-full text-base font-bold font-mono tracking-widest px-3 py-1.5 border border-slate-300 rounded-lg focus:border-emerald-600 focus:outline-hidden bg-slate-50"
+              className="w-full text-xs font-bold font-mono px-3 py-2 border border-slate-300 rounded-lg focus:border-emerald-600 focus:outline-hidden bg-slate-50"
             />
             <span className="absolute right-2.5 top-2 text-[10px] font-bold text-emerald-700">
               [OK]
             </span>
           </div>
           <p className="text-[10px] text-slate-500 mt-1">
-            Validated for In-Charge: <strong>Haji M. Bilal Bukhari</strong>
+            Supervisor: <strong>bilal.bukhari@bukharirice.com</strong>
           </p>
         </div>
 
