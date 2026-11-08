@@ -36,9 +36,9 @@ export const CashMemoBill: React.FC = () => {
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg shadow-xs flex flex-col justify-between h-full text-xs">
+    <div className="bg-white border border-slate-200 rounded-lg shadow-xs flex flex-col justify-between h-full text-xs overflow-hidden">
       {/* Memo Header */}
-      <div className="p-3 border-b border-slate-200 bg-slate-50/70">
+      <div className="shrink-0 p-3 border-b border-slate-200 bg-slate-50/70">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="text-sm font-black text-slate-900 tracking-tight font-mono-num">
@@ -52,7 +52,7 @@ export const CashMemoBill: React.FC = () => {
           <button
             onClick={clearCart}
             title="Clear all rows"
-            className="text-[10px] text-red-600 hover:text-red-800 font-bold hover:underline"
+            className="text-[10px] text-red-600 hover:text-red-800 font-bold hover:underline cursor-pointer"
           >
             Clear Bill [DEL]
           </button>
@@ -67,7 +67,7 @@ export const CashMemoBill: React.FC = () => {
       </div>
 
       {/* Items Table */}
-      <div className="flex-1 overflow-y-auto max-h-[300px]">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         <table className="w-full text-left text-xs border-collapse">
           <thead className="bg-slate-100 text-slate-600 text-[10px] font-bold uppercase sticky top-0 border-b border-slate-200">
             <tr>
@@ -128,7 +128,7 @@ export const CashMemoBill: React.FC = () => {
       </div>
 
       {/* Bill Calculation & Tender Box */}
-      <div className="p-3 bg-slate-50 border-t border-slate-200 space-y-2.5">
+      <div className="shrink-0 p-3 bg-slate-50 border-t border-slate-200 space-y-2.5">
         {/* Calculations */}
         <div className="space-y-1 font-mono-num text-xs">
           <div className="flex items-center justify-between text-slate-600">

@@ -78,7 +78,7 @@ export const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-56 bg-white border-r border-slate-200 flex flex-col justify-between h-[calc(100vh-42px-36px)] text-xs select-none">
+    <aside className="w-56 shrink-0 bg-white border-r border-slate-200 flex flex-col justify-between h-full text-xs select-none">
       <div className="p-2 space-y-4">
         {/* Workstation Operations */}
         <div>

@@ -30,9 +30,9 @@ export const PosCounterScreen: React.FC = () => {
   });
 
   return (
-    <div className="space-y-3">
+    <div className="h-full flex flex-col space-y-2 overflow-hidden">
       {/* Top Quick Status Bar (Exact from Image 3) */}
-      <div className="bg-white border border-slate-200 rounded-lg px-3.5 py-2 shadow-xs flex items-center justify-between text-xs flex-wrap gap-2">
+      <div className="shrink-0 bg-white border border-slate-200 rounded-lg px-3.5 py-1.5 shadow-xs flex items-center justify-between text-xs flex-wrap gap-2">
         <div className="flex items-center space-x-3">
           <span className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold border border-emerald-300 text-[11px]">
             <Cpu className="w-3 h-3 text-emerald-700" />
@@ -50,11 +50,11 @@ export const PosCounterScreen: React.FC = () => {
       </div>
 
       {/* Main 2-Column POS Layout */}
-      <div className="grid grid-cols-12 gap-3 items-start">
+      <div className="flex-1 grid grid-cols-12 gap-2.5 min-h-0 overflow-hidden items-stretch">
         {/* Left Column: Catalog & Scale Terminal */}
-        <div className="col-span-8 space-y-3">
+        <div className="col-span-8 flex flex-col h-full min-h-0 space-y-2 overflow-hidden">
           {/* Search & Category Filter Chips */}
-          <div className="bg-white border border-slate-200 rounded-lg p-2.5 shadow-xs space-y-2">
+          <div className="shrink-0 bg-white border border-slate-200 rounded-lg p-2 shadow-xs space-y-1.5">
             <div className="flex items-center space-x-2">
               <div className="relative flex-1">
                 <input
@@ -66,7 +66,7 @@ export const PosCounterScreen: React.FC = () => {
                 />
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
               </div>
-              <button className="flex items-center space-x-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg border border-slate-200 text-xs">
+              <button className="flex items-center space-x-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg border border-slate-200 text-xs cursor-pointer">
                 <Filter className="w-3.5 h-3.5" />
                 <span>Filter</span>
               </button>
@@ -78,7 +78,7 @@ export const PosCounterScreen: React.FC = () => {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all whitespace-nowrap ${
+                  className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all whitespace-nowrap cursor-pointer ${
                     selectedCategory === cat.id
                       ? 'bg-emerald-800 text-white shadow-xs'
                       : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
@@ -90,19 +90,23 @@ export const PosCounterScreen: React.FC = () => {
             </div>
           </div>
 
-          {/* Product Cards Grid (6 varieties matching Image 3) */}
-          <div className="grid grid-cols-3 gap-2.5">
-            {filteredProducts.map((prod) => (
-              <ProductCard key={prod.id} product={prod} />
-            ))}
+          {/* Product Cards Grid: ONLY THIS SCROLLS! ("mid wala card khali scrol hona chahya") */}
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+            <div className="grid grid-cols-3 gap-2 auto-rows-max pb-1">
+              {filteredProducts.map((prod) => (
+                <ProductCard key={prod.id} product={prod} />
+              ))}
+            </div>
           </div>
 
-          {/* Integrated Heavy Scale Terminal (Bottom Left) */}
-          <ScaleTerminal />
+          {/* Integrated Heavy Scale Terminal (Bottom Left - Fixed at bottom) */}
+          <div className="shrink-0">
+            <ScaleTerminal />
+          </div>
         </div>
 
         {/* Right Column: Cash Memo & Checkout */}
-        <div className="col-span-4 sticky top-14">
+        <div className="col-span-4 h-full min-h-0 flex flex-col overflow-hidden">
           <CashMemoBill />
         </div>
       </div>

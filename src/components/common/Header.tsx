@@ -20,7 +20,7 @@ export const Header: React.FC = () => {
   }, []);
 
   return (
-    <header className="bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between text-xs sticky top-0 z-30 shadow-xs">
+    <header className="shrink-0 bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between text-xs sticky top-0 z-30 shadow-xs">
       {/* Brand & Shortcut */}
       <div className="flex items-center space-x-3">
         <button 
