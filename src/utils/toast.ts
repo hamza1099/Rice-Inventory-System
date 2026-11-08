@@ -49,3 +49,4 @@ export const notifyInfo = (message: string) => {
 };
 
 export { toast };
+export default toast;
