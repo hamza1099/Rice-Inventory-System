@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Settings, Save, Scale, Printer, Shield, Database, Check } from 'lucide-react';
+import { notifySuccess } from '../utils/toast';
 
 export const SystemSettingsScreen: React.FC = () => {
   const [comPort, setComPort] = useState<string>('COM1');
@@ -196,8 +197,8 @@ export const SystemSettingsScreen: React.FC = () => {
             </label>
 
             <button
-              onClick={() => alert("Local database snapshot exported successfully.")}
-              className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-lg border border-slate-200 transition-colors"
+              onClick={() => notifySuccess("Local database snapshot exported successfully! (آف لائن بیک اپ ڈاؤن لوڈ ہو گیا)")}
+              className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-lg border border-slate-200 transition-colors cursor-pointer"
             >
               Export Local DB Snapshot (Offline Backup)
             </button>

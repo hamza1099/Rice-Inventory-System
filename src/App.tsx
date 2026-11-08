@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { PosProvider } from './context/PosContext';
 import { Header } from './components/common/Header';
 import { Sidebar } from './components/common/Sidebar';
@@ -33,6 +35,20 @@ const App: React.FC = () => {
           {/* Global Modals */}
           <LockScreenModal />
           <MandiChitModal />
+
+          {/* Global Toast Notifications */}
+          <ToastContainer
+            position="top-right"
+            autoClose={3500}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="colored"
+          />
         </div>
       </PosProvider>
     </BrowserRouter>

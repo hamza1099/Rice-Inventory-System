@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Users, UserPlus, Shield, Check, X, Mail, Key } from 'lucide-react';
 import { AddUserModal, type TerminalUser } from '../components/users/AddUserModal';
+import { notifySuccess, notifyInfo } from '../utils/toast';
 
 export const UserManagementScreen: React.FC = () => {
   const [users, setUsers] = useState<TerminalUser[]>([
@@ -64,7 +65,7 @@ export const UserManagementScreen: React.FC = () => {
     const newPass = prompt(`Enter new password for ${user.name} (${user.email}):`);
     if (newPass) {
       setUsers(users.map((u) => (u.id === user.id ? { ...u, password: newPass } : u)));
-      alert(`Password for ${user.email} updated successfully!`);
+      notifySuccess(`Password for ${user.email} updated successfully! (پاس ورڈ تبدیل ہو گیا)`);
     }
   };
 

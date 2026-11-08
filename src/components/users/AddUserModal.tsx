@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, UserPlus, Mail, Lock, Eye, EyeOff, Shield, Sparkles } from 'lucide-react';
 import { transliterateEnglishToUrduName } from '../../utils/urduTransliterator';
+import { notifySuccess, notifyWarning } from '../../utils/toast';
 
 export interface TerminalUser {
   id: string;
@@ -55,15 +56,15 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      alert('Please enter user name.');
+      notifyWarning('Please enter user name (صارف کا نام درج کریں)');
       return;
     }
     if (!email.trim() || !email.includes('@')) {
-      alert('Please enter a valid email address.');
+      notifyWarning('Please enter a valid email address (درست ای میل درج کریں)');
       return;
     }
     if (!password || password.length < 4) {
-      alert('Please enter a password (at least 4 characters).');
+      notifyWarning('Please enter a password (at least 4 characters)');
       return;
     }
 
@@ -81,6 +82,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
     };
 
     onAddUser(newUser);
+    notifySuccess(`User ${name} added successfully! (نیا صارف شامل کر دیا گیا)`);
     // Reset fields
     setName('');
     setUrduName('');

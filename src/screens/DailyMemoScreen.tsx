@@ -6,6 +6,7 @@ import { MemoLedgerTable } from '../components/memo/MemoLedgerTable';
 import { DrawerAuditCard } from '../components/memo/DrawerAuditCard';
 import { ReceiptPrintModal } from '../components/pos/ReceiptPrintModal';
 import { CalendarRangeModal } from '../components/memo/CalendarRangeModal';
+import { notifySuccess, notifyInfo } from '../utils/toast';
 import { DollarSign, Wallet, CreditCard, TrendingUp, X } from 'lucide-react';
 
 export const DailyMemoScreen: React.FC = () => {
@@ -104,6 +105,7 @@ export const DailyMemoScreen: React.FC = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    notifySuccess("Daily Roznamcha CSV exported successfully!");
   };
 
   const handleResetFilters = () => {
@@ -125,7 +127,7 @@ export const DailyMemoScreen: React.FC = () => {
         dateRangeLabel={dateRangeLabel}
         onOpenCalendar={() => setIsCalendarOpen(true)}
         onExportCSV={handleExportCSV}
-        onDownloadPDF={() => alert("Downloading PDF summary report...")}
+        onDownloadPDF={() => notifyInfo("Generating PDF summary report for thermal/A4 printing...")}
       />
 
       {/* 4 Stat Cards Dynamically Updated */}

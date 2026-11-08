@@ -3,6 +3,7 @@ import type { InventoryItem } from '../../types';
 import { X, PlusCircle, Sparkles, DollarSign, Calculator } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 import { transliterateEnglishToUrduName } from '../../utils/urduTransliterator';
+import { notifySuccess, notifyWarning } from '../../utils/toast';
 
 interface AddVarietyModalProps {
   isOpen: boolean;
@@ -71,7 +72,7 @@ export const AddVarietyModal: React.FC<AddVarietyModalProps> = ({ isOpen, onClos
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!varietyName.trim()) {
-      alert('Please enter variety name.');
+      notifyWarning('Please enter variety name (چاول کا نام درج کریں)');
       return;
     }
 
@@ -98,7 +99,7 @@ export const AddVarietyModal: React.FC<AddVarietyModalProps> = ({ isOpen, onClos
     };
 
     addInventoryItem(newItem);
-    alert(`Successfully added ${newItem.varietyName} (${newItem.urduName})!`);
+    notifySuccess(`Successfully added ${newItem.varietyName} (${newItem.urduName})!`);
     onClose();
   };
 

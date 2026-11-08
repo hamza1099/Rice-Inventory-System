@@ -1,6 +1,7 @@
 import React from 'react';
 import { Lock, Printer, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
+import { notifySuccess, notifyWarning, notifyInfo } from '../../utils/toast';
 
 export const HandoverAuthCard: React.FC = () => {
   const {
@@ -14,12 +15,12 @@ export const HandoverAuthCard: React.FC = () => {
 
   const handleFinalize = () => {
     if (supervisorPin.length < 4) {
-      alert('Please enter valid 4-digit supervisor PIN code.');
+      notifyWarning('Please enter valid 4-digit supervisor password/code.');
       return;
     }
     const success = finalizeDayEnd();
     if (success) {
-      alert('Z-Report generated successfully! Day-End Register has been sealed and locked for handover.');
+      notifySuccess('Z-Report generated successfully! Day-End Register has been sealed and locked for handover.');
     }
   };
 
@@ -84,15 +85,15 @@ export const HandoverAuthCard: React.FC = () => {
       <div className="flex items-center justify-between border-t border-slate-100 pt-3">
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => alert("Printing Z-Report & Audit Slip to thermal printer...")}
-            className="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center space-x-1.5 transition-colors"
+            onClick={() => notifyInfo("Printing Z-Report & Audit Slip to thermal printer...")}
+            className="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center space-x-1.5 transition-colors cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5 text-slate-500" />
             <span>Print Z-Report & Audit Slip [F5]</span>
           </button>
           <button
-            onClick={() => alert("Sending pulse to kick cash drawer...")}
-            className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold text-xs transition-colors"
+            onClick={() => notifySuccess("Kick pulse sent to cash drawer successfully!")}
+            className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold text-xs transition-colors cursor-pointer"
           >
             Test Drawer Eject
           </button>

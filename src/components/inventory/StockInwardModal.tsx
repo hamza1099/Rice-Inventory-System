@@ -12,6 +12,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
+import { notifySuccess, notifyWarning } from '../../utils/toast';
 
 interface StockInwardModalProps {
   item: InventoryItem | null;
@@ -126,11 +127,11 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({ item, onClos
 
   const handleConfirm = () => {
     if (bags <= 0) {
-      alert('Please enter a valid number of bags.');
+      notifyWarning('Please enter a valid number of bags (تعداد بوری درج کریں)');
       return;
     }
     if (inwardCostPerKg <= 0) {
-      alert('Please enter a valid purchase cost.');
+      notifyWarning('Please enter a valid purchase cost (خریداری ریٹ درج کریں)');
       return;
     }
 
@@ -142,8 +143,8 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({ item, onClos
       isSellingRateModified ? sellingRatePerKg : undefined
     );
 
-    alert(
-      `Stock Inward Confirmed!\nAdded ${bags} bags (${totalInwardKg.toLocaleString()} KG) of ${item.varietyName}.\nTotal Inward Bill: PKR ${totalInwardAmount.toLocaleString()}\nNew Weighted Avg Cost: PKR ${weightedAvgCostPerKg.toFixed(2)}/kg (PKR ${Math.round(weightedAvgCostPerBag).toLocaleString()}/bag)`
+    notifySuccess(
+      `Stock Inward Confirmed! Added ${bags} bags (${totalInwardKg.toLocaleString()} KG) of ${item.varietyName}. Total Bill: PKR ${totalInwardAmount.toLocaleString()}`
     );
     onClose();
   };

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Trash2, Printer, CreditCard, Banknote, User } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
+import { notifyWarning, notifySuccess } from '../../utils/toast';
 
 export const CashMemoBill: React.FC = () => {
   const {
@@ -25,10 +26,13 @@ export const CashMemoBill: React.FC = () => {
 
   const handleCheckout = () => {
     if (cart.length === 0) {
-      alert('Cart is empty! Add products first.');
+      notifyWarning('Cart is empty! Add products first. (بل میں چاول شامل کریں)');
       return;
     }
-    completeSale();
+    const sale = completeSale();
+    if (sale) {
+      notifySuccess(`Cash Memo ${sale.memoNo} completed successfully!`);
+    }
   };
 
   return (

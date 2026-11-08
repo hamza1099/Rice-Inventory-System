@@ -1,6 +1,7 @@
 import React from 'react';
 import type { InventoryItem } from '../../types';
 import { PlusCircle, Edit3, Trash2, FileText, TrendingUp, TrendingDown } from 'lucide-react';
+import { notifyInfo } from '../../utils/toast';
 
 interface InventoryTableProps {
   inventory: InventoryItem[];
@@ -62,8 +63,8 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
             WHOLESALE LOT VERIFIED
           </span>
           <button 
-            onClick={() => alert("Printing Godown Inventory Stock Report...")}
-            className="flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200 transition-colors"
+            onClick={() => notifyInfo("Generating & Printing Godown Inventory Stock Report...")}
+            className="flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200 transition-colors cursor-pointer"
           >
             <FileText className="w-3 h-3" />
             <span>[Ctrl+R Report]</span>

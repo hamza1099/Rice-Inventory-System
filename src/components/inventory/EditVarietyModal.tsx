@@ -3,6 +3,7 @@ import type { InventoryItem } from '../../types';
 import { X, Check, DollarSign, Trash2, AlertTriangle, Sparkles } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 import { transliterateEnglishToUrduName } from '../../utils/urduTransliterator';
+import { notifySuccess, notifyWarning, notifyInfo } from '../../utils/toast';
 
 interface EditVarietyModalProps {
   item: InventoryItem | null;
@@ -92,7 +93,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!varietyName.trim()) {
-      alert('Please enter variety name.');
+      notifyWarning('Please enter variety name (چاول کا نام درج کریں)');
       return;
     }
 
@@ -109,7 +110,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
       qualityNotes: qualityNotes.trim()
     });
 
-    alert(`Rates & Details updated successfully for ${varietyName}!`);
+    notifySuccess(`Rates & Details updated successfully for ${varietyName}!`);
     onClose();
   };
 
@@ -121,6 +122,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
       } else {
         deleteInventoryItem(item.id);
       }
+      notifyInfo(`${item.varietyName} removed from inventory.`);
       onClose();
     }
   };
