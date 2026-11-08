@@ -7,8 +7,7 @@ import {
   Lock,
   Eye,
   EyeOff,
-  LogIn,
-  Check
+  LogIn
 } from 'lucide-react';
 import { usePos } from '../context/PosContext';
 import { RouteName } from '../routes/RouteName';
@@ -83,16 +82,6 @@ export const LoginScreen: React.FC = () => {
               بخاری رائس ٹریڈرز
             </span>
           </div>
-        </div>
-
-        {/* Right: Terminal Access Gateway */}
-        <div className="flex items-center space-x-2 text-slate-500 text-xs font-semibold">
-          <div className="w-4 h-4 rounded-full border border-slate-400 flex items-center justify-center shrink-0">
-            <Check className="w-2.5 h-2.5 text-slate-600 stroke-[3]" />
-          </div>
-          <span className="text-slate-600 font-medium text-[11px] tracking-tight">
-            Terminal Access Gateway
-          </span>
         </div>
       </header>
 
