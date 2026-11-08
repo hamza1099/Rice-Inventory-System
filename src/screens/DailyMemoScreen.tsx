@@ -212,7 +212,7 @@ export const DailyMemoScreen: React.FC = () => {
       <MemoLedgerTable memos={filteredMemos} />
 
       {/* Bottom Shift Reconciliation & Drawer Audit */}
-      <DrawerAuditCard />
+      <DrawerAuditCard activePeriod={activePeriod} />
 
       {/* Calendar Range Modal */}
       <CalendarRangeModal
