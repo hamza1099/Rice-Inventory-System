@@ -339,33 +339,18 @@ export const AddVarietyModal: React.FC<AddVarietyModalProps> = ({ isOpen, onClos
             </div>
           </div>
 
-          {/* Moisture & Notes */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
-                Moisture Index % (نمی کا تناسب):
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                value={moisturePercentage}
-                onChange={(e) => setMoisturePercentage(parseFloat(e.target.value) || 0)}
-                className="w-full px-2.5 py-1.5 border border-slate-300 rounded font-mono"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
-                Quality / Lot Notes:
-              </label>
-              <input
-                type="text"
-                value={qualityNotes}
-                onChange={(e) => setQualityNotes(e.target.value)}
-                placeholder="e.g. Old Crop 2023 Vintage"
-                className="w-full px-2.5 py-1.5 border border-slate-300 rounded text-xs"
-              />
-            </div>
+          {/* Quality Notes */}
+          <div>
+            <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
+              Quality / Lot Notes:
+            </label>
+            <input
+              type="text"
+              value={qualityNotes}
+              onChange={(e) => setQualityNotes(e.target.value)}
+              placeholder="e.g. Old Crop 2023 Vintage"
+              className="w-full px-2.5 py-1.5 border border-slate-300 rounded text-xs"
+            />
           </div>
 
           {/* Actions */}

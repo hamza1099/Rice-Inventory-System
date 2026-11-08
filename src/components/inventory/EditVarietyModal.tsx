@@ -323,7 +323,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
             </div>
           </div>
 
-          {/* Category & Packaging */}
+          {/* Category & Quality Notes */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-slate-700 mb-1">
@@ -343,28 +343,16 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
 
             <div>
               <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                Moisture %:
+                Quality / Lot Notes:
               </label>
               <input
-                type="number"
-                step="0.1"
-                value={moisturePercentage}
-                onChange={(e) => setMoisturePercentage(parseFloat(e.target.value) || 0)}
-                className="w-full px-2.5 py-1.5 border border-slate-300 rounded font-mono"
+                type="text"
+                value={qualityNotes}
+                onChange={(e) => setQualityNotes(e.target.value)}
+                placeholder="e.g. Old Crop 2023 Vintage"
+                className="w-full px-2.5 py-1.5 border border-slate-300 rounded text-xs"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-bold text-slate-700 mb-1">
-              Quality / Lot Notes:
-            </label>
-            <input
-              type="text"
-              value={qualityNotes}
-              onChange={(e) => setQualityNotes(e.target.value)}
-              className="w-full px-2.5 py-1.5 border border-slate-300 rounded text-xs"
-            />
           </div>
 
           {/* Footer Actions with Delete & Save */}

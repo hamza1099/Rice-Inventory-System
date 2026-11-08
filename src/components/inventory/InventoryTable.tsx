@@ -107,7 +107,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                   </div>
                   {item.qualityNotes && (
                     <span className="text-[10px] text-slate-500 block leading-tight mt-0.5">
-                      Moisture: {item.moisturePercentage}% • {item.qualityNotes}
+                      {item.qualityNotes}
                     </span>
                   )}
                 </td>
