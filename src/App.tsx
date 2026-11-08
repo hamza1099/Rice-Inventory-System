@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import './ReactToastify.css';
 import { PosProvider } from './context/PosContext';
 import { Header } from './components/common/Header';
 import { Sidebar } from './components/common/Sidebar';
