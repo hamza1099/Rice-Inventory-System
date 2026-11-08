@@ -47,6 +47,12 @@ interface PosContextType {
   setHandoverNotes: (notes: string) => void;
   isDayClosed: boolean;
   finalizeDayEnd: () => boolean;
+
+  // Terminal Lock & Mandi Chit
+  isTerminalLocked: boolean;
+  setIsTerminalLocked: (locked: boolean) => void;
+  isMandiChitOpen: boolean;
+  setIsMandiChitOpen: (open: boolean) => void;
 }
 
 const PosContext = createContext<PosContextType | undefined>(undefined);
@@ -116,6 +122,8 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     'All spot memos cleared, zero credit given. Cash ready for godown safe handover.'
   );
   const [isDayClosed, setIsDayClosed] = useState<boolean>(false);
+  const [isTerminalLocked, setIsTerminalLocked] = useState<boolean>(false);
+  const [isMandiChitOpen, setIsMandiChitOpen] = useState<boolean>(false);
 
   const addToCart = (newItem: CartItem) => {
     setCart((prev) => [...prev, newItem]);
@@ -252,7 +260,11 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         handoverNotes,
         setHandoverNotes,
         isDayClosed,
-        finalizeDayEnd
+        finalizeDayEnd,
+        isTerminalLocked,
+        setIsTerminalLocked,
+        isMandiChitOpen,
+        setIsMandiChitOpen
       }}
     >
       {children}

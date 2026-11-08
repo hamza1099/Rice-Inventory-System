@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Product } from '../../types';
-import { Scale, PackagePlus, AlertCircle } from 'lucide-react';
+import { Scale, AlertCircle } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 
 interface ProductCardProps {
@@ -34,14 +34,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Pricing & Stock Details */}
         <div className="space-y-1 mb-3 bg-slate-50/80 p-2 rounded border border-slate-100">
           <div className="flex items-baseline justify-between">
-            <span className="text-[11px] text-slate-500 font-medium">
-              {product.isWholesalePack ? 'Pack Rate:' : 'Rate:'}
-            </span>
+            <span className="text-[11px] text-slate-500 font-medium">Rate:</span>
             <span className="text-xs font-bold text-slate-900 font-mono-num">
-              {product.isWholesalePack ? (
-                <>PKR {product.wholesaleBoriPrice?.toLocaleString()} <span className="text-[10px] text-slate-500">/ bori</span></>
-              ) : (
-                <>PKR {product.ratePerKg} <span className="text-[10px] text-slate-500">/ kg</span></>
+              PKR {product.ratePerKg} <span className="text-[10px] text-slate-500 font-normal">/ kg</span>
+              {product.isWholesalePack && (
+                <span className="text-[10px] text-slate-400 font-normal block text-right">
+                  (PKR {product.wholesaleBoriPrice?.toLocaleString()} / 50kg bori)
+                </span>
               )}
             </span>
           </div>
@@ -51,11 +50,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <div className="flex items-center space-x-1">
               <span className={`w-1.5 h-1.5 rounded-full ${product.isLowStock ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></span>
               <span className={`font-semibold ${product.isLowStock ? 'text-amber-700' : 'text-slate-700'}`}>
-                {product.isWholesalePack ? (
-                  `${Math.round(product.availableKg / 50)} Bags (${product.binLocation})`
-                ) : (
-                  `${product.availableKg} KG (${product.binLocation})`
-                )}
+                {product.availableKg} KG ({product.binLocation})
               </span>
             </div>
           </div>
@@ -68,26 +63,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
       </div>
 
-      {/* Action Button */}
+      {/* Action Button: Always uniform 'Weigh & Add' */}
       <button
         onClick={() => setSelectedProductForModal(product)}
-        className={`w-full py-2 px-3 rounded font-bold text-xs flex items-center justify-center space-x-1.5 transition-all shadow-xs active:scale-98 ${
-          product.isWholesalePack
-            ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300'
-            : 'bg-emerald-50 hover:bg-emerald-800 hover:text-white text-emerald-800 border border-emerald-300'
-        }`}
+        className="w-full py-2 px-3 rounded font-bold text-xs flex items-center justify-center space-x-1.5 transition-all shadow-xs active:scale-98 bg-emerald-50 hover:bg-emerald-800 hover:text-white text-emerald-800 border border-emerald-300 cursor-pointer"
       >
-        {product.isWholesalePack ? (
-          <>
-            <PackagePlus className="w-3.5 h-3.5" />
-            <span>+ Add Bag Pack</span>
-          </>
-        ) : (
-          <>
-            <Scale className="w-3.5 h-3.5" />
-            <span>Weigh & Add</span>
-          </>
-        )}
+        <Scale className="w-3.5 h-3.5" />
+        <span>Weigh & Add</span>
       </button>
     </div>
   );

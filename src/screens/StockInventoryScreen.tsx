@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export const StockInventoryScreen: React.FC = () => {
-  const { inventory } = usePos();
+  const { inventory, setIsMandiChitOpen } = usePos();
   const [selectedFilter, setSelectedFilter] = useState<string>('All Rice');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -65,8 +65,8 @@ export const StockInventoryScreen: React.FC = () => {
             <span>+ New Stock Inward (آمد گودام)</span>
           </button>
           <button 
-            onClick={() => alert("Generating Mandi Stock Receiving Chit [Alt+P]...")}
-            className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200 transition-colors"
+            onClick={() => setIsMandiChitOpen(true)}
+            className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200 transition-colors cursor-pointer"
           >
             <FileText className="w-3.5 h-3.5 text-slate-500" />
             <span>Mandi Stock Chit [Alt+P]</span>

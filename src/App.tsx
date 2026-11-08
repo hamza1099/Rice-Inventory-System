@@ -4,6 +4,8 @@ import { PosProvider } from './context/PosContext';
 import { Header } from './components/common/Header';
 import { Sidebar } from './components/common/Sidebar';
 import { StatusBar } from './components/common/StatusBar';
+import { LockScreenModal } from './components/common/LockScreenModal';
+import { MandiChitModal } from './components/inventory/MandiChitModal';
 import InitRoute from './routes/InitRoute';
 
 const App: React.FC = () => {
@@ -27,6 +29,10 @@ const App: React.FC = () => {
 
           {/* Bottom Fiscal & Shortcut Status Bar */}
           <StatusBar />
+
+          {/* Global Modals */}
+          <LockScreenModal />
+          <MandiChitModal />
         </div>
       </PosProvider>
     </BrowserRouter>

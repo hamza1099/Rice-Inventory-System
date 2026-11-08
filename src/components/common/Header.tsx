@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, User, Lock, Wifi } from 'lucide-react';
+import { usePos } from '../../context/PosContext';
 
 export const Header: React.FC = () => {
+  const { setIsTerminalLocked } = usePos();
   const [timeStr, setTimeStr] = useState<string>('14:32:00 PKT');
 
   useEffect(() => {
@@ -69,8 +71,8 @@ export const Header: React.FC = () => {
 
         {/* Lock Terminal Button */}
         <button 
-          onClick={() => alert("Terminal Locked for Security. Press ENTER with Supervisor PIN to resume.")}
-          className="flex items-center space-x-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-2.5 py-1 rounded font-semibold text-[11px] transition-colors"
+          onClick={() => setIsTerminalLocked(true)}
+          className="flex items-center space-x-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-2.5 py-1 rounded font-semibold text-[11px] transition-colors cursor-pointer"
         >
           <Lock className="w-3.5 h-3.5" />
           <span>Lock [ESC]</span>
