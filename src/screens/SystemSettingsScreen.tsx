@@ -13,6 +13,7 @@ export const SystemSettingsScreen: React.FC = () => {
 
   const handleSave = () => {
     setSavedSuccess(true);
+    notifySuccess('System & hardware configuration saved successfully! (سیٹنگز محفوظ ہو گئیں)');
     setTimeout(() => setSavedSuccess(false), 2500);
   };
 

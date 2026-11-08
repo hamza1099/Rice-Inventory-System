@@ -5,14 +5,15 @@ import {
   Receipt,
   Boxes,
   CheckCircle2,
-  Users
+  Users,
+  Settings
 } from 'lucide-react';
 import { RouteName } from '../../routes/RouteName';
 
 export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
 
-  // Keyboard shortcut listener for F1, F2, F3, F4, F8
+  // Keyboard shortcut listener for F1, F2, F3, F4, F8, F9
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'F1') {
@@ -30,6 +31,9 @@ export const Sidebar: React.FC = () => {
       } else if (e.key === 'F8') {
         e.preventDefault();
         navigate(RouteName.USER_MANAGEMENT);
+      } else if (e.key === 'F9') {
+        e.preventDefault();
+        navigate(RouteName.SYSTEM_SETTINGS);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
