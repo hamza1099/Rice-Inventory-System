@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { InventoryItem } from '../../types';
-import { PlusCircle, Edit3, AlertTriangle, FileText } from 'lucide-react';
+import { PlusCircle, Edit3, Trash2, FileText, TrendingUp, TrendingDown } from 'lucide-react';
 
 interface InventoryTableProps {
   inventory: InventoryItem[];
   onOpenInward: (item: InventoryItem) => void;
   onOpenRateEdit: (item: InventoryItem) => void;
+  onDeleteItem?: (id: string) => void;
 }
 
 export const InventoryTable: React.FC<InventoryTableProps> = ({
   inventory,
   onOpenInward,
-  onOpenRateEdit
+  onOpenRateEdit,
+  onDeleteItem
 }) => {
   const getStatusBadge = (status: InventoryItem['lotStatus']) => {
     switch (status) {
@@ -140,8 +142,25 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                 </td>
 
                 {/* Cost */}
-                <td className="py-3 px-3 text-right text-slate-600">
-                  PKR {item.costPerKg.toFixed(2)}
+                <td className="py-3 px-3 text-right">
+                  <span className="text-xs font-bold text-slate-800 block">
+                    PKR {item.costPerKg.toFixed(2)}
+                  </span>
+                  {item.previousCostPerKg && item.previousCostPerKg !== item.costPerKg && (
+                    <div className="flex items-center justify-end gap-0.5 text-[9px] font-bold">
+                      {item.costDifferencePerKg && item.costDifferencePerKg > 0 ? (
+                        <span className="text-red-600 flex items-center">
+                          <TrendingUp className="w-2.5 h-2.5 mr-0.5" />
+                          +{item.costDifferencePerKg.toFixed(1)}/kg
+                        </span>
+                      ) : (
+                        <span className="text-emerald-600 flex items-center">
+                          <TrendingDown className="w-2.5 h-2.5 mr-0.5" />
+                          {item.costDifferencePerKg?.toFixed(1)}/kg
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </td>
 
                 {/* Counter Rate & Margin */}
@@ -149,9 +168,14 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                   <span className="text-sm font-black text-emerald-800 block">
                     PKR {item.counterRatePerKg.toFixed(2)}
                   </span>
-                  <span className="text-[10px] text-emerald-700 font-semibold">
+                  <span className="text-[10px] text-emerald-700 font-semibold block">
                     Margin: +PKR {item.marginPerKg.toFixed(2)}/kg
                   </span>
+                  {item.marginPercentage && (
+                    <span className="text-[9px] text-slate-500 font-mono">
+                      ({item.marginPercentage}% Markup)
+                    </span>
+                  )}
                 </td>
 
                 {/* Fast Operations */}
@@ -159,20 +183,33 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                   <div className="flex items-center justify-center space-x-1.5">
                     <button
                       onClick={() => onOpenInward(item)}
-                      title="Add Stock Inward (آمد گودام)"
-                      className="inline-flex items-center space-x-1 px-2 py-1 rounded bg-emerald-50 hover:bg-emerald-800 hover:text-white border border-emerald-300 text-emerald-800 font-bold text-[10px] transition-colors"
+                      title="Add Stock Inward (آمد گودام و لاگت)"
+                      className="inline-flex items-center space-x-1 px-2 py-1 rounded bg-emerald-50 hover:bg-emerald-800 hover:text-white border border-emerald-300 text-emerald-800 font-bold text-[10px] transition-colors cursor-pointer"
                     >
                       <PlusCircle className="w-3 h-3" />
-                      <span>+ Bags</span>
+                      <span>+ Inward</span>
                     </button>
                     <button
                       onClick={() => onOpenRateEdit(item)}
-                      title="Adjust Counter Rate"
-                      className="inline-flex items-center space-x-1 px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold text-[10px] transition-colors"
+                      title="Edit Variety & Adjust Rates (ریٹ و تفصیل)"
+                      className="inline-flex items-center space-x-1 px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold text-[10px] transition-colors cursor-pointer"
                     >
                       <Edit3 className="w-3 h-3 text-slate-500" />
-                      <span>Rate</span>
+                      <span>Edit & Rate</span>
                     </button>
+                    {onDeleteItem && (
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Delete ${item.varietyName} from inventory?`)) {
+                            onDeleteItem(item.id);
+                          }
+                        }}
+                        title="Delete Product (چاول حذف کریں)"
+                        className="inline-flex items-center p-1 rounded bg-slate-50 hover:bg-red-50 hover:text-red-600 border border-slate-200 text-slate-400 font-bold text-[10px] transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

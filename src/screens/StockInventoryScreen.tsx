@@ -4,7 +4,8 @@ import { StatCard } from '../components/common/StatCard';
 import { InventoryTable } from '../components/inventory/InventoryTable';
 import { GodownStats } from '../components/inventory/GodownStats';
 import { StockInwardModal } from '../components/inventory/StockInwardModal';
-import { RateEditModal } from '../components/inventory/RateEditModal';
+import { EditVarietyModal } from '../components/inventory/EditVarietyModal';
+import { AddVarietyModal } from '../components/inventory/AddVarietyModal';
 import type { InventoryItem } from '../types';
 import {
   Boxes,
@@ -13,25 +14,38 @@ import {
   Droplets,
   Plus,
   FileText,
-  Search
+  Search,
+  PlusCircle
 } from 'lucide-react';
 
 export const StockInventoryScreen: React.FC = () => {
-  const { inventory, setIsMandiChitOpen } = usePos();
+  const { inventory, setIsMandiChitOpen, deleteInventoryItem } = usePos();
   const [selectedFilter, setSelectedFilter] = useState<string>('All Rice');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Modals state
   const [inwardItem, setInwardItem] = useState<InventoryItem | null>(null);
   const [rateEditItem, setRateEditItem] = useState<InventoryItem | null>(null);
+  const [isAddVarietyOpen, setIsAddVarietyOpen] = useState<boolean>(false);
+
+  // Dynamic calculations
+  const totalValuation = inventory.reduce(
+    (sum, item) => sum + item.physicalStockKg * item.costPerKg,
+    0
+  );
+  const totalBulkKg = inventory.reduce((sum, item) => sum + item.physicalStockKg, 0);
+  const totalBags = inventory.reduce((sum, item) => sum + item.bagsCount, 0);
+  const lowStockCount = inventory.filter(
+    (i) => i.lotStatus === 'Low Stock' || i.lotStatus === 'Critical Low'
+  ).length;
 
   const filterChips = [
-    { id: 'All Rice', label: 'All Rice [32]' },
-    { id: 'Basmati', label: 'Super Basmati [8]' },
-    { id: 'Kainat', label: 'Kainat 1121 [6]' },
-    { id: 'Sella', label: 'Sella (سیلا) [7]' },
-    { id: 'Broken', label: 'Broken / Tota (ٹوٹا) [4]' },
-    { id: 'LowStock', label: 'Low Stock Only [3]' }
+    { id: 'All Rice', label: `All Rice [${inventory.length}]` },
+    { id: 'Basmati', label: 'Super Basmati' },
+    { id: 'Kainat', label: 'Kainat 1121' },
+    { id: 'Sella', label: 'Sella (سیلا)' },
+    { id: 'Broken', label: 'Broken / Tota (ٹوٹا)' },
+    { id: 'LowStock', label: `Low Stock Only [${lowStockCount}]` }
   ];
 
   const filteredInventory = inventory.filter((item) => {
@@ -59,10 +73,17 @@ export const StockInventoryScreen: React.FC = () => {
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setInwardItem(inventory[0])}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-xs transition-colors"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>+ New Stock Inward (آمد گودام)</span>
+          </button>
+          <button
+            onClick={() => setIsAddVarietyOpen(true)}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold text-xs transition-colors cursor-pointer"
+          >
+            <PlusCircle className="w-4 h-4 text-emerald-700" />
+            <span>+ Add New Variety (نیا چاول جنس)</span>
           </button>
           <button 
             onClick={() => setIsMandiChitOpen(true)}
@@ -89,9 +110,9 @@ export const StockInventoryScreen: React.FC = () => {
         <StatCard
           title="VARIETIES TRACKED"
           urduTitle="اجناس لسٹ"
-          value="32 Active Lots"
-          subValue="28 Normal • 4 Depleted/Zero Stock"
-          badge="SKU: 32"
+          value={`${inventory.length} Active Lots`}
+          subValue={`${inventory.length - lowStockCount} Normal • ${lowStockCount} Critical/Low Stock`}
+          badge={`SKU: ${inventory.length}`}
           badgeColor="emerald"
           icon={Boxes}
           iconBg="bg-emerald-100"
@@ -101,8 +122,8 @@ export const StockInventoryScreen: React.FC = () => {
         <StatCard
           title="TOTAL STOCK VALUATION"
           urduTitle="کل مالیت گودام"
-          value="PKR 4,680,000"
-          subValue="Bulk Weight: 18,400 kg (~368 Bori)"
+          value={`PKR ${Math.round(totalValuation).toLocaleString()}`}
+          subValue={`Bulk Weight: ${totalBulkKg.toLocaleString()} kg (~${totalBags} Bori)`}
           badge="Cost Value"
           badgeColor="blue"
           icon={BadgeDollarSign}
@@ -113,10 +134,10 @@ export const StockInventoryScreen: React.FC = () => {
         <StatCard
           title="THRESHOLD ALERTS"
           urduTitle="سٹاک وارننگ"
-          value="03 Varieties"
-          subValue="Super Kernel Basmati: Only 25 kg left!"
-          badge="3 Urgent"
-          badgeColor="red"
+          value={`${String(lowStockCount).padStart(2, '0')} Varieties`}
+          subValue={lowStockCount > 0 ? "Requires Mandi Inward Order" : "All stocks healthy"}
+          badge={`${lowStockCount} Urgent`}
+          badgeColor={lowStockCount > 0 ? "red" : "emerald"}
           icon={AlertTriangle}
           iconBg="bg-red-100"
           iconColor="text-red-800"
@@ -171,6 +192,7 @@ export const StockInventoryScreen: React.FC = () => {
         inventory={filteredInventory}
         onOpenInward={(item) => setInwardItem(item)}
         onOpenRateEdit={(item) => setRateEditItem(item)}
+        onDeleteItem={(id) => deleteInventoryItem(id)}
       />
 
       {/* Bottom Godown Warehouse Status Cards */}
@@ -178,7 +200,15 @@ export const StockInventoryScreen: React.FC = () => {
 
       {/* Modals */}
       <StockInwardModal item={inwardItem} onClose={() => setInwardItem(null)} />
-      <RateEditModal item={rateEditItem} onClose={() => setRateEditItem(null)} />
+      <EditVarietyModal
+        item={rateEditItem}
+        onClose={() => setRateEditItem(null)}
+        onDelete={(id) => deleteInventoryItem(id)}
+      />
+      <AddVarietyModal
+        isOpen={isAddVarietyOpen}
+        onClose={() => setIsAddVarietyOpen(false)}
+      />
     </div>
   );
 };

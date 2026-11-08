@@ -32,10 +32,19 @@ interface PosContextType {
   activeReceipt: MemoRecord | null;
   setActiveReceipt: (rec: MemoRecord | null) => void;
 
-  // Inventory
+  // Inventory & Product CRUD
   inventory: InventoryItem[];
-  updateInventoryRate: (id: string, newRate: number) => void;
-  addStockInward: (id: string, additionalKg: number, additionalBags: number) => void;
+  addInventoryItem: (item: InventoryItem) => void;
+  updateInventoryItem: (id: string, updated: Partial<InventoryItem>) => void;
+  deleteInventoryItem: (id: string) => void;
+  updateInventoryRate: (id: string, newRate: number, newCost?: number) => void;
+  addStockInward: (
+    id: string,
+    additionalKg: number,
+    additionalBags: number,
+    inwardCostPerKg?: number,
+    updatedSellingRate?: number
+  ) => void;
 
   // Day-End Reconciliation
   denominations: DenominationRow[];
@@ -58,7 +67,7 @@ interface PosContextType {
 const PosContext = createContext<PosContextType | undefined>(undefined);
 
 export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [products] = useState<Product[]>(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   
   // Preload cart with items matching Image 3 (Cash Memo #1085)
   const [cart, setCart] = useState<CartItem[]>([
@@ -171,34 +180,179 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return newRecord;
   };
 
-  const updateInventoryRate = (id: string, newRate: number) => {
-    setInventory((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          const newMargin = newRate - item.costPerKg;
-          return { ...item, counterRatePerKg: newRate, marginPerKg: newMargin };
-        }
-        return item;
-      })
-    );
+  const addInventoryItem = (newItem: InventoryItem) => {
+    setInventory((prev) => [newItem, ...prev]);
+
+    // Also create or sync product in POS Counter
+    const categoryMapping: Product['category'] = newItem.category.includes('Basmati')
+      ? 'Basmati Varieties'
+      : newItem.category.includes('Long Grain') || newItem.category.includes('Kainat')
+      ? 'Kainat / Long Grain'
+      : newItem.category.includes('Sella')
+      ? 'Sella Rice'
+      : newItem.category.includes('Broken')
+      ? 'Broken / Tota'
+      : 'All Rice';
+
+    const newProd: Product = {
+      id: newItem.id,
+      name: newItem.varietyName,
+      urduName: newItem.urduName,
+      category: categoryMapping,
+      badgeLabel: newItem.category.toUpperCase(),
+      ratePerKg: newItem.counterRatePerKg,
+      availableKg: newItem.physicalStockKg,
+      binLocation: 'Godown Stack',
+      shortcut: `F${100 + inventory.length + 1}`,
+      tareWeightDefault: newItem.tareDeductionKg || 0.10
+    };
+    setProducts((prev) => [...prev, newProd]);
   };
 
-  const addStockInward = (id: string, additionalKg: number, additionalBags: number) => {
+  const updateInventoryItem = (id: string, updated: Partial<InventoryItem>) => {
     setInventory((prev) =>
       prev.map((item) => {
         if (item.id === id) {
-          const updatedKg = item.physicalStockKg + additionalKg;
-          const updatedBags = item.bagsCount + additionalBags;
+          const cost = updated.costPerKg !== undefined ? updated.costPerKg : item.costPerKg;
+          const rate = updated.counterRatePerKg !== undefined ? updated.counterRatePerKg : item.counterRatePerKg;
+          const margin = rate - cost;
+          const marginPct = cost > 0 ? (margin / cost) * 100 : 0;
+          const kg = updated.physicalStockKg !== undefined ? updated.physicalStockKg : item.physicalStockKg;
           return {
             ...item,
-            physicalStockKg: updatedKg,
-            bagsCount: updatedBags,
-            lotStatus: updatedKg > 200 ? 'In Stock' : 'Low Stock'
+            ...updated,
+            costPerKg: cost,
+            counterRatePerKg: rate,
+            marginPerKg: Math.round(margin * 100) / 100,
+            marginPercentage: Math.round(marginPct * 10) / 10,
+            lotStatus: kg > 200 ? 'In Stock' : kg > 0 ? 'Low Stock' : 'Out of Stock'
           };
         }
         return item;
       })
     );
+
+    // Keep products synchronized
+    setProducts((prev) =>
+      prev.map((p) => {
+        if (p.id === id) {
+          return {
+            ...p,
+            name: updated.varietyName || p.name,
+            urduName: updated.urduName || p.urduName,
+            ratePerKg: updated.counterRatePerKg !== undefined ? updated.counterRatePerKg : p.ratePerKg,
+            availableKg: updated.physicalStockKg !== undefined ? updated.physicalStockKg : p.availableKg
+          };
+        }
+        return p;
+      })
+    );
+  };
+
+  const deleteInventoryItem = (id: string) => {
+    setInventory((prev) => prev.filter((item) => item.id !== id));
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const updateInventoryRate = (id: string, newRate: number, newCost?: number) => {
+    setInventory((prev) =>
+      prev.map((item) => {
+        if (item.id === id) {
+          const cost = newCost !== undefined && newCost > 0 ? newCost : item.costPerKg;
+          const prevCost = newCost !== undefined && newCost > 0 ? item.costPerKg : item.previousCostPerKg;
+          const costDiff = newCost !== undefined && newCost > 0 ? newCost - item.costPerKg : item.costDifferencePerKg;
+          const newMargin = newRate - cost;
+          const marginPct = cost > 0 ? (newMargin / cost) * 100 : 0;
+          return {
+            ...item,
+            costPerKg: cost,
+            previousCostPerKg: prevCost,
+            costDifferencePerKg: costDiff,
+            counterRatePerKg: newRate,
+            marginPerKg: Math.round(newMargin * 100) / 100,
+            marginPercentage: Math.round(marginPct * 10) / 10
+          };
+        }
+        return item;
+      })
+    );
+
+    setProducts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, ratePerKg: newRate } : p))
+    );
+  };
+
+  const addStockInward = (
+    id: string,
+    additionalKg: number,
+    additionalBags: number,
+    inwardCostPerKg?: number,
+    updatedSellingRate?: number
+  ) => {
+    setInventory((prev) =>
+      prev.map((item) => {
+        if (item.id === id) {
+          const oldKg = item.physicalStockKg;
+          const oldBags = item.bagsCount;
+          const oldCostPerKg = item.costPerKg;
+          const updatedKg = oldKg + additionalKg;
+          const updatedBags = oldBags + additionalBags;
+
+          let newCostPerKg = oldCostPerKg;
+          let prevCost = item.costPerKg;
+          let latestCost = inwardCostPerKg !== undefined ? inwardCostPerKg : oldCostPerKg;
+          let costDiff = inwardCostPerKg !== undefined ? inwardCostPerKg - oldCostPerKg : 0;
+
+          if (inwardCostPerKg !== undefined && inwardCostPerKg > 0) {
+            // Weighted Average Cost: (Old Stock * Old Cost + New Stock * New Cost) / Total Stock
+            const oldValuation = oldKg * oldCostPerKg;
+            const inwardValuation = additionalKg * inwardCostPerKg;
+            if (updatedKg > 0) {
+              newCostPerKg = (oldValuation + inwardValuation) / updatedKg;
+            } else {
+              newCostPerKg = inwardCostPerKg;
+            }
+          }
+
+          const sellingRate = updatedSellingRate !== undefined && updatedSellingRate > 0
+            ? updatedSellingRate
+            : item.counterRatePerKg;
+          const newMargin = sellingRate - newCostPerKg;
+          const marginPct = newCostPerKg > 0 ? (newMargin / newCostPerKg) * 100 : 0;
+
+          return {
+            ...item,
+            physicalStockKg: updatedKg,
+            bagsCount: updatedBags,
+            previousCostPerKg: prevCost,
+            latestInwardCostPerKg: latestCost,
+            costDifferencePerKg: costDiff,
+            costPerKg: Math.round(newCostPerKg * 100) / 100,
+            counterRatePerKg: sellingRate,
+            marginPerKg: Math.round(newMargin * 100) / 100,
+            marginPercentage: Math.round(marginPct * 10) / 10,
+            latestInwardDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+            lotStatus: updatedKg > 200 ? 'In Stock' : updatedKg > 0 ? 'Low Stock' : 'Out of Stock'
+          };
+        }
+        return item;
+      })
+    );
+
+    if (updatedSellingRate || additionalKg > 0) {
+      setProducts((prev) =>
+        prev.map((p) => {
+          if (p.id === id) {
+            return {
+              ...p,
+              ratePerKg: updatedSellingRate || p.ratePerKg,
+              availableKg: p.availableKg + additionalKg
+            };
+          }
+          return p;
+        })
+      );
+    }
   };
 
   const updateDenominationCount = (index: number, count: number) => {
@@ -250,6 +404,9 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         activeReceipt,
         setActiveReceipt,
         inventory,
+        addInventoryItem,
+        updateInventoryItem,
+        deleteInventoryItem,
         updateInventoryRate,
         addStockInward,
         denominations,

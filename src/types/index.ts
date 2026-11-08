@@ -60,8 +60,13 @@ export interface InventoryItem {
   bagTypeLabel: string;
   lotStatus: 'In Stock' | 'Critical Low' | 'Low Stock' | 'Out of Stock';
   costPerKg: number;
+  previousCostPerKg?: number;
+  latestInwardCostPerKg?: number;
+  latestInwardDate?: string;
+  costDifferencePerKg?: number;
   counterRatePerKg: number;
   marginPerKg: number;
+  marginPercentage?: number;
   moisturePercentage: number;
   qualityNotes?: string;
   isRateFixed?: boolean;
