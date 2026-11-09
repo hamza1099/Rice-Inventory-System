@@ -202,18 +202,23 @@ export const AddVarietyModal: React.FC<AddVarietyModalProps> = ({ isOpen, onClos
 
             <div>
               <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                Grain Category (قسم):
+                Item Category (کیٹگری):
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full px-2.5 py-1.5 border border-slate-300 rounded bg-white text-xs font-bold"
               >
+                <option value="Rice (چاول)">Rice (چاول)</option>
+                <option value="Pulses / Daal (دالیں)">Pulses / Daal (دالیں)</option>
+                <option value="Spices (کھلا مصالحہ)">Spices / Masala (کھلا مصالحہ)</option>
+                <option value="Shan & National (ڈبہ مصالحہ)">Shan & National (ڈبہ مصالحہ)</option>
+                <option value="Oil & Ghee (تیل و گھی)">Oil & Ghee (تیل و گھی)</option>
+                <option value="Atta & Sugar (آٹا و چینی)">Atta & Sugar (آٹا و چینی)</option>
                 <option value="Basmati Classic">Basmati Classic (باسمتی کلاسک)</option>
                 <option value="Long Grain">Long Grain / Kainat 1121 (کائنات ۱۱۲۱)</option>
                 <option value="Sella (Parboiled)">Sella (Parboiled) (سیلا گولڈن)</option>
                 <option value="Broken / Tota">Broken / Tota (ٹوٹا کوالٹی)</option>
-                <option value="Super Kernel">Super Kernel Basmati (کرنل باسمتی)</option>
               </select>
             </div>
           </div>

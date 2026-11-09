@@ -184,15 +184,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setInventory((prev) => [newItem, ...prev]);
 
     // Also create or sync product in POS Counter
-    const categoryMapping: Product['category'] = newItem.category.includes('Basmati')
-      ? 'Basmati Varieties'
-      : newItem.category.includes('Long Grain') || newItem.category.includes('Kainat')
-      ? 'Kainat / Long Grain'
-      : newItem.category.includes('Sella')
-      ? 'Sella Rice'
-      : newItem.category.includes('Broken')
-      ? 'Broken / Tota'
-      : 'All Rice';
+    const categoryMapping: string = newItem.category || 'Rice (چاول)';
 
     const newProd: Product = {
       id: newItem.id,

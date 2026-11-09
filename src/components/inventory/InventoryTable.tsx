@@ -2,7 +2,7 @@ import React from 'react';
 import type { InventoryItem } from '../../types';
 import { PlusCircle, Edit3, Trash2, FileText, TrendingUp, TrendingDown, Image as ImageIcon } from 'lucide-react';
 import { notifyInfo } from '../../utils/toast';
-import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/riceImages';
+import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/productImages';
 
 interface InventoryTableProps {
   inventory: InventoryItem[];

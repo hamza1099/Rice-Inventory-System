@@ -20,7 +20,7 @@ import {
 
 export const StockInventoryScreen: React.FC = () => {
   const { inventory, setIsMandiChitOpen, deleteInventoryItem } = usePos();
-  const [selectedFilter, setSelectedFilter] = useState<string>('All Rice');
+  const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Modals state
@@ -41,11 +41,13 @@ export const StockInventoryScreen: React.FC = () => {
   ).length;
 
   const filterChips = [
-    { id: 'All Rice', label: `All Rice [${inventory.length}]` },
-    { id: 'Basmati', label: 'Super Basmati' },
-    { id: 'Kainat', label: 'Kainat 1121' },
-    { id: 'Sella', label: 'Sella (سیلا)' },
-    { id: 'Broken', label: 'Broken / Tota (ٹوٹا)' },
+    { id: 'All', label: `All Items [${inventory.length}]` },
+    { id: 'Rice', label: 'Rice (چاول)' },
+    { id: 'Pulses', label: 'Pulses / Daal (دالیں)' },
+    { id: 'Spices', label: 'Spices (کھلا مصالحہ)' },
+    { id: 'Packaged', label: 'Shan & National (ڈبہ)' },
+    { id: 'Oil', label: 'Oil & Ghee' },
+    { id: 'AttaSugar', label: 'Atta & Sugar' },
     { id: 'LowStock', label: `Low Stock Only [${lowStockCount}]` }
   ];
 
@@ -53,14 +55,23 @@ export const StockInventoryScreen: React.FC = () => {
     const matchesSearch =
       item.varietyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.urduName.includes(searchQuery) ||
-      item.sku.toLowerCase().includes(searchQuery.toLowerCase());
+      item.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchQuery.toLowerCase());
 
     let matchesFilter = true;
-    if (selectedFilter === 'Basmati') matchesFilter = item.category.includes('Basmati');
-    if (selectedFilter === 'Kainat') matchesFilter = item.category.includes('Long Grain');
-    if (selectedFilter === 'Sella') matchesFilter = item.category.includes('Sella');
-    if (selectedFilter === 'Broken') matchesFilter = item.category.includes('Broken');
-    if (selectedFilter === 'LowStock') {
+    if (selectedFilter === 'Rice') {
+      matchesFilter = item.category.includes('Rice') || item.category.includes('چاول') || item.category.includes('Basmati') || item.category.includes('Long Grain') || item.category.includes('Sella') || item.category.includes('Broken');
+    } else if (selectedFilter === 'Pulses') {
+      matchesFilter = item.category.includes('Pulses') || item.category.includes('Daal') || item.category.includes('دال');
+    } else if (selectedFilter === 'Spices') {
+      matchesFilter = item.category.includes('Spices') || item.category.includes('مصالحہ');
+    } else if (selectedFilter === 'Packaged') {
+      matchesFilter = item.category.includes('Shan') || item.category.includes('National') || item.category.includes('ڈبہ');
+    } else if (selectedFilter === 'Oil') {
+      matchesFilter = item.category.includes('Oil') || item.category.includes('Ghee');
+    } else if (selectedFilter === 'AttaSugar') {
+      matchesFilter = item.category.includes('Atta') || item.category.includes('Sugar');
+    } else if (selectedFilter === 'LowStock') {
       matchesFilter = item.lotStatus === 'Low Stock' || item.lotStatus === 'Critical Low';
     }
 
@@ -87,7 +98,7 @@ export const StockInventoryScreen: React.FC = () => {
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold text-xs transition-colors cursor-pointer"
           >
             <PlusCircle className="w-4 h-4 text-emerald-700" />
-            <span>+ Add New Variety (نیا چاول جنس)</span>
+            <span>+ Add New Item / Variety (نئی جنس / آئٹم)</span>
           </button>
           <button 
             onClick={() => setIsMandiChitOpen(true)}

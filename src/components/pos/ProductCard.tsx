@@ -1,8 +1,8 @@
 import React from 'react';
 import type { Product } from '../../types';
-import { Scale, AlertCircle } from 'lucide-react';
+import { Scale, AlertCircle, ShoppingBag } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
-import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/riceImages';
+import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/productImages';
 
 interface ProductCardProps {
   product: Product;
@@ -11,81 +11,104 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { setSelectedProductForModal } = usePos();
 
+  const isPackaged = product.unitLabel === '/ pkt' || product.unitLabel === '/ tin' || product.unitLabel === '/ bag';
+
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-2.5 shadow-xs hover:shadow-sm hover:border-emerald-600/50 transition-all flex flex-col justify-between group">
+    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-2xs hover:shadow-md hover:border-emerald-600/50 transition-all duration-200 flex flex-col justify-between group">
       <div>
-        {/* Top Header: Badge & Shortcut Key */}
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+        {/* Top Prominent Image Banner (Bari aur Khobsorat Image) */}
+        <div className="relative w-full h-28 bg-slate-100 overflow-hidden border-b border-slate-100">
+          <img
+            src={product.imageUrl || DEFAULT_RICE_IMAGE}
+            alt={product.name}
+            loading="lazy"
+            className="w-full h-full object-cover object-center group-hover:scale-106 transition-transform duration-300"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = SVG_RICE_FALLBACK;
+            }}
+          />
+
+          {/* Floating Category/Badge Pill (Top-Left) */}
+          <span className="absolute top-2 left-2 text-[9px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-md bg-slate-900/80 backdrop-blur-xs text-white border border-white/20 shadow-xs">
             {product.badgeLabel}
           </span>
-          <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-slate-100 text-slate-500 font-bold">
+
+          {/* Floating Shortcut Pill (Top-Right) */}
+          <span className="absolute top-2 right-2 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-white/95 backdrop-blur-xs text-slate-800 shadow-xs border border-slate-200">
             {product.shortcut}
           </span>
+
+          {/* Floating Brand Badge (Bottom-Left) if branded */}
+          {product.brand && (
+            <span className="absolute bottom-1.5 left-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-900/85 text-emerald-100 backdrop-blur-xs shadow-xs">
+              {product.brand}
+            </span>
+          )}
         </div>
 
-        {/* Product Names (English & Urdu) + Image */}
-        <div className="flex items-center space-x-2.5 mb-1.5">
-          <div className="w-12 h-12 rounded-lg overflow-hidden border border-slate-200 shrink-0 bg-slate-100 shadow-xs group-hover:border-emerald-600/50 transition-colors">
-            <img
-              src={product.imageUrl || DEFAULT_RICE_IMAGE}
-              alt={product.name}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = SVG_RICE_FALLBACK;
-              }}
-            />
-          </div>
-          <div className="flex-1 min-w-0">
+        {/* Card Body: Names, Price, and Stock Details */}
+        <div className="p-2.5 pb-1.5 space-y-2">
+          {/* Product Names: English & Urdu */}
+          <div>
             <h3 className="text-xs font-bold text-slate-900 leading-snug group-hover:text-emerald-800 transition-colors truncate">
               {product.name}
             </h3>
-            <p className="urdu-text text-[11px] text-slate-500 font-medium !leading-none mt-1 truncate" dir="rtl">
+            <p className="urdu-text text-[11px] text-slate-600 font-medium !leading-tight mt-0.5 truncate" dir="rtl">
               {product.urduName}
             </p>
           </div>
-        </div>
 
-        {/* Pricing & Stock Details */}
-        <div className="space-y-1 mb-2 bg-slate-50/80 p-1.5 rounded border border-slate-100">
-          <div className="flex items-baseline justify-between">
-            <span className="text-[11px] text-slate-500 font-medium">Rate:</span>
-            <span className="text-xs font-bold text-slate-900 font-mono-num">
-              PKR {product.ratePerKg} <span className="text-[10px] text-slate-500 font-normal">/ kg</span>
-              {product.isWholesalePack && (
-                <span className="text-[10px] text-slate-400 font-normal block text-right">
-                  (PKR {product.wholesaleBoriPrice?.toLocaleString()} / 50kg bori)
+          {/* Pricing & Stock Details Strip */}
+          <div className="space-y-1 bg-slate-50/90 p-1.5 rounded-lg border border-slate-150">
+            <div className="flex items-baseline justify-between">
+              <span className="text-[11px] text-slate-500 font-medium">Rate:</span>
+              <span className="text-xs font-bold text-slate-900 font-mono-num text-right">
+                PKR {product.ratePerKg.toLocaleString()}{' '}
+                <span className="text-[10px] text-slate-500 font-normal">
+                  {product.unitLabel || '/ kg'}
                 </span>
-              )}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between text-[10px]">
-            <span className="text-slate-500">Available:</span>
-            <div className="flex items-center space-x-1">
-              <span className={`w-1.5 h-1.5 rounded-full ${product.isLowStock ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></span>
-              <span className={`font-semibold ${product.isLowStock ? 'text-amber-700' : 'text-slate-700'}`}>
-                {product.availableKg} KG ({product.binLocation})
+                {product.isWholesalePack && (
+                  <span className="text-[10px] text-slate-400 font-normal block">
+                    (PKR {product.wholesaleBoriPrice?.toLocaleString()} / 50kg bori)
+                  </span>
+                )}
               </span>
             </div>
-          </div>
-          {product.isLowStock && (
-            <div className="flex items-center space-x-1 text-[9px] text-amber-700 font-bold">
-              <AlertCircle className="w-2.5 h-2.5" />
-              <span>Low Stock Alert!</span>
+
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="text-slate-500">Available:</span>
+              <div className="flex items-center space-x-1">
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    product.isLowStock ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'
+                  }`}
+                />
+                <span className={`font-semibold ${product.isLowStock ? 'text-amber-700' : 'text-slate-700'}`}>
+                  {product.availableStockLabel || `${product.availableKg} KG`} ({product.binLocation})
+                </span>
+              </div>
             </div>
-          )}
+
+            {product.isLowStock && (
+              <div className="flex items-center space-x-1 text-[9px] text-amber-700 font-bold pt-0.5">
+                <AlertCircle className="w-2.5 h-2.5 shrink-0" />
+                <span>Low Stock Alert!</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Action Button: Always uniform 'Weigh & Add' */}
-      <button
-        onClick={() => setSelectedProductForModal(product)}
-        className="w-full py-1.5 px-3 rounded font-bold text-xs flex items-center justify-center space-x-1.5 transition-all shadow-xs active:scale-98 bg-emerald-50 hover:bg-emerald-800 hover:text-white text-emerald-800 border border-emerald-300 cursor-pointer"
-      >
-        <Scale className="w-3.5 h-3.5" />
-        <span>Weigh & Add</span>
-      </button>
+      {/* Action Button: Weigh & Add or Select & Add */}
+      <div className="p-2.5 pt-0">
+        <button
+          onClick={() => setSelectedProductForModal(product)}
+          className="w-full py-1.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition-all shadow-2xs active:scale-98 bg-emerald-50 hover:bg-emerald-800 hover:text-white text-emerald-800 border border-emerald-300 hover:border-emerald-800 cursor-pointer"
+        >
+          {isPackaged ? <ShoppingBag className="w-3.5 h-3.5" /> : <Scale className="w-3.5 h-3.5" />}
+          <span>{isPackaged ? 'Select & Add' : 'Weigh & Add'}</span>
+        </button>
+      </div>
     </div>
   );
 };

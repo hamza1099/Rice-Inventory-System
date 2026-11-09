@@ -1,23 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { X, Scale, ShoppingCart } from 'lucide-react';
+import { X, Scale, ShoppingBag } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 import type { EntryMode } from '../../types';
-import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/riceImages';
+import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/productImages';
 
 export const WeightEntryModal: React.FC = () => {
   const { selectedProductForModal, setSelectedProductForModal, addToCart } = usePos();
 
+  const product = selectedProductForModal;
+  const isPackaged =
+    product?.unitLabel === '/ pkt' ||
+    product?.unitLabel === '/ tin' ||
+    product?.unitLabel === '/ bag';
+
   const [mode, setMode] = useState<EntryMode>('kg');
   const [inputValue, setInputValue] = useState<string>('10.00');
 
-  const product = selectedProductForModal;
-
   useEffect(() => {
     if (product) {
-      setMode('kg');
-      setInputValue('10.00');
+      if (isPackaged) {
+        setMode('packet');
+        setInputValue('1');
+      } else {
+        setMode('kg');
+        setInputValue('10.00');
+      }
     }
-  }, [product]);
+  }, [product, isPackaged]);
 
   // Handle mode switch presets
   const handleModeChange = (newMode: EntryMode) => {
@@ -27,6 +36,8 @@ export const WeightEntryModal: React.FC = () => {
     } else if (newMode === 'bags') {
       setInputValue('1');
     } else if (newMode === 'mund') {
+      setInputValue('1');
+    } else if (newMode === 'packet') {
       setInputValue('1');
     }
   };
@@ -47,7 +58,7 @@ export const WeightEntryModal: React.FC = () => {
 
   if (!product) return null;
 
-  // Calculate actual net weight in KG based on mode
+  // Calculate actual net weight/qty based on mode
   const rawNum = parseFloat(inputValue) || 0;
   let netWeightKg = rawNum;
 
@@ -55,6 +66,8 @@ export const WeightEntryModal: React.FC = () => {
     netWeightKg = rawNum * (product.boriWeightKg || 50);
   } else if (mode === 'mund') {
     netWeightKg = rawNum * 40; // 1 Mund = 40 KG in Pakistan Mandi
+  } else if (mode === 'packet') {
+    netWeightKg = rawNum;
   }
 
   // Calculate Subtotal
@@ -78,7 +91,19 @@ export const WeightEntryModal: React.FC = () => {
     setSelectedProductForModal(null);
   };
 
+  const unitSuffix = product.unitLabel ? product.unitLabel.replace('/', '').trim() : 'kg';
+
   const getPresets = () => {
+    if (mode === 'packet') {
+      return [
+        { label: `1 ${unitSuffix}`, val: '1' },
+        { label: `2 ${unitSuffix}s`, val: '2' },
+        { label: `3 ${unitSuffix}s`, val: '3' },
+        { label: `6 ${unitSuffix}s (Half Carton)`, val: '6' },
+        { label: `12 ${unitSuffix}s (Full Carton)`, val: '12' },
+        { label: `24 ${unitSuffix}s (Bulk)`, val: '24' }
+      ];
+    }
     if (mode === 'bags') {
       return [
         { label: '1 Bag (50kg)', val: '1' },
@@ -117,11 +142,13 @@ export const WeightEntryModal: React.FC = () => {
         {/* Modal Header */}
         <div className="bg-emerald-800 text-white px-5 py-3.5 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Scale className="w-5 h-5 text-emerald-200" />
+            {isPackaged ? <ShoppingBag className="w-5 h-5 text-emerald-200" /> : <Scale className="w-5 h-5 text-emerald-200" />}
             <div>
               <h2 className="text-sm font-bold flex items-center gap-2">
                 <span>وزن اور تعداد اندراج</span>
-                <span className="text-emerald-200 font-normal text-xs">(Weight & Quantity Entry)</span>
+                <span className="text-emerald-200 font-normal text-xs">
+                  {isPackaged ? '(Quantity Selection)' : '(Weight & Quantity Entry)'}
+                </span>
               </h2>
               <p className="text-[11px] text-emerald-100">
                 {product.name} ({product.urduName}) • SKU #{product.id.toUpperCase()}
@@ -144,7 +171,7 @@ export const WeightEntryModal: React.FC = () => {
               <img
                 src={product.imageUrl || DEFAULT_RICE_IMAGE}
                 alt={product.name}
-                className="w-11 h-11 rounded-lg object-cover border border-slate-200 shadow-xs bg-white shrink-0"
+                className="w-12 h-12 rounded-lg object-cover border border-slate-200 shadow-xs bg-white shrink-0"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = SVG_RICE_FALLBACK;
                 }}
@@ -152,65 +179,93 @@ export const WeightEntryModal: React.FC = () => {
               <div>
                 <span className="text-[10px] text-slate-500 block font-sans">مقررہ ریٹ (Base Rate):</span>
                 <span className="text-sm font-bold text-slate-900">
-                  PKR {product.ratePerKg} <span className="text-[10px] text-slate-500 font-normal font-sans">/kg فی کلو</span>
+                  PKR {product.ratePerKg.toLocaleString()}{' '}
+                  <span className="text-[10px] text-slate-500 font-normal font-sans">
+                    {product.unitLabel || '/ kg'}
+                  </span>
                 </span>
               </div>
             </div>
             <div className="text-right">
               <span className="text-[10px] text-slate-500 block font-sans">موجودہ سٹاک (Available):</span>
               <span className="text-sm font-bold text-emerald-700">
-                {product.availableKg.toFixed(2)} KG <span className="text-[10px] text-slate-500 font-normal font-sans">({product.binLocation})</span>
+                {product.availableStockLabel || `${product.availableKg} KG`}{' '}
+                <span className="text-[10px] text-slate-500 font-normal font-sans">({product.binLocation})</span>
               </span>
             </div>
           </div>
 
-          {/* Select Entry Mode: KG, Bags, Mund */}
+          {/* Select Entry Mode */}
           <div>
             <label className="block text-[11px] font-bold text-slate-700 mb-1.5 flex items-center justify-between">
               <span>(SELECT ENTRY MODE) اندراج کی قسم:</span>
-              <span className="text-slate-400 font-normal text-[10px]">چاول وزن منتخب کریں</span>
+              <span className="text-slate-400 font-normal text-[10px]">
+                {isPackaged ? 'تعداد منتخب کریں' : 'وزن یا بوری منتخب کریں'}
+              </span>
             </label>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleModeChange('kg')}
-                className={`py-2 px-3 rounded-lg border font-bold text-xs transition-all cursor-pointer ${
-                  mode === 'kg'
-                    ? 'bg-emerald-800 text-white border-emerald-900 shadow-xs'
-                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                (KG Weight) وزن
-              </button>
-              <button
-                type="button"
-                onClick={() => handleModeChange('bags')}
-                className={`py-2 px-3 rounded-lg border font-bold text-xs transition-all cursor-pointer ${
-                  mode === 'bags'
-                    ? 'bg-emerald-800 text-white border-emerald-900 shadow-xs'
-                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                (Bags) بوری / بیگز
-              </button>
-              <button
-                type="button"
-                onClick={() => handleModeChange('mund')}
-                className={`py-2 px-3 rounded-lg border font-bold text-xs transition-all cursor-pointer ${
-                  mode === 'mund'
-                    ? 'bg-emerald-800 text-white border-emerald-900 shadow-xs'
-                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                (Mund 40kg) من
-              </button>
-            </div>
+            {isPackaged ? (
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleModeChange('packet')}
+                  className="py-2 px-3 rounded-lg border font-bold text-xs bg-emerald-800 text-white border-emerald-900 shadow-xs cursor-pointer flex items-center justify-center space-x-1"
+                >
+                  <ShoppingBag className="w-3.5 h-3.5" />
+                  <span>تعداد ({unitSuffix.toUpperCase()})</span>
+                </button>
+                <div className="flex items-center text-[11px] text-slate-500 px-2">
+                  <span>سیلڈ پیکجڈ آئٹم (Standard Unit)</span>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleModeChange('kg')}
+                  className={`py-2 px-3 rounded-lg border font-bold text-xs transition-all cursor-pointer ${
+                    mode === 'kg'
+                      ? 'bg-emerald-800 text-white border-emerald-900 shadow-xs'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  (KG Weight) وزن
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleModeChange('bags')}
+                  className={`py-2 px-3 rounded-lg border font-bold text-xs transition-all cursor-pointer ${
+                    mode === 'bags'
+                      ? 'bg-emerald-800 text-white border-emerald-900 shadow-xs'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  (Bags) بوری / بیگز
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleModeChange('mund')}
+                  className={`py-2 px-3 rounded-lg border font-bold text-xs transition-all cursor-pointer ${
+                    mode === 'mund'
+                      ? 'bg-emerald-800 text-white border-emerald-900 shadow-xs'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  (Mund 40kg) من
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Input field (Full Width) */}
+          {/* Input field */}
           <div>
             <label className="block text-[11px] font-bold text-slate-700 mb-1">
-              {mode === 'bags' ? 'تعداد بوری (Number of Bags):' : mode === 'mund' ? 'تعداد من (Mund 40kg):' : 'صاف وزن (Net Weight):'}
+              {mode === 'packet'
+                ? `تعداد (${unitSuffix.toUpperCase()} Quantity):`
+                : mode === 'bags'
+                ? 'تعداد بوری (Number of Bags):'
+                : mode === 'mund'
+                ? 'تعداد من (Mund 40kg):'
+                : 'صاف وزن (Net Weight):'}
             </label>
             <div className="relative">
               <input
@@ -223,7 +278,13 @@ export const WeightEntryModal: React.FC = () => {
                 className="w-full text-xl font-bold font-mono-num px-3 py-2 bg-white border-2 border-emerald-600 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
               />
               <span className="absolute right-3 top-2.5 font-bold text-xs text-slate-500 uppercase">
-                {mode === 'bags' ? 'Bori (50kg)' : mode === 'mund' ? 'Mund (40kg)' : 'KG'}
+                {mode === 'packet'
+                  ? unitSuffix
+                  : mode === 'bags'
+                  ? 'Bori (50kg)'
+                  : mode === 'mund'
+                  ? 'Mund (40kg)'
+                  : 'KG'}
               </span>
             </div>
           </div>
@@ -239,10 +300,10 @@ export const WeightEntryModal: React.FC = () => {
                   key={preset.val}
                   type="button"
                   onClick={() => setInputValue(preset.val)}
-                  className={`px-2.5 py-1 border rounded font-mono-num font-bold text-xs transition-colors cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
                     inputValue === preset.val
                       ? 'bg-emerald-800 text-white border-emerald-900 shadow-xs'
-                      : 'bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 text-slate-700 border-slate-200'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'
                   }`}
                 >
                   {preset.label}
@@ -251,22 +312,33 @@ export const WeightEntryModal: React.FC = () => {
             </div>
           </div>
 
-          {/* Calculated Subtotal Card */}
-          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3.5 text-emerald-950 flex items-center justify-between">
+          {/* Real-time Subtotal Summary Card */}
+          <div className="bg-emerald-950 text-white p-3.5 rounded-lg flex items-center justify-between font-mono-num shadow-inner">
             <div>
-              <span className="text-[10px] font-bold text-emerald-700 block uppercase">
-                (CALCULATED SUBTOTAL) کل رقم
+              <span className="text-[10px] text-emerald-300 font-sans block">
+                صاف وزن / مقدار (Total Net Quantity):
               </span>
-              <p className="text-xs text-emerald-800 font-mono-num mt-0.5">
-                {mode === 'bags'
-                  ? `${inputValue} Bags = ${netWeightKg.toFixed(2)} kg × PKR ${product.ratePerKg}`
-                  : mode === 'mund'
-                  ? `${inputValue} Mund = ${netWeightKg.toFixed(2)} kg × PKR ${product.ratePerKg}`
-                  : `${netWeightKg.toFixed(2)} kg × PKR ${product.ratePerKg}`}
-              </p>
+              <span className="text-base font-bold">
+                {mode === 'packet'
+                  ? `${Math.round(netWeightKg)} ${unitSuffix}`
+                  : `${netWeightKg.toFixed(2)} KG`}
+                {mode === 'bags' && (
+                  <span className="text-xs text-emerald-300 font-normal font-sans ml-1">
+                    ({rawNum} Bori)
+                  </span>
+                )}
+                {mode === 'mund' && (
+                  <span className="text-xs text-emerald-300 font-normal font-sans ml-1">
+                    ({rawNum} Mund)
+                  </span>
+                )}
+              </span>
             </div>
             <div className="text-right">
-              <span className="text-2xl font-black font-mono-num text-emerald-800">
+              <span className="text-[10px] text-emerald-300 font-sans block">
+                کل رقم (Calculated Subtotal):
+              </span>
+              <span className="text-xl font-extrabold text-emerald-300">
                 PKR {Math.round(subtotal).toLocaleString()}
               </span>
             </div>
@@ -274,22 +346,26 @@ export const WeightEntryModal: React.FC = () => {
         </div>
 
         {/* Modal Footer Actions */}
-        <div className="bg-slate-50 px-5 py-3 border-t border-slate-200 flex items-center justify-end space-x-3">
-          <button
-            type="button"
-            onClick={() => setSelectedProductForModal(null)}
-            className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs transition-colors cursor-pointer"
-          >
-            (Cancel) [ESC] منسوخ کریں
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            className="px-5 py-2 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs flex items-center space-x-2 shadow-xs transition-colors cursor-pointer"
-          >
-            <ShoppingCart className="w-4 h-4" />
-            <span>(Save & Add to Memo) [ENTER] محفوظ کریں اور بل میں شامل کریں</span>
-          </button>
+        <div className="bg-slate-50 px-5 py-3 border-t border-slate-200 flex items-center justify-between">
+          <span className="text-[10px] text-slate-500 font-mono">
+            Press [ESC] to Cancel • [ENTER] to Add
+          </span>
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => setSelectedProductForModal(null)}
+              className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100 font-bold transition-colors cursor-pointer"
+            >
+              Cancel (منسوخ)
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="px-5 py-2 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-lg shadow-sm transition-all active:scale-98 cursor-pointer flex items-center space-x-1.5"
+            >
+              <span>+ Add to Bill (بل میں شامل کریں)</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

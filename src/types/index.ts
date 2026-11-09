@@ -1,15 +1,18 @@
-export type EntryMode = 'kg' | 'bags' | 'mund';
+export type EntryMode = 'kg' | 'bags' | 'mund' | 'packet' | 'liter';
 
 export interface Product {
   id: string;
   name: string;
   urduName: string;
-  category: 'All Rice' | 'Basmati Varieties' | 'Kainat / Long Grain' | 'Sella Rice' | 'Broken / Tota';
+  category: string;
   badgeLabel: string;
   ratePerKg: number;
+  unitLabel?: string; // '/ kg', '/ pkt', '/ liter'
   availableKg: number;
+  availableStockLabel?: string;
   binLocation: string;
   imageUrl?: string;
+  brand?: string; // 'Shan', 'National', 'Dalda', 'Habib', 'BRT'
   isLowStock?: boolean;
   isWholesalePack?: boolean;
   wholesaleBoriPrice?: number;

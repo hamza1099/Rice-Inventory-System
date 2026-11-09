@@ -106,7 +106,9 @@ export const CashMemoBill: React.FC = () => {
                     {item.ratePerKg}
                   </td>
                   <td className="py-2 px-2 text-right font-bold text-slate-900">
-                    {item.netWeight.toFixed(2)} kg
+                    {item.mode === 'packet'
+                      ? `${Math.round(item.netWeight)} ${item.product.unitLabel ? item.product.unitLabel.replace('/', '').trim() : 'pkt'}`
+                      : `${item.netWeight.toFixed(2)} kg`}
                   </td>
                   <td className="py-2 px-3 text-right font-extrabold text-slate-900">
                     {Math.round(item.subtotal).toLocaleString()}
