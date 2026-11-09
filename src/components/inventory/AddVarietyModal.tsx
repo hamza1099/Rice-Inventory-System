@@ -4,6 +4,8 @@ import { X, PlusCircle, Sparkles, DollarSign, Calculator } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 import { transliterateEnglishToUrduName } from '../../utils/urduTransliterator';
 import { notifySuccess, notifyWarning } from '../../utils/toast';
+import { RiceImageUpload } from './RiceImageUpload';
+import { SAMPLE_RICE_PRESETS } from '../../utils/riceImages';
 
 interface AddVarietyModalProps {
   isOpen: boolean;
@@ -15,6 +17,7 @@ export const AddVarietyModal: React.FC<AddVarietyModalProps> = ({ isOpen, onClos
 
   const [varietyName, setVarietyName] = useState<string>('');
   const [urduName, setUrduName] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState<string>(SAMPLE_RICE_PRESETS[0]?.imageUrl || '');
   const [isUrduManual, setIsUrduManual] = useState<boolean>(false);
   const [sku, setSku] = useState<string>(`SKU-RICE-${String(inventory.length + 1).padStart(2, '0')}`);
   const [category, setCategory] = useState<string>('Basmati Classic');
@@ -95,11 +98,13 @@ export const AddVarietyModal: React.FC<AddVarietyModalProps> = ({ isOpen, onClos
       marginPerKg: Math.round(marginPerKg * 100) / 100,
       marginPercentage: Math.round(marginPct * 10) / 10,
       moisturePercentage,
-      qualityNotes: qualityNotes.trim()
+      qualityNotes: qualityNotes.trim(),
+      imageUrl: imageUrl.trim() || undefined
     };
 
     addInventoryItem(newItem);
     notifySuccess(`Successfully added ${newItem.varietyName} (${newItem.urduName})!`);
+    setImageUrl(SAMPLE_RICE_PRESETS[0]?.imageUrl || '');
     onClose();
   };
 
@@ -173,6 +178,12 @@ export const AddVarietyModal: React.FC<AddVarietyModalProps> = ({ isOpen, onClos
               />
             </div>
           </div>
+
+          {/* Rice Product Image Upload & Preview */}
+          <RiceImageUpload
+            imageUrl={imageUrl}
+            onChange={setImageUrl}
+          />
 
           {/* SKU & Category */}
           <div className="grid grid-cols-2 gap-3">

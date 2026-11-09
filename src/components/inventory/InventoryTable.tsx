@@ -1,7 +1,8 @@
 import React from 'react';
 import type { InventoryItem } from '../../types';
-import { PlusCircle, Edit3, Trash2, FileText, TrendingUp, TrendingDown } from 'lucide-react';
+import { PlusCircle, Edit3, Trash2, FileText, TrendingUp, TrendingDown, Image as ImageIcon } from 'lucide-react';
 import { notifyInfo } from '../../utils/toast';
+import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/riceImages';
 
 interface InventoryTableProps {
   inventory: InventoryItem[];
@@ -90,26 +91,40 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
           <tbody className="divide-y divide-slate-100 font-mono-num">
             {inventory.map((item) => (
               <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                {/* Rice Variety & Description */}
+                {/* Rice Variety & Description + Thumbnail */}
                 <td className="py-3 px-4 font-sans">
-                  <div className="flex items-center space-x-1.5">
-                    <span className="font-extrabold text-slate-900 text-xs">
-                      {item.varietyName}
-                    </span>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 shrink-0 bg-slate-100 shadow-xs">
+                      <img
+                        src={item.imageUrl || DEFAULT_RICE_IMAGE}
+                        alt={item.varietyName}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = SVG_RICE_FALLBACK;
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-1.5">
+                        <span className="font-extrabold text-slate-900 text-xs">
+                          {item.varietyName}
+                        </span>
+                      </div>
+                      <div className="flex items-baseline space-x-2 text-[11px] mt-0.5">
+                        <span className="urdu-text text-emerald-900 font-bold text-xs" dir="rtl">
+                          {item.urduName}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          • {item.sku}
+                        </span>
+                      </div>
+                      {item.qualityNotes && (
+                        <span className="text-[10px] text-slate-500 block leading-tight mt-0.5">
+                          {item.qualityNotes}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-baseline space-x-2 text-[11px] mt-0.5">
-                    <span className="urdu-text text-emerald-900 font-bold text-xs" dir="rtl">
-                      {item.urduName}
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      • {item.sku}
-                    </span>
-                  </div>
-                  {item.qualityNotes && (
-                    <span className="text-[10px] text-slate-500 block leading-tight mt-0.5">
-                      {item.qualityNotes}
-                    </span>
-                  )}
                 </td>
 
                 {/* Category */}

@@ -2,6 +2,7 @@ import React from 'react';
 import type { Product } from '../../types';
 import { Scale, AlertCircle } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
+import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/riceImages';
 
 interface ProductCardProps {
   product: Product;
@@ -14,7 +15,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <div className="bg-white border border-slate-200 rounded-lg p-2.5 shadow-xs hover:shadow-sm hover:border-emerald-600/50 transition-all flex flex-col justify-between group">
       <div>
         {/* Top Header: Badge & Shortcut Key */}
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center justify-between mb-1.5">
           <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
             {product.badgeLabel}
           </span>
@@ -23,13 +24,27 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </span>
         </div>
 
-        {/* Product Names (English & Urdu) */}
-        <h3 className="text-sm font-bold text-slate-900 leading-snug group-hover:text-emerald-800 transition-colors">
-          {product.name}
-        </h3>
-        <p className="urdu-text text-xs text-slate-500 font-medium leading-normal mb-1.5" dir="rtl">
-          {product.urduName}
-        </p>
+        {/* Product Names (English & Urdu) + Image */}
+        <div className="flex items-center space-x-2.5 mb-1.5">
+          <div className="w-12 h-12 rounded-lg overflow-hidden border border-slate-200 shrink-0 bg-slate-100 shadow-xs group-hover:border-emerald-600/50 transition-colors">
+            <img
+              src={product.imageUrl || DEFAULT_RICE_IMAGE}
+              alt={product.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = SVG_RICE_FALLBACK;
+              }}
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-xs font-bold text-slate-900 leading-snug group-hover:text-emerald-800 transition-colors truncate">
+              {product.name}
+            </h3>
+            <p className="urdu-text text-[11px] text-slate-500 font-medium !leading-none mt-1 truncate" dir="rtl">
+              {product.urduName}
+            </p>
+          </div>
+        </div>
 
         {/* Pricing & Stock Details */}
         <div className="space-y-1 mb-2 bg-slate-50/80 p-1.5 rounded border border-slate-100">

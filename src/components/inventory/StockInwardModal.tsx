@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 import { notifySuccess, notifyWarning } from '../../utils/toast';
+import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/riceImages';
 
 interface StockInwardModalProps {
   isOpen: boolean;
@@ -238,6 +239,29 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
           ) : (
             /* Loaded State for Selected Variety */
             <>
+              {/* Selected Variety Card with Image Preview */}
+              <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 rounded-lg p-2 shadow-xs">
+                <img
+                  src={activeItem.imageUrl || DEFAULT_RICE_IMAGE}
+                  alt={activeItem.varietyName}
+                  className="w-12 h-12 rounded-lg object-cover border border-slate-200 shadow-xs bg-white shrink-0"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = SVG_RICE_FALLBACK;
+                  }}
+                />
+                <div className="flex-1 min-w-0">
+                  <span className="font-extrabold text-xs text-slate-900 block truncate">
+                    {activeItem.varietyName}
+                  </span>
+                  <span className="urdu-text text-[11px] text-emerald-800 font-bold block !leading-none" dir="rtl">
+                    {activeItem.urduName}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    SKU: {activeItem.sku} • {activeItem.packagingStandard}
+                  </span>
+                </div>
+              </div>
+
               {/* Current Stock & Cost Banner */}
               <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 grid grid-cols-3 gap-2 font-mono-num">
                 <div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Scale, ShoppingCart } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 import type { EntryMode } from '../../types';
+import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/riceImages';
 
 export const WeightEntryModal: React.FC = () => {
   const { selectedProductForModal, setSelectedProductForModal, addToCart } = usePos();
@@ -139,16 +140,26 @@ export const WeightEntryModal: React.FC = () => {
         <div className="p-5 space-y-4 text-xs">
           {/* Rate & Available Stock info strip */}
           <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-lg border border-slate-200 font-mono-num">
-            <div>
-              <span className="text-[10px] text-slate-500 block">مقررہ ریٹ (Base Rate):</span>
-              <span className="text-sm font-bold text-slate-900">
-                PKR {product.ratePerKg} <span className="text-[10px] text-slate-500 font-normal">/kg فی کلو</span>
-              </span>
+            <div className="flex items-center space-x-3">
+              <img
+                src={product.imageUrl || DEFAULT_RICE_IMAGE}
+                alt={product.name}
+                className="w-11 h-11 rounded-lg object-cover border border-slate-200 shadow-xs bg-white shrink-0"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = SVG_RICE_FALLBACK;
+                }}
+              />
+              <div>
+                <span className="text-[10px] text-slate-500 block font-sans">مقررہ ریٹ (Base Rate):</span>
+                <span className="text-sm font-bold text-slate-900">
+                  PKR {product.ratePerKg} <span className="text-[10px] text-slate-500 font-normal font-sans">/kg فی کلو</span>
+                </span>
+              </div>
             </div>
             <div className="text-right">
-              <span className="text-[10px] text-slate-500 block">موجودہ سٹاک (Available):</span>
+              <span className="text-[10px] text-slate-500 block font-sans">موجودہ سٹاک (Available):</span>
               <span className="text-sm font-bold text-emerald-700">
-                {product.availableKg.toFixed(2)} KG <span className="text-[10px] text-slate-500 font-normal">({product.binLocation})</span>
+                {product.availableKg.toFixed(2)} KG <span className="text-[10px] text-slate-500 font-normal font-sans">({product.binLocation})</span>
               </span>
             </div>
           </div>

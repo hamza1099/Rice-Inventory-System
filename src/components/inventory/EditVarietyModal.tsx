@@ -4,6 +4,7 @@ import { X, Check, DollarSign, Trash2, AlertTriangle, Sparkles } from 'lucide-re
 import { usePos } from '../../context/PosContext';
 import { transliterateEnglishToUrduName } from '../../utils/urduTransliterator';
 import { notifySuccess, notifyWarning, notifyInfo } from '../../utils/toast';
+import { RiceImageUpload } from './RiceImageUpload';
 
 interface EditVarietyModalProps {
   item: InventoryItem | null;
@@ -16,6 +17,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
 
   const [varietyName, setVarietyName] = useState<string>('');
   const [urduName, setUrduName] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState<string>('');
   const [category, setCategory] = useState<string>('');
   const [packagingStandard, setPackagingStandard] = useState<string>('');
 
@@ -36,6 +38,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
     if (item) {
       setVarietyName(item.varietyName);
       setUrduName(item.urduName);
+      setImageUrl(item.imageUrl || '');
       setCategory(item.category);
       setPackagingStandard(item.packagingStandard);
 
@@ -100,6 +103,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
     updateInventoryItem(item.id, {
       varietyName: varietyName.trim(),
       urduName: urduName.trim() || varietyName,
+      imageUrl: imageUrl.trim() || undefined,
       category,
       packagingStandard,
       bagsCount,
@@ -189,6 +193,14 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
               />
             </div>
           </div>
+
+          {/* Rice Product Image Upload & Preview */}
+          <RiceImageUpload
+            imageUrl={imageUrl}
+            onChange={setImageUrl}
+            label="Product Photo (چاول کی تصویر):"
+            urduLabel="تصویر تبدیل یا اپلوڈ کریں"
+          />
 
           {/* Pricing & Profit CRUD Section (Core Request) */}
           <div className="bg-slate-50 border border-slate-300 rounded-lg p-3 space-y-3">

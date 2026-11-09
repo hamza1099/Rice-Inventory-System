@@ -9,6 +9,7 @@ export interface Product {
   ratePerKg: number;
   availableKg: number;
   binLocation: string;
+  imageUrl?: string;
   isLowStock?: boolean;
   isWholesalePack?: boolean;
   wholesaleBoriPrice?: number;
@@ -69,6 +70,7 @@ export interface InventoryItem {
   marginPercentage?: number;
   moisturePercentage: number;
   qualityNotes?: string;
+  imageUrl?: string;
   isRateFixed?: boolean;
 }
 

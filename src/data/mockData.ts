@@ -7,6 +7,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     urduName: 'سوپر باسمتی چاول پرانا',
     category: 'Basmati Varieties',
     badgeLabel: 'PREMIUM AGED',
+    imageUrl: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=400&q=80',
     ratePerKg: 380,
     availableKg: 420.0,
     binLocation: 'Bin #02',
@@ -19,6 +20,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     urduName: 'کائنات ۱۱۲۱ سٹیم چاول',
     category: 'Kainat / Long Grain',
     badgeLabel: 'EXTRA LONG GRAIN',
+    imageUrl: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=400&q=80',
     ratePerKg: 340,
     availableKg: 580.0,
     binLocation: 'Bin #05',
@@ -31,6 +33,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     urduName: 'سوپر کرنل باسمتی نایاب',
     category: 'Basmati Varieties',
     badgeLabel: 'SPECIAL SELECTION',
+    imageUrl: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=400&q=80',
     ratePerKg: 420,
     availableKg: 120.0,
     binLocation: 'Bin #01',
@@ -44,6 +47,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     urduName: 'باسمتی سوپر سیلا گولڈن',
     category: 'Sella Rice',
     badgeLabel: 'CATERING GRADE',
+    imageUrl: 'https://images.unsplash.com/photo-1594489428504-5c0c480a15fd?auto=format&fit=crop&w=400&q=80',
     ratePerKg: 360,
     availableKg: 310.0,
     binLocation: 'Bin #08',
@@ -56,6 +60,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     urduName: 'سفید ٹوٹا چاول کوالٹی',
     category: 'Broken / Tota',
     badgeLabel: 'DAILY UTILITY',
+    imageUrl: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=400&q=80',
     ratePerKg: 210,
     availableKg: 560.0,
     binLocation: 'Bin #11',
@@ -68,6 +73,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     urduName: '۵۰ کلو سوپر باسمتی بوری',
     category: 'Basmati Varieties',
     badgeLabel: 'SEALED BAG WHOLESALE',
+    imageUrl: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=400&q=80',
     ratePerKg: 370,
     availableKg: 1400.0,
     binLocation: 'Stack A',
@@ -239,7 +245,8 @@ export const INITIAL_INVENTORY: InventoryItem[] = [
     marginPerKg: 30.0,
     marginPercentage: 9.5,
     moisturePercentage: 10.8,
-    qualityNotes: 'Old Crop 2023 Vintage'
+    qualityNotes: 'Old Crop 2023 Vintage',
+    imageUrl: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=400&q=80'
   },
   {
     id: 'inv-02',
@@ -261,7 +268,8 @@ export const INITIAL_INVENTORY: InventoryItem[] = [
     marginPerKg: 25.0,
     marginPercentage: 8.8,
     moisturePercentage: 11.2,
-    qualityNotes: 'Length 8.35mm Average'
+    qualityNotes: 'Length 8.35mm Average',
+    imageUrl: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=400&q=80'
   },
   {
     id: 'inv-03',
@@ -281,7 +289,8 @@ export const INITIAL_INVENTORY: InventoryItem[] = [
     marginPerKg: 40.0,
     marginPercentage: 11.4,
     moisturePercentage: 10.5,
-    qualityNotes: 'Below Threshold! Needs Urgent Mandi Order'
+    qualityNotes: 'Below Threshold! Needs Urgent Mandi Order',
+    imageUrl: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=400&q=80'
   },
   {
     id: 'inv-04',
@@ -301,7 +310,8 @@ export const INITIAL_INVENTORY: InventoryItem[] = [
     marginPerKg: 25.0,
     marginPercentage: 9.6,
     moisturePercentage: 10.4,
-    qualityNotes: 'Double Polished Grain'
+    qualityNotes: 'Double Polished Grain',
+    imageUrl: 'https://images.unsplash.com/photo-1594489428504-5c0c480a15fd?auto=format&fit=crop&w=400&q=80'
   },
   {
     id: 'inv-05',
@@ -321,7 +331,8 @@ export const INITIAL_INVENTORY: InventoryItem[] = [
     marginPerKg: 20.0,
     marginPercentage: 13.8,
     moisturePercentage: 12.0,
-    qualityNotes: 'Clean Destoned Quality'
+    qualityNotes: 'Clean Destoned Quality',
+    imageUrl: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=400&q=80'
   },
   {
     id: 'inv-06',
@@ -340,6 +351,7 @@ export const INITIAL_INVENTORY: InventoryItem[] = [
     marginPerKg: 25.0,
     moisturePercentage: 11.0,
     qualityNotes: 'Heavy Grain Export Quality',
+    imageUrl: 'https://images.unsplash.com/photo-1539136788836-5699e78bfc75?auto=format&fit=crop&w=400&q=80',
     isRateFixed: true
   }
 ];

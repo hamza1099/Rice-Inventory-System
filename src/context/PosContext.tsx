@@ -203,6 +203,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ratePerKg: newItem.counterRatePerKg,
       availableKg: newItem.physicalStockKg,
       binLocation: 'Godown Stack',
+      imageUrl: newItem.imageUrl,
       shortcut: `F${100 + inventory.length + 1}`,
       tareWeightDefault: newItem.tareDeductionKg || 0.10
     };
@@ -241,7 +242,8 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             name: updated.varietyName || p.name,
             urduName: updated.urduName || p.urduName,
             ratePerKg: updated.counterRatePerKg !== undefined ? updated.counterRatePerKg : p.ratePerKg,
-            availableKg: updated.physicalStockKg !== undefined ? updated.physicalStockKg : p.availableKg
+            availableKg: updated.physicalStockKg !== undefined ? updated.physicalStockKg : p.availableKg,
+            imageUrl: updated.imageUrl !== undefined ? updated.imageUrl : p.imageUrl
           };
         }
         return p;
