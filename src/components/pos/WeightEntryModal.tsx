@@ -5,7 +5,7 @@ import type { EntryMode } from '../../types';
 import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/productImages';
 
 export const WeightEntryModal: React.FC = () => {
-  const { selectedProductForModal, setSelectedProductForModal, addToCart } = usePos();
+  const { selectedProductForModal, setSelectedProductForModal, addToCart, openImagePreview } = usePos();
 
   const product = selectedProductForModal;
   const isPackaged =
@@ -168,14 +168,33 @@ export const WeightEntryModal: React.FC = () => {
           {/* Rate & Available Stock info strip */}
           <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-lg border border-slate-200 font-mono-num">
             <div className="flex items-center space-x-3">
-              <img
-                src={product.imageUrl || DEFAULT_RICE_IMAGE}
-                alt={product.name}
-                className="w-12 h-12 rounded-lg object-cover border border-slate-200 shadow-xs bg-white shrink-0"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = SVG_RICE_FALLBACK;
-                }}
-              />
+              <div
+                onClick={() =>
+                  openImagePreview({
+                    imageUrl: product.imageUrl || DEFAULT_RICE_IMAGE,
+                    title: product.name,
+                    urduTitle: product.urduName,
+                    category: product.category,
+                    badgeLabel: product.badgeLabel,
+                    rate: product.ratePerKg,
+                    unitLabel: product.unitLabel,
+                    stock: product.availableStockLabel || `${product.availableKg} KG`,
+                    binLocation: product.binLocation,
+                    product
+                  })
+                }
+                className="w-12 h-12 rounded-lg overflow-hidden border border-slate-200 shadow-xs bg-white shrink-0 cursor-pointer group hover:border-emerald-600 transition-colors relative"
+                title="Click to preview large image (بڑی تصویر دیکھیں)"
+              >
+                <img
+                  src={product.imageUrl || DEFAULT_RICE_IMAGE}
+                  alt={product.name}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = SVG_RICE_FALLBACK;
+                  }}
+                />
+              </div>
               <div>
                 <span className="text-[10px] text-slate-500 block font-sans">مقررہ ریٹ (Base Rate):</span>
                 <span className="text-sm font-bold text-slate-900">

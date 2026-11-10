@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import type { Product, CartItem, MemoRecord, InventoryItem, DenominationRow } from '../types';
+import type { Product, CartItem, MemoRecord, InventoryItem, DenominationRow, ImagePreviewData } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_MEMOS, INITIAL_INVENTORY, INITIAL_DENOMINATIONS } from '../data/mockData';
 
 interface PosContextType {
@@ -62,6 +62,12 @@ interface PosContextType {
   setIsTerminalLocked: (locked: boolean) => void;
   isMandiChitOpen: boolean;
   setIsMandiChitOpen: (open: boolean) => void;
+
+  // Image Preview Lightbox Modal
+  imagePreview: ImagePreviewData | null;
+  setImagePreview: (data: ImagePreviewData | null) => void;
+  openImagePreview: (data: ImagePreviewData) => void;
+  closeImagePreview: () => void;
 }
 
 const PosContext = createContext<PosContextType | undefined>(undefined);
@@ -133,6 +139,17 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isDayClosed, setIsDayClosed] = useState<boolean>(false);
   const [isTerminalLocked, setIsTerminalLocked] = useState<boolean>(true);
   const [isMandiChitOpen, setIsMandiChitOpen] = useState<boolean>(false);
+
+  // Global Image Preview Lightbox
+  const [imagePreview, setImagePreview] = useState<ImagePreviewData | null>(null);
+
+  const openImagePreview = (data: ImagePreviewData) => {
+    setImagePreview(data);
+  };
+
+  const closeImagePreview = () => {
+    setImagePreview(null);
+  };
 
   const addToCart = (newItem: CartItem) => {
     setCart((prev) => [...prev, newItem]);
@@ -415,7 +432,11 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isTerminalLocked,
         setIsTerminalLocked,
         isMandiChitOpen,
-        setIsMandiChitOpen
+        setIsMandiChitOpen,
+        imagePreview,
+        setImagePreview,
+        openImagePreview,
+        closeImagePreview
       }}
     >
       {children}

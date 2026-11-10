@@ -85,3 +85,17 @@ export interface DenominationRow {
   count: number;
   subtotal: number;
 }
+
+export interface ImagePreviewData {
+  imageUrl: string;
+  title: string;
+  urduTitle?: string;
+  category?: string;
+  badgeLabel?: string;
+  rate?: number;
+  unitLabel?: string;
+  stock?: string;
+  binLocation?: string;
+  product?: Product;
+}
+

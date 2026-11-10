@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
-import { UploadCloud, Image as ImageIcon, X, Sparkles, Check } from 'lucide-react';
+import { UploadCloud, Image as ImageIcon, X, Sparkles, Check, ZoomIn } from 'lucide-react';
+import { usePos } from '../../context/PosContext';
 import { ALL_PRODUCT_PRESETS, SVG_RICE_FALLBACK } from '../../utils/productImages';
 import { notifySuccess, notifyWarning } from '../../utils/toast';
 
@@ -16,6 +17,7 @@ export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
   label = 'Product Image (پروڈکٹ تصویر):',
   urduLabel = 'سامان یا چاول کی اصلی تصویر اپلوڈ کریں'
 }) => {
+  const { openImagePreview } = usePos();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,11 +92,25 @@ export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
           <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
             <button
               type="button"
+              onClick={() =>
+                openImagePreview({
+                  imageUrl,
+                  title: label,
+                  urduTitle: urduLabel
+                })
+              }
+              className="px-2.5 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-[11px] shadow-xs cursor-pointer flex items-center space-x-1 transition-all"
+            >
+              <ZoomIn className="w-3.5 h-3.5" />
+              <span>Preview</span>
+            </button>
+            <button
+              type="button"
               onClick={() => fileInputRef.current?.click()}
               className="px-3 py-1.5 rounded-lg bg-white/95 hover:bg-white text-slate-800 font-bold text-[11px] shadow-xs cursor-pointer flex items-center space-x-1 transition-all"
             >
               <UploadCloud className="w-3.5 h-3.5 text-emerald-700" />
-              <span>Change Photo</span>
+              <span>Change</span>
             </button>
             <button
               type="button"

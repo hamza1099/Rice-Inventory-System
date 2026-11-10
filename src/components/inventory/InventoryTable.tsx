@@ -1,6 +1,7 @@
 import React from 'react';
 import type { InventoryItem } from '../../types';
-import { PlusCircle, Edit3, Trash2, FileText, TrendingUp, TrendingDown, Image as ImageIcon } from 'lucide-react';
+import { PlusCircle, Edit3, Trash2, FileText, TrendingUp, TrendingDown, Image as ImageIcon, ZoomIn } from 'lucide-react';
+import { usePos } from '../../context/PosContext';
 import { notifyInfo } from '../../utils/toast';
 import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/productImages';
 
@@ -17,6 +18,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
   onOpenRateEdit,
   onDeleteItem
 }) => {
+  const { openImagePreview } = usePos();
   const getStatusBadge = (status: InventoryItem['lotStatus']) => {
     switch (status) {
       case 'In Stock':
@@ -94,15 +96,33 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                 {/* Rice Variety & Description + Thumbnail */}
                 <td className="py-3 px-4 font-sans">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 shrink-0 bg-slate-100 shadow-xs">
+                    <div
+                      onClick={() =>
+                        openImagePreview({
+                          imageUrl: item.imageUrl || DEFAULT_RICE_IMAGE,
+                          title: item.varietyName,
+                          urduTitle: item.urduName,
+                          category: item.category,
+                          badgeLabel: item.lotStatus,
+                          rate: item.counterRatePerKg,
+                          stock: `${item.physicalStockKg} KG (${item.bagsCount} Bags)`,
+                          binLocation: item.packagingStandard
+                        })
+                      }
+                      className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 shrink-0 bg-slate-100 shadow-xs cursor-pointer group hover:border-emerald-600 transition-colors relative"
+                      title="Click to preview image (بڑی تصویر دیکھیں)"
+                    >
                       <img
                         src={item.imageUrl || DEFAULT_RICE_IMAGE}
                         alt={item.varietyName}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = SVG_RICE_FALLBACK;
                         }}
                       />
+                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <ZoomIn className="w-3.5 h-3.5 text-white" />
+                      </div>
                     </div>
                     <div>
                       <div className="flex items-center space-x-1.5">

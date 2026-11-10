@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Product } from '../../types';
-import { Scale, AlertCircle, ShoppingBag } from 'lucide-react';
+import { Scale, AlertCircle, ShoppingBag, ZoomIn } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/productImages';
 
@@ -9,20 +9,39 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { setSelectedProductForModal } = usePos();
+  const { setSelectedProductForModal, openImagePreview } = usePos();
 
   const isPackaged = product.unitLabel === '/ pkt' || product.unitLabel === '/ tin' || product.unitLabel === '/ bag';
+
+  const handleImageClick = () => {
+    openImagePreview({
+      imageUrl: product.imageUrl || DEFAULT_RICE_IMAGE,
+      title: product.name,
+      urduTitle: product.urduName,
+      category: product.category,
+      badgeLabel: product.badgeLabel,
+      rate: product.ratePerKg,
+      unitLabel: product.unitLabel,
+      stock: product.availableStockLabel || `${product.availableKg} KG`,
+      binLocation: product.binLocation,
+      product
+    });
+  };
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-2xs hover:shadow-md hover:border-emerald-600/50 transition-all duration-200 flex flex-col justify-between group">
       <div>
-        {/* Top Prominent Image Banner (Bari aur Khobsorat Image) */}
-        <div className="relative w-full h-28 bg-slate-100 overflow-hidden border-b border-slate-100">
+        {/* Top Prominent Image Banner (Click to Preview) */}
+        <div
+          onClick={handleImageClick}
+          className="relative w-full h-28 bg-slate-100 overflow-hidden border-b border-slate-100 cursor-pointer group/img"
+          title="Click to view full image (بڑی تصویر دیکھیں)"
+        >
           <img
             src={product.imageUrl || DEFAULT_RICE_IMAGE}
             alt={product.name}
             loading="lazy"
-            className="w-full h-full object-cover object-center group-hover:scale-106 transition-transform duration-300"
+            className="w-full h-full object-cover object-center group-hover/img:scale-108 transition-transform duration-300"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               if (target.src !== DEFAULT_RICE_IMAGE) {
@@ -32,6 +51,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               }
             }}
           />
+
+          {/* Hover Zoom Preview Pill */}
+          <div className="absolute inset-0 bg-slate-950/25 opacity-0 group-hover/img:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
+            <span className="px-2.5 py-1 rounded-full bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold shadow-md flex items-center space-x-1.5 border border-white/20 scale-95 group-hover/img:scale-100 transition-transform">
+              <ZoomIn className="w-3 h-3 text-emerald-400" />
+              <span>Click to Preview (تصویر دیکھیں)</span>
+            </span>
+          </div>
 
           {/* Floating Category/Badge Pill (Top-Left) */}
           <span className="absolute top-2 left-2 text-[9px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-md bg-slate-900/80 backdrop-blur-xs text-white border border-white/20 shadow-xs">

@@ -7,6 +7,7 @@ import { Header } from './components/common/Header';
 import { Sidebar } from './components/common/Sidebar';
 import { StatusBar } from './components/common/StatusBar';
 import { MandiChitModal } from './components/inventory/MandiChitModal';
+import { ImagePreviewModal } from './components/common/ImagePreviewModal';
 import InitRoute from './routes/InitRoute';
 import { LoginScreen } from './screens/LoginScreen';
 import { RouteName } from './routes/RouteName';
@@ -42,6 +43,7 @@ const MainLayout: React.FC = () => {
 
       {/* Global Modals */}
       <MandiChitModal />
+      <ImagePreviewModal />
     </div>
   );
 };
