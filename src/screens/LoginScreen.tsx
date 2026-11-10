@@ -189,7 +189,7 @@ export const LoginScreen: React.FC = () => {
               <div className="flex items-start justify-between">
                 <div>
                   <h2 className="text-2xl sm:text-3xl font-black text-[#15241b] tracking-tight leading-none">
-                    Terminal Access
+                    Login
                   </h2>
                   <p className="text-xs text-slate-600 mt-2 leading-normal">
                     Sign in to access export orders, consignments, and mill dispatches.
