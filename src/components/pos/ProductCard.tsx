@@ -24,7 +24,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             loading="lazy"
             className="w-full h-full object-cover object-center group-hover:scale-106 transition-transform duration-300"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = SVG_RICE_FALLBACK;
+              const target = e.target as HTMLImageElement;
+              if (target.src !== DEFAULT_RICE_IMAGE) {
+                target.src = DEFAULT_RICE_IMAGE;
+              } else {
+                target.src = SVG_RICE_FALLBACK;
+              }
             }}
           />
 

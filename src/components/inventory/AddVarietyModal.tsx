@@ -5,7 +5,7 @@ import { usePos } from '../../context/PosContext';
 import { transliterateEnglishToUrduName } from '../../utils/urduTransliterator';
 import { notifySuccess, notifyWarning } from '../../utils/toast';
 import { RiceImageUpload } from './RiceImageUpload';
-import { SAMPLE_RICE_PRESETS } from '../../utils/riceImages';
+import { BORI_BASMATI_IMAGE } from '../../utils/productImages';
 
 interface AddVarietyModalProps {
   isOpen: boolean;
@@ -17,7 +17,7 @@ export const AddVarietyModal: React.FC<AddVarietyModalProps> = ({ isOpen, onClos
 
   const [varietyName, setVarietyName] = useState<string>('');
   const [urduName, setUrduName] = useState<string>('');
-  const [imageUrl, setImageUrl] = useState<string>(SAMPLE_RICE_PRESETS[0]?.imageUrl || '');
+  const [imageUrl, setImageUrl] = useState<string>(BORI_BASMATI_IMAGE);
   const [isUrduManual, setIsUrduManual] = useState<boolean>(false);
   const [sku, setSku] = useState<string>(`SKU-RICE-${String(inventory.length + 1).padStart(2, '0')}`);
   const [category, setCategory] = useState<string>('Basmati Classic');
@@ -104,7 +104,7 @@ export const AddVarietyModal: React.FC<AddVarietyModalProps> = ({ isOpen, onClos
 
     addInventoryItem(newItem);
     notifySuccess(`Successfully added ${newItem.varietyName} (${newItem.urduName})!`);
-    setImageUrl(SAMPLE_RICE_PRESETS[0]?.imageUrl || '');
+    setImageUrl(BORI_BASMATI_IMAGE);
     onClose();
   };
 

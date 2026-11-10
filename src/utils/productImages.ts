@@ -11,9 +11,19 @@ export interface ProductPreset {
   imageUrl: string;
 }
 
-// Default Fallbacks
-export const DEFAULT_RICE_IMAGE =
-  'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80';
+// ==================== AUTHENTIC 50KG MANDI SACKS (چاول اور دالوں کی اصل بوریاں) ====================
+export const BORI_BASMATI_IMAGE = '/images/rice_bori_basmati.jpg';
+export const BORI_SUPER_IMAGE = '/images/rice_bori_super.jpg';
+export const BORI_KAINAT_IMAGE = '/images/rice_bori_kainat.jpg';
+export const BORI_SELLA_IMAGE = '/images/rice_bori_sella.jpg';
+export const BORI_STACK_IMAGE = '/images/rice_bori_stack.jpg';
+export const BORI_DAAL_CHANA_IMAGE = '/images/daal_chana_bori.jpg';
+export const BORI_DAAL_MOONG_IMAGE = '/images/daal_moong_bori.jpg';
+export const BORI_SPICES_ZEERA_IMAGE = '/images/spices_zeera_bori.jpg';
+export const BORI_ATTA_WHEAT_IMAGE = '/images/atta_wheat_sack.jpg';
+
+// Default Fallback is now the authentic 50kg Jute Bori
+export const DEFAULT_RICE_IMAGE = BORI_BASMATI_IMAGE;
 
 export const SVG_RICE_FALLBACK =
   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="%23f1f5f9"/><circle cx="100" cy="75" r="45" fill="%23065f46" opacity="0.1"/><path d="M100 40 C120 40 140 60 140 85 C140 105 120 120 100 120 C80 120 60 105 60 85 C60 60 80 40 100 40 Z" fill="%2310b981" opacity="0.6"/><ellipse cx="100" cy="80" rx="18" ry="32" fill="%23ffffff"/><text x="100" y="138" font-size="11" font-family="sans-serif" font-weight="bold" fill="%23065f46" text-anchor="middle">BUKHARI RICE</text></svg>';
@@ -39,127 +49,145 @@ export const NATIONAL_NIHARI_IMAGE =
 
 // Preset library across all categories for quick selection during inventory entry
 export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
-  // 1. RICE (چاول)
+  // 1. RICE (چاول کی بوریاں)
   {
     id: 'pr-rice-basmati',
-    name: 'Super Basmati Rice',
-    urduName: 'سوپر باسمتی چاول پرانا',
+    name: 'Super Basmati Old (50kg Bori)',
+    urduName: 'سوپر باسمتی چاول پرانا بوری',
     category: 'Rice (چاول)',
     rate: 380,
     unit: 'kg',
-    imageUrl: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80'
+    imageUrl: BORI_BASMATI_IMAGE
   },
   {
     id: 'pr-rice-kainat',
-    name: 'Kainat 1121 Steam Extra Long',
-    urduName: 'کائنات ۱۱۲۱ سٹیم',
+    name: 'Kainat 1121 Steam (50kg Bori)',
+    urduName: 'کائنات ۱۱۲۱ سٹیم بوری',
     category: 'Rice (چاول)',
     rate: 340,
     unit: 'kg',
-    imageUrl: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=600&q=80'
+    imageUrl: BORI_KAINAT_IMAGE
+  },
+  {
+    id: 'pr-rice-super',
+    name: 'Super Kernel Basmati Vintage',
+    urduName: 'سوپر کرنل باسمتی نایاب بوری',
+    category: 'Rice (چاول)',
+    rate: 420,
+    unit: 'kg',
+    imageUrl: BORI_SUPER_IMAGE
   },
   {
     id: 'pr-rice-sella',
-    name: 'Golden Sella Basmati',
-    urduName: 'سیلا گولڈن باسمتی',
+    name: 'Golden Sella Basmati (50kg Bori)',
+    urduName: 'سیلا گولڈن باسمتی بوری',
     category: 'Rice (چاول)',
     rate: 360,
     unit: 'kg',
-    imageUrl: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=600&q=80'
+    imageUrl: BORI_SELLA_IMAGE
   },
   {
     id: 'pr-rice-tota',
-    name: 'White Broken Tota',
-    urduName: 'سفید ٹوٹا چاول',
+    name: 'White Broken Tota (بوری)',
+    urduName: 'سفید ٹوٹا چاول بوری',
     category: 'Rice (چاول)',
     rate: 210,
     unit: 'kg',
-    imageUrl: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=600&q=80'
+    imageUrl: BORI_BASMATI_IMAGE
+  },
+  {
+    id: 'pr-rice-stack',
+    name: '50kg Super Bori Godown Stack',
+    urduName: '۵۰ کلو سوپر باسمتی بوری گودام سٹیک',
+    category: 'Rice (چاول)',
+    rate: 370,
+    unit: 'kg',
+    imageUrl: BORI_STACK_IMAGE
   },
 
-  // 2. PULSES / DAAL (دالیں)
+  // 2. PULSES / DAAL (دالوں کی بوریاں)
   {
     id: 'pr-daal-chana',
-    name: 'Daal Chana Special',
-    urduName: 'دال چنا سپیشل واش',
+    name: 'Daal Chana Special (50kg Bori)',
+    urduName: 'دال چنا سپیشل واش بوری',
     category: 'Pulses / Daal (دالیں)',
     rate: 260,
     unit: 'kg',
-    imageUrl: 'https://plus.unsplash.com/premium_photo-1674025748666-9ac6c8a7ab3d?auto=format&fit=crop&w=600&q=80'
+    imageUrl: BORI_DAAL_CHANA_IMAGE
   },
   {
     id: 'pr-daal-moong',
-    name: 'Daal Moong Dhooli',
-    urduName: 'دال مونگ دھلی ہوئی',
+    name: 'Daal Moong Dhooli (50kg Bori)',
+    urduName: 'دال مونگ دھلی ہوئی بوری',
     category: 'Pulses / Daal (دالیں)',
     rate: 290,
     unit: 'kg',
-    imageUrl: 'https://images.unsplash.com/photo-1546548970-71785318a17b?auto=format&fit=crop&w=600&q=80'
+    imageUrl: BORI_DAAL_MOONG_IMAGE
   },
   {
     id: 'pr-daal-masoor',
-    name: 'Daal Masoor Red',
-    urduName: 'دال مسور سرخ',
+    name: 'Daal Masoor Red Imported',
+    urduName: 'دال مسور سرخ امپورٹڈ بوری',
     category: 'Pulses / Daal (دالیں)',
     rate: 275,
     unit: 'kg',
-    imageUrl: 'https://images.unsplash.com/photo-1515543237350-b3eea1ec8082?auto=format&fit=crop&w=600&q=80'
+    imageUrl: BORI_DAAL_MOONG_IMAGE
   },
   {
     id: 'pr-daal-mash',
     name: 'Daal Mash Dhooli Extra',
-    urduName: 'دال ماش دھلی سپیشل',
+    urduName: 'دال ماش دھلی سپیشل بوری',
     category: 'Pulses / Daal (دالیں)',
     rate: 420,
     unit: 'kg',
-    imageUrl: 'https://images.unsplash.com/photo-1585994192701-f1a505c8574a?auto=format&fit=crop&w=600&q=80'
+    imageUrl: BORI_DAAL_CHANA_IMAGE
   },
   {
     id: 'pr-safaid-chana',
-    name: 'Safaid Kabuli Chana',
-    urduName: 'سفید چنا کابل موٹا',
+    name: 'Safaid Kabuli Chana Moata',
+    urduName: 'سفید چنا کابل موٹا بوری',
     category: 'Pulses / Daal (دالیں)',
     rate: 340,
     unit: 'kg',
-    imageUrl: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=600&q=80'
+    imageUrl: BORI_DAAL_CHANA_IMAGE
   },
 
   // 3. SPICES / KHULA MASALA (کھلا مصالحہ جات)
   {
     id: 'pr-masala-zeera',
-    name: 'Sabut Zeera Safaid',
-    urduName: 'سفید زیرہ خالص',
-    category: 'Spices / Masala (کھلا مصالحہ)',
+    name: 'Sabut Zeera Safaid Pure (بوری)',
+    urduName: 'سفید زیرہ خالص بوری',
+    category: 'Spices (کھلا مصالحہ)',
     rate: 1850,
     unit: 'kg',
-    imageUrl: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=600&q=80'
+    imageUrl: BORI_SPICES_ZEERA_IMAGE
   },
   {
     id: 'pr-masala-haldi',
-    name: 'Haldi Powder Pure',
+    name: 'Haldi Powder Pure Desi',
     urduName: 'ہلدی پاؤڈر خالص دیسی',
-    category: 'Spices / Masala (کھلا مصالحہ)',
+    category: 'Spices (کھلا مصالحہ)',
     rate: 480,
     unit: 'kg',
-    imageUrl: 'https://images.unsplash.com/photo-1666818398897-381dd5eb9139?auto=format&fit=crop&w=600&q=80'
+    imageUrl: BORI_SPICES_ZEERA_IMAGE
   },
   {
     id: 'pr-masala-mirch',
-    name: 'Lal Mirch Powder',
-    urduName: 'سرخ مرچ پسی ہوئی',
-    category: 'Spices / Masala (کھلا مصالحہ)',
+    name: 'Lal Mirch Powder Pure',
+    urduName: 'سرخ مرچ پسی ہوئی خالص',
+    category: 'Spices (کھلا مصالحہ)',
     rate: 650,
     unit: 'kg',
-    imageUrl: 'https://images.unsplash.com/photo-1547332226-395d746d139a?auto=format&fit=crop&w=600&q=80'
+    imageUrl: BORI_SPICES_ZEERA_IMAGE
   },
   {
     id: 'pr-masala-garam',
-    name: 'Garam Masala Mix Whole',
-    urduName: 'گرم مصالحہ ثابت مکس',
-    category: 'Spices / Masala (کھلا مصالحہ)',
+    name: 'Garam Masala Mix Whole Special',
+    urduName: 'گرم مصالحہ ثابت سپیشل بوری',
+    category: 'Spices (کھلا مصالحہ)',
     rate: 1400,
     unit: 'kg',
-    imageUrl: 'https://images.unsplash.com/photo-1532336414038-cf19250c5757?auto=format&fit=crop&w=600&q=80'
+    imageUrl: BORI_SPICES_ZEERA_IMAGE
   },
 
   // 4. SHAN & NATIONAL (برانڈڈ ڈبہ مصالحہ جات)
@@ -227,7 +255,7 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
   // 5. OIL, GHEE, FLOUR & SUGAR (تیل، گھی، آٹا، چینی)
   {
     id: 'pr-oil-dalda',
-    name: 'Dalda Cooking Oil 5 Litre',
+    name: 'Dalda Cooking Oil 5 Litre Tin',
     urduName: 'ڈالڈا کوکنگ آئل ۵ لیٹر',
     category: 'Oil & Ghee (تیل و گھی)',
     brand: 'Dalda',
@@ -237,7 +265,7 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
   },
   {
     id: 'pr-ghee-habib',
-    name: 'Habib Banaspati Ghee 1kg',
+    name: 'Habib Banaspati Ghee 1kg Packet',
     urduName: 'حبیب بناسپتی گھی ۱ کلو',
     category: 'Oil & Ghee (تیل و گھی)',
     brand: 'Habib',
@@ -247,21 +275,21 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
   },
   {
     id: 'pr-atta-chakki',
-    name: 'Chakki Atta 10kg Bag',
-    urduName: 'خالص دیسی چکی آٹا ۱۰ کلو',
+    name: 'Chakki Atta 10kg Bag (خالص آٹا بوری)',
+    urduName: 'خالص دیسی چکی آٹا ۱۰ کلو تھیلا',
     category: 'Atta & Sugar (آٹا و چینی)',
     brand: 'Bukhari Flour',
     rate: 1350,
     unit: 'bag',
-    imageUrl: 'https://images.unsplash.com/photo-1509358271058-acd22cc93898?auto=format&fit=crop&w=600&q=80'
+    imageUrl: BORI_ATTA_WHEAT_IMAGE
   },
   {
     id: 'pr-sugar-cheeni',
-    name: 'Refined White Sugar (چینی)',
-    urduName: 'سفید دانے دار چینی',
+    name: 'Refined White Sugar 50kg Bori',
+    urduName: 'سفید دانے دار چینی بوری',
     category: 'Atta & Sugar (آٹا و چینی)',
     rate: 145,
     unit: 'kg',
-    imageUrl: 'https://images.unsplash.com/photo-1581441363689-1f3c3c414635?auto=format&fit=crop&w=600&q=80'
+    imageUrl: BORI_STACK_IMAGE
   }
 ];
