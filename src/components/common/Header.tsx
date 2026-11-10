@@ -31,14 +31,8 @@ export const Header: React.FC = () => {
 
   return (
     <header className="shrink-0 bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between text-xs sticky top-0 z-30 shadow-xs">
-      {/* Brand & Shortcut */}
+      {/* Brand */}
       <div className="flex items-center space-x-3">
-        <button 
-          title="Terminal Quick Switch"
-          className="flex items-center space-x-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-mono px-2 py-1 rounded text-[11px] font-semibold border border-slate-200 transition-colors"
-        >
-          <span>ALT+R</span>
-        </button>
         <div className="flex items-baseline space-x-2">
           <h1 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block"></span>
