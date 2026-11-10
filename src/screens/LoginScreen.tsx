@@ -60,154 +60,160 @@ export const LoginScreen: React.FC = () => {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#f3f5f8] flex flex-col font-sans antialiased select-none">
-      
-      {/* Top Navbar spanning 100% width edge-to-edge */}
-      <header className="w-full px-6 sm:px-10 lg:px-16 py-3 bg-white border-b border-slate-200/80 flex items-center justify-between shrink-0 shadow-xs z-10">
-        {/* Left: Brand with Logo */}
+    <div
+      className="h-screen w-screen overflow-hidden relative flex flex-col font-sans antialiased select-none"
+      style={{
+        backgroundImage: `url("${loginBg}")`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      {/* Dark vignette overlay covering the whole screen background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-emerald-950/40 to-black/75 backdrop-blur-[2px] z-0"></div>
+
+      {/* Top Navbar Header spanning full width */}
+      <header className="relative z-10 w-full px-6 sm:px-10 lg:px-14 py-3 bg-black/40 backdrop-blur-md border-b border-[#c5a059]/40 flex items-center justify-between shrink-0 shadow-md">
+        {/* Left: Brand with Logo in rounded white box */}
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-lg overflow-hidden border border-emerald-900/30 bg-[#0c3c2b] flex items-center justify-center shadow-xs shrink-0">
+          <div className="w-8 h-8 rounded-lg overflow-hidden bg-white p-0.5 shadow-sm shrink-0 border border-white/60">
             <img
               src={logoImg}
               alt="Bukhari Rice Traders"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           </div>
           <div className="flex items-center space-x-2.5">
-            <span className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight">
+            <span className="text-sm sm:text-base font-extrabold text-white tracking-tight">
               Bukhari Rice Traders
             </span>
-            <span className="text-slate-300 font-light text-base">|</span>
-            <span className="urdu-text text-xs sm:text-sm text-slate-600 font-semibold !leading-none" dir="rtl">
+            <span className="text-amber-400/60 font-light text-base">|</span>
+            <span className="urdu-text text-xs sm:text-sm text-amber-100 font-semibold !leading-none" dir="rtl">
               بخاری رائس ٹریڈرز
             </span>
           </div>
         </div>
       </header>
 
-      {/* Main Viewport: Large, Spacious, Perfectly Balanced 2-Column Layout */}
-      <main className="flex-1 min-h-0 w-full flex items-center justify-center p-4 sm:p-6 lg:p-8 xl:p-10 overflow-y-auto">
-        <div className="w-full max-w-[1320px] h-full max-h-[720px] min-h-[580px] flex flex-col lg:flex-row items-stretch justify-center gap-6 lg:gap-8 xl:gap-10 my-auto">
+      {/* Main Viewport: Centered 2-Column Exact Layout */}
+      <main className="relative z-10 flex-1 min-h-0 w-full flex items-center justify-center p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <div className="w-full max-w-[1180px] flex flex-col lg:flex-row items-stretch justify-center gap-6 lg:gap-8 my-auto">
           
-          {/* LEFT COLUMN: Large Hero Poster Card ("ya pora is side ma bara sa ana chahya") */}
-          <div
-            className="flex-1 w-full rounded-3xl p-7 sm:p-8 lg:p-9 xl:p-10 text-white relative overflow-hidden shadow-2xl flex flex-col justify-between border border-emerald-700/50"
-            style={{
-              backgroundImage: `url("${loginBg}")`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          >
-            {/* Deep Emerald Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-[#0a3828]/95 via-[#072c1f]/93 to-[#031811]/98 z-0"></div>
+          {/* LEFT COLUMN: Deep Emerald Card with Neon Halo Glow */}
+          <div className="flex-1 w-full bg-gradient-to-b from-[#0c3123] via-[#09261b] to-[#04150e] rounded-3xl p-6 sm:p-8 lg:p-8 text-white relative overflow-hidden shadow-[0_0_50px_rgba(16,185,129,0.22)] border border-emerald-500/40 flex flex-col justify-between">
+            {/* Subtle inner background pattern */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.12),transparent_60%)] pointer-events-none"></div>
 
-            {/* Top & Middle Foreground Content */}
-            <div className="relative z-10 space-y-4">
+            {/* Top & Middle Content */}
+            <div className="relative z-10 space-y-3.5">
               {/* Harvest Lot Pill */}
               <div>
-                <span className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-[10px] lg:text-[11px] font-mono tracking-widest text-white/95 uppercase shadow-inner">
-                  <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-amber-400/40 text-[10px] font-mono tracking-wider text-amber-300 uppercase shadow-inner">
+                  <MapPin className="w-3 h-3 text-amber-400 shrink-0" />
                   <span>HARVEST LOT #BRT-2024-EXP</span>
                 </span>
               </div>
 
-              {/* Urdu & English Titles - Grand & Bold */}
-              <div className="pt-2">
-                <h1 className="urdu-text text-4xl sm:text-5xl xl:text-[54px] font-black text-white tracking-wide !leading-tight drop-shadow-md" dir="rtl">
+              {/* Urdu Big Calligraphy Heading */}
+              <div className="pt-1">
+                <h1 className="urdu-text text-4xl sm:text-5xl lg:text-[52px] font-black text-white tracking-wide !leading-tight drop-shadow-md text-right" dir="rtl">
                   بخاری رائس ٹریڈرز
                 </h1>
-                <h2 className="text-sm sm:text-base font-bold text-white/95 tracking-wide mt-2">
+                <h2 className="text-sm sm:text-base font-bold text-white tracking-wide mt-1.5">
                   Bukhari Rice Traders • Est. 1988
                 </h2>
-                <p className="text-xs sm:text-sm text-white/80 leading-relaxed mt-2.5 font-normal max-w-xl">
+                <p className="text-xs text-emerald-100/80 leading-relaxed mt-2 font-normal max-w-lg">
                   Leading exporters of authenticated Super Kernel & 1121 Steam Basmati consignments directly from the fertile Indus floodplains.
                 </p>
               </div>
 
               {/* Physical Spec Certificate Glass Card */}
-              <div className="bg-black/35 backdrop-blur-md border border-white/20 rounded-2xl p-4 sm:p-5 lg:p-6 shadow-lg space-y-2.5 mt-4">
+              <div className="bg-black/30 backdrop-blur-md border border-amber-400/30 rounded-2xl p-4 shadow-lg space-y-2 mt-3">
                 <div className="flex items-center space-x-2">
                   <Award className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="text-xs sm:text-sm font-bold text-white tracking-wide">
+                  <span className="text-xs font-bold text-amber-200 tracking-wide">
                     Physical Spec Certificate
                   </span>
                 </div>
 
-                <p className="text-[11px] sm:text-xs lg:text-[13px] italic text-white/85 leading-relaxed">
+                <p className="text-[11px] sm:text-xs italic text-white/90 leading-relaxed">
                   &ldquo;Supplying nature's unmatched aroma, average cooked grain elongation exceeding 8.35mm, strictly aged 18+ months.&rdquo;
                 </p>
 
-                <div className="pt-2.5 border-t border-white/10 flex items-center justify-between text-[10px] sm:text-[11px] font-mono tracking-wider font-bold text-amber-300 uppercase">
+                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono tracking-wider font-bold text-amber-400 uppercase">
                   <span>LOT VARIETY: SUPER KERNEL</span>
                   <span>MOISTURE: &le; 11.8%</span>
                 </div>
               </div>
             </div>
 
-            {/* Bottom 3 Stat Boxes Grid */}
-            <div className="relative z-10 grid grid-cols-3 gap-3 pt-6">
-              <div className="bg-black/40 backdrop-blur-md border border-white/15 rounded-2xl p-3 sm:p-4 text-center shadow-inner">
-                <div className="text-2xl sm:text-3xl font-black text-amber-400 font-mono tracking-tight leading-none">
+            {/* Bottom 3 Stat Boxes Grid - Light 3D Glossy Cards with Golden Metallic Numbers */}
+            <div className="relative z-10 grid grid-cols-3 gap-3 pt-5">
+              {/* Stat 1 */}
+              <div className="bg-gradient-to-b from-[#fbfcfd] to-[#e4e7eb] rounded-2xl p-3 text-center shadow-md border border-white/80">
+                <div className="text-2xl sm:text-3xl font-black bg-gradient-to-b from-amber-500 via-amber-600 to-amber-700 bg-clip-text text-transparent font-mono tracking-tight leading-none drop-shadow-xs">
                   40+
                 </div>
-                <div className="text-[10px] sm:text-[11px] text-white/75 font-semibold uppercase tracking-wider mt-1.5">
+                <div className="text-[10px] text-slate-600 font-extrabold uppercase tracking-wider mt-1.5">
                   Global Dest.
                 </div>
               </div>
 
-              <div className="bg-black/40 backdrop-blur-md border border-white/15 rounded-2xl p-3 sm:p-4 text-center shadow-inner">
-                <div className="text-2xl sm:text-3xl font-black text-amber-400 font-mono tracking-tight leading-none">
+              {/* Stat 2 */}
+              <div className="bg-gradient-to-b from-[#fbfcfd] to-[#e4e7eb] rounded-2xl p-3 text-center shadow-md border border-white/80">
+                <div className="text-2xl sm:text-3xl font-black bg-gradient-to-b from-amber-500 via-amber-600 to-amber-700 bg-clip-text text-transparent font-mono tracking-tight leading-none drop-shadow-xs">
                   100%
                 </div>
-                <div className="text-[10px] sm:text-[11px] text-white/75 font-semibold uppercase tracking-wider mt-1.5">
+                <div className="text-[10px] text-slate-600 font-extrabold uppercase tracking-wider mt-1.5">
                   Pure Basmati
                 </div>
               </div>
 
-              <div className="bg-black/40 backdrop-blur-md border border-white/15 rounded-2xl p-3 sm:p-4 text-center shadow-inner">
-                <div className="text-2xl sm:text-3xl font-black text-amber-400 font-mono tracking-tight leading-none">
+              {/* Stat 3 */}
+              <div className="bg-gradient-to-b from-[#fbfcfd] to-[#e4e7eb] rounded-2xl p-3 text-center shadow-md border border-white/80">
+                <div className="text-2xl sm:text-3xl font-black bg-gradient-to-b from-amber-500 via-amber-600 to-amber-700 bg-clip-text text-transparent font-mono tracking-tight leading-none drop-shadow-xs">
                   ISO
                 </div>
-                <div className="text-[10px] sm:text-[11px] text-white/75 font-semibold uppercase tracking-wider mt-1.5">
+                <div className="text-[10px] text-slate-600 font-extrabold uppercase tracking-wider mt-1.5">
                   & Halal Audit
                 </div>
               </div>
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Terminal Access Form Card - Generous & Balanced */}
-          <div className="w-full lg:w-[460px] xl:w-[490px] shrink-0 bg-white rounded-3xl shadow-2xl border border-slate-100 p-7 sm:p-9 xl:p-10 flex flex-col justify-between">
+          {/* RIGHT COLUMN: Terminal Access White Frosted Card */}
+          <div className="w-full lg:w-[450px] shrink-0 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/90 p-7 sm:p-8 flex flex-col justify-between">
             
-            {/* Card Top Title Row - Perfectly Aligned */}
+            {/* Card Header */}
             <div>
               <div className="flex items-start justify-between">
-                <div className="pr-3">
-                  <h2 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-900 tracking-tight leading-none">
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
                     Terminal Access
                   </h2>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-2.5 leading-normal">
+                  <p className="text-xs text-slate-500 mt-2 leading-normal">
                     Sign in to access export orders, consignments, and mill dispatches.
                   </p>
                 </div>
-                <span className="urdu-text text-3xl xl:text-4xl font-black text-[#9c591e] shrink-0 !leading-none select-none" dir="rtl">
+                <span className="urdu-text text-3xl sm:text-4xl font-black text-[#9c591e] shrink-0 !leading-none select-none" dir="rtl">
                   لاگ ان
                 </span>
               </div>
 
               {/* Form Inputs */}
-              <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5 mt-6 sm:mt-8">
+              <form onSubmit={handleLogin} className="space-y-4 mt-6">
                 {/* Email Field */}
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs sm:text-sm font-bold text-slate-700">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-slate-700">
                       Email or Trader ID
                     </label>
-                    <span className="urdu-text text-xs sm:text-sm font-bold text-slate-400 !leading-none" dir="rtl">
+                    <span className="urdu-text text-xs font-bold text-slate-400 !leading-none" dir="rtl">
                       ای میل
                     </span>
                   </div>
                   <div className="relative flex items-center bg-[#f0f4f9] rounded-xl border border-slate-200/90 focus-within:border-emerald-700 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-700/20 transition-all">
-                    <div className="pl-4 pr-1.5 text-slate-400 pointer-events-none">
+                    <div className="pl-3.5 pr-1.5 text-slate-400 pointer-events-none">
                       <AtSign className="w-4 h-4 text-slate-400" />
                     </div>
                     <input
@@ -216,23 +222,23 @@ export const LoginScreen: React.FC = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="trade.partner@gulfcommodities.ae"
-                      className="w-full py-3.5 pr-4 text-xs sm:text-sm font-medium text-slate-800 bg-transparent focus:outline-hidden placeholder:text-slate-400"
+                      className="w-full py-3 pr-3 text-xs sm:text-sm font-medium text-slate-800 bg-transparent focus:outline-hidden placeholder:text-slate-400"
                     />
                   </div>
                 </div>
 
                 {/* Password Field */}
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs sm:text-sm font-bold text-slate-700">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-slate-700">
                       Password
                     </label>
-                    <span className="urdu-text text-xs sm:text-sm font-bold text-slate-400 !leading-none" dir="rtl">
+                    <span className="urdu-text text-xs font-bold text-slate-400 !leading-none" dir="rtl">
                       پاس ورڈ
                     </span>
                   </div>
                   <div className="relative flex items-center bg-[#f0f4f9] rounded-xl border border-slate-200/90 focus-within:border-emerald-700 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-700/20 transition-all">
-                    <div className="pl-4 pr-1.5 text-slate-400 pointer-events-none">
+                    <div className="pl-3.5 pr-1.5 text-slate-400 pointer-events-none">
                       <Lock className="w-4 h-4 text-slate-400" />
                     </div>
                     <input
@@ -241,12 +247,12 @@ export const LoginScreen: React.FC = () => {
                       value={password}
                       onChange={handlePasswordChange}
                       placeholder="••••••••••••••"
-                      className="w-full py-3.5 pr-11 text-xs sm:text-sm font-medium text-slate-800 bg-transparent focus:outline-hidden tracking-wider"
+                      className="w-full py-3 pr-10 text-xs sm:text-sm font-medium text-slate-800 bg-transparent focus:outline-hidden tracking-wider"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 text-slate-400 hover:text-slate-600 cursor-pointer p-1 transition-colors"
+                      className="absolute right-3 text-slate-400 hover:text-slate-600 cursor-pointer p-1 transition-colors"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -254,7 +260,7 @@ export const LoginScreen: React.FC = () => {
                 </div>
 
                 {/* Remember me & Forgot Password Row */}
-                <div className="flex items-center justify-between text-xs sm:text-sm pt-1">
+                <div className="flex items-center justify-between text-xs pt-1">
                   <label className="flex items-center space-x-2 cursor-pointer select-none">
                     <input
                       type="checkbox"
@@ -273,14 +279,14 @@ export const LoginScreen: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Sign In Button */}
+                {/* Sign In Button with subtle gold border & rich emerald gradient */}
                 <div className="pt-2">
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-[#0b4330] hover:bg-[#072e21] active:scale-98 text-white py-4 px-5 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center space-x-2.5 shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
+                    className="w-full bg-gradient-to-r from-[#0c3c2b] via-[#093223] to-[#07281c] hover:from-[#093022] hover:to-[#052017] active:scale-98 text-white py-3.5 px-5 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center space-x-2.5 shadow-lg border border-emerald-500/40 transition-all cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
                   >
-                    <LogIn className="w-4 h-4 text-white shrink-0" />
+                    <LogIn className="w-4 h-4 text-emerald-300 shrink-0" />
                     <span>Sign In • لاگ ان کریں</span>
                   </button>
                 </div>
@@ -298,7 +304,6 @@ export const LoginScreen: React.FC = () => {
 
         </div>
       </main>
-
     </div>
   );
 };
