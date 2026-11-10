@@ -130,8 +130,8 @@ export const ReceiptPrintModal: React.FC = () => {
 
             {/* Footer */}
             <div className="text-center text-[9px] text-slate-600 space-y-1">
-              <p className="urdu-text font-semibold text-slate-800" dir="rtl">
-                چاول خریدنے کا شکریہ! برائے مہربانی اپنا سامان کاؤنٹر پر ہی چیک فرما لیں۔
+              <p className="urdu-text font-semibold text-slate-800 text-[10px]" dir="rtl">
+                چاول خریدنے کا شکریہ! خریدا ہوا مال واپس اور تبدیل ہر بار ہو جائے گا۔
               </p>
               <p>NO CREDIT / SPOT CASH SETTLEMENT ONLY</p>
               <p className="text-[8px] text-slate-400 mt-2">Powered by Bukhari Rice ERP System</p>
