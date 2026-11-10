@@ -122,7 +122,7 @@ export const ScaleTerminal: React.FC = () => {
               >
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} - PKR {p.ratePerKg}/kg
+                    {p.name} - PKR {p.ratePerKg} {p.unitLabel || '/kg'}
                   </option>
                 ))}
               </select>
