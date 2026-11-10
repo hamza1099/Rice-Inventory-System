@@ -6,7 +6,8 @@ import {
   Boxes,
   CheckCircle2,
   Users,
-  Settings
+  Settings,
+  BookOpen
 } from 'lucide-react';
 import { RouteName } from '../../routes/RouteName';
 
@@ -28,6 +29,9 @@ export const Sidebar: React.FC = () => {
       } else if (e.key === 'F4') {
         e.preventDefault();
         navigate(RouteName.DAY_END);
+      } else if (e.key === 'F5') {
+        e.preventDefault();
+        navigate(RouteName.KHATA);
       } else if (e.key === 'F8') {
         e.preventDefault();
         navigate(RouteName.USER_MANAGEMENT);
@@ -61,6 +65,13 @@ export const Sidebar: React.FC = () => {
       urdu: 'گودام و سٹاک',
       key: 'F3',
       icon: Boxes
+    },
+    {
+      to: RouteName.KHATA,
+      label: 'Customer Khata (ادھار)',
+      urdu: 'ادھار کھاتہ رجسٹر',
+      key: 'F5',
+      icon: BookOpen
     },
     {
       to: RouteName.DAY_END,

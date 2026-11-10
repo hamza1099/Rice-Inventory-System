@@ -5,6 +5,7 @@ import { PosCounterScreen } from "../screens/PosCounterScreen";
 import { DailyMemoScreen } from "../screens/DailyMemoScreen";
 import { StockInventoryScreen } from "../screens/StockInventoryScreen";
 import { DayEndClosingScreen } from "../screens/DayEndClosingScreen";
+import { CustomerKhataScreen } from "../screens/CustomerKhataScreen";
 import { UserManagementScreen } from "../screens/UserManagementScreen";
 import { SystemSettingsScreen } from "../screens/SystemSettingsScreen";
 
@@ -33,6 +34,10 @@ export const AppRoute: RouteConfig[] = [
   {
     path: RouteName.DAY_END,
     element: DayEndClosingScreen,
+  },
+  {
+    path: RouteName.KHATA,
+    element: CustomerKhataScreen,
   },
   {
     path: RouteName.USER_MANAGEMENT,

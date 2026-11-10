@@ -1,6 +1,17 @@
 import React, { createContext, useContext, useState } from 'react';
-import type { Product, CartItem, MemoRecord, InventoryItem, DenominationRow, ImagePreviewData } from '../types';
+import type {
+  Product,
+  CartItem,
+  MemoRecord,
+  InventoryItem,
+  DenominationRow,
+  ImagePreviewData,
+  KhataCustomer,
+  KhataTransaction,
+  KhataItemEntry
+} from '../types';
 import { INITIAL_PRODUCTS, INITIAL_MEMOS, INITIAL_INVENTORY, INITIAL_DENOMINATIONS } from '../data/mockData';
+import { INITIAL_KHATA_CUSTOMERS, INITIAL_KHATA_TRANSACTIONS } from '../data/mockKhataData';
 
 interface PosContextType {
   // Products & Cart
@@ -68,6 +79,39 @@ interface PosContextType {
   setImagePreview: (data: ImagePreviewData | null) => void;
   openImagePreview: (data: ImagePreviewData) => void;
   closeImagePreview: () => void;
+
+  // Khata / Udhar Customer Book
+  khataCustomers: KhataCustomer[];
+  khataTransactions: KhataTransaction[];
+  selectedKhataCustomerId: string | null;
+  setSelectedKhataCustomerId: (id: string | null) => void;
+  addKhataCustomer: (data: {
+    customerName: string;
+    urduName?: string;
+    shopName: string;
+    phone: string;
+    address: string;
+    creditLimit?: number;
+    openingBalance?: number;
+    notes?: string;
+  }) => KhataCustomer;
+  updateKhataCustomer: (id: string, updated: Partial<KhataCustomer>) => void;
+  deleteKhataCustomer: (id: string) => void;
+  addKhataPurchase: (
+    customerId: string,
+    amount: number,
+    description: string,
+    items?: KhataItemEntry[],
+    notes?: string
+  ) => void;
+  addKhataPayment: (
+    customerId: string,
+    amount: number,
+    paymentMode: 'CASH' | 'RAAST' | 'BANK' | 'CHEQUE',
+    notes?: string,
+    referenceNo?: string
+  ) => void;
+  deleteKhataTransaction: (txId: string) => void;
 }
 
 const PosContext = createContext<PosContextType | undefined>(undefined);
@@ -149,6 +193,203 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const closeImagePreview = () => {
     setImagePreview(null);
+  };
+
+  // ==================== KHATA / UDHAR CUSTOMER BOOK ====================
+  const [khataCustomers, setKhataCustomers] = useState<KhataCustomer[]>(INITIAL_KHATA_CUSTOMERS);
+  const [khataTransactions, setKhataTransactions] = useState<KhataTransaction[]>(INITIAL_KHATA_TRANSACTIONS);
+  const [selectedKhataCustomerId, setSelectedKhataCustomerId] = useState<string | null>(
+    INITIAL_KHATA_CUSTOMERS[0]?.id || null
+  );
+
+  const addKhataCustomer = (data: {
+    customerName: string;
+    urduName?: string;
+    shopName: string;
+    phone: string;
+    address: string;
+    creditLimit?: number;
+    openingBalance?: number;
+    notes?: string;
+  }): KhataCustomer => {
+    const openingBal = data.openingBalance || 0;
+    const newCust: KhataCustomer = {
+      id: `khata-cust-${Date.now()}`,
+      customerName: data.customerName.trim(),
+      urduName: data.urduName?.trim() || data.customerName.trim(),
+      shopName: data.shopName.trim(),
+      phone: data.phone.trim(),
+      address: data.address.trim(),
+      creditLimit: data.creditLimit || 50000,
+      totalDebit: openingBal,
+      totalCredit: 0,
+      currentBalance: openingBal,
+      status: openingBal > 0 ? 'ACTIVE' : 'SETTLED',
+      createdAt: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      lastTransactionDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      notes: data.notes?.trim() || ''
+    };
+
+    setKhataCustomers((prev) => [newCust, ...prev]);
+    setSelectedKhataCustomerId(newCust.id);
+
+    if (openingBal > 0) {
+      const now = new Date();
+      const openTx: KhataTransaction = {
+        id: `tx-${Date.now()}`,
+        customerId: newCust.id,
+        dateStr: now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        timeStr: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} PKT`,
+        timestamp: Date.now(),
+        type: 'OPENING_BALANCE',
+        description: 'سابقہ پرانا کھاتہ (Opening Balance Brought Forward)',
+        debit: openingBal,
+        credit: 0,
+        balanceAfter: openingBal,
+        notes: 'Initial balance recorded at account opening'
+      };
+      setKhataTransactions((prev) => [openTx, ...prev]);
+    }
+
+    return newCust;
+  };
+
+  const updateKhataCustomer = (id: string, updated: Partial<KhataCustomer>) => {
+    setKhataCustomers((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, ...updated } : c))
+    );
+  };
+
+  const deleteKhataCustomer = (id: string) => {
+    setKhataCustomers((prev) => prev.filter((c) => c.id !== id));
+    setKhataTransactions((prev) => prev.filter((tx) => tx.customerId !== id));
+    if (selectedKhataCustomerId === id) {
+      const remaining = khataCustomers.filter((c) => c.id !== id);
+      setSelectedKhataCustomerId(remaining[0]?.id || null);
+    }
+  };
+
+  const addKhataPurchase = (
+    customerId: string,
+    amount: number,
+    description: string,
+    items?: KhataItemEntry[],
+    notes?: string
+  ) => {
+    const cust = khataCustomers.find((c) => c.id === customerId);
+    if (!cust) return;
+
+    const newBalance = cust.currentBalance + amount;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} PKT`;
+
+    const newTx: KhataTransaction = {
+      id: `tx-${Date.now()}`,
+      customerId,
+      dateStr,
+      timeStr,
+      timestamp: Date.now(),
+      type: 'PURCHASE',
+      description,
+      items,
+      debit: amount,
+      credit: 0,
+      balanceAfter: newBalance,
+      referenceNo: `INV-${Math.floor(10000 + Math.random() * 90000)}`,
+      notes
+    };
+
+    setKhataTransactions((prev) => [newTx, ...prev]);
+
+    setKhataCustomers((prev) =>
+      prev.map((c) => {
+        if (c.id === customerId) {
+          return {
+            ...c,
+            totalDebit: c.totalDebit + amount,
+            currentBalance: newBalance,
+            status: newBalance > 0 ? 'ACTIVE' : 'SETTLED',
+            lastTransactionDate: dateStr
+          };
+        }
+        return c;
+      })
+    );
+  };
+
+  const addKhataPayment = (
+    customerId: string,
+    amount: number,
+    paymentMode: 'CASH' | 'RAAST' | 'BANK' | 'CHEQUE',
+    notes?: string,
+    referenceNo?: string
+  ) => {
+    const cust = khataCustomers.find((c) => c.id === customerId);
+    if (!cust) return;
+
+    const newBalance = Math.max(0, cust.currentBalance - amount);
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} PKT`;
+
+    const newTx: KhataTransaction = {
+      id: `tx-${Date.now()}`,
+      customerId,
+      dateStr,
+      timeStr,
+      timestamp: Date.now(),
+      type: 'PAYMENT',
+      description: `وصولی رقم (${paymentMode}): PKR ${amount.toLocaleString()} ادا کی گئی`,
+      debit: 0,
+      credit: amount,
+      balanceAfter: newBalance,
+      paymentMode,
+      referenceNo: referenceNo || `RCPT-${Math.floor(100 + Math.random() * 900)}`,
+      notes
+    };
+
+    setKhataTransactions((prev) => [newTx, ...prev]);
+
+    setKhataCustomers((prev) =>
+      prev.map((c) => {
+        if (c.id === customerId) {
+          return {
+            ...c,
+            totalCredit: c.totalCredit + amount,
+            currentBalance: newBalance,
+            status: newBalance <= 0 ? 'SETTLED' : 'ACTIVE',
+            lastTransactionDate: dateStr
+          };
+        }
+        return c;
+      })
+    );
+  };
+
+  const deleteKhataTransaction = (txId: string) => {
+    const tx = khataTransactions.find((t) => t.id === txId);
+    if (!tx) return;
+
+    setKhataTransactions((prev) => prev.filter((t) => t.id !== txId));
+
+    setKhataCustomers((prev) =>
+      prev.map((c) => {
+        if (c.id === tx.customerId) {
+          const newDebit = tx.type === 'PURCHASE' ? c.totalDebit - tx.debit : c.totalDebit;
+          const newCredit = tx.type === 'PAYMENT' ? c.totalCredit - tx.credit : c.totalCredit;
+          const newBalance = Math.max(0, newDebit - newCredit);
+          return {
+            ...c,
+            totalDebit: newDebit,
+            totalCredit: newCredit,
+            currentBalance: newBalance,
+            status: newBalance <= 0 ? 'SETTLED' : 'ACTIVE'
+          };
+        }
+        return c;
+      })
+    );
   };
 
   const addToCart = (newItem: CartItem) => {
@@ -436,7 +677,17 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         imagePreview,
         setImagePreview,
         openImagePreview,
-        closeImagePreview
+        closeImagePreview,
+        khataCustomers,
+        khataTransactions,
+        selectedKhataCustomerId,
+        setSelectedKhataCustomerId,
+        addKhataCustomer,
+        updateKhataCustomer,
+        deleteKhataCustomer,
+        addKhataPurchase,
+        addKhataPayment,
+        deleteKhataTransaction
       }}
     >
       {children}

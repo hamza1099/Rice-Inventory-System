@@ -99,3 +99,48 @@ export interface ImagePreviewData {
   product?: Product;
 }
 
+// ==================== KHATA / UDHAR LEDGER TYPES ====================
+export interface KhataItemEntry {
+  productName: string;
+  urduName?: string;
+  quantity: number;
+  unit: string;
+  rate: number;
+  subtotal: number;
+}
+
+export interface KhataTransaction {
+  id: string;
+  customerId: string;
+  dateStr: string;
+  timeStr: string;
+  timestamp: number;
+  type: 'PURCHASE' | 'PAYMENT' | 'OPENING_BALANCE';
+  description: string;
+  items?: KhataItemEntry[];
+  debit: number; // Amount added to udhar (بنام)
+  credit: number; // Amount paid / received (جمع)
+  balanceAfter: number; // Running balance after this entry
+  paymentMode?: 'CASH' | 'RAAST' | 'BANK' | 'CHEQUE';
+  referenceNo?: string;
+  notes?: string;
+}
+
+export interface KhataCustomer {
+  id: string;
+  customerName: string;
+  urduName?: string;
+  shopName: string;
+  phone: string;
+  address: string;
+  creditLimit?: number;
+  totalDebit: number; // Total purchases
+  totalCredit: number; // Total payments received
+  currentBalance: number; // Remaining balance
+  status: 'ACTIVE' | 'SETTLED';
+  createdAt: string;
+  lastTransactionDate?: string;
+  notes?: string;
+}
+
+
