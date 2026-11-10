@@ -56,7 +56,7 @@ export const LoginScreen: React.FC = () => {
   };
 
   const handleForgotPassword = () => {
-    notifyInfo('Please contact Terminal Supervisor (Haji Bilal Bukhari: 0301-4421882) or Trade Desk to reset credentials.');
+    notifyInfo('Please contact Terminal Supervisor (0331-7726262) or Trade Desk to reset credentials.');
   };
 
   return (
@@ -297,7 +297,7 @@ export const LoginScreen: React.FC = () => {
             <div className="mt-6 text-center text-xs text-slate-500 font-medium">
               Need support?{' '}
               <span className="text-slate-800 font-bold hover:underline cursor-pointer">
-                Contact Trade Desk (+92 042 3578-RICE)
+                Contact Trade Desk (0331-7726262)
               </span>
             </div>
           </div>
