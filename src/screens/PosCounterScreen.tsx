@@ -70,9 +70,9 @@ export const PosCounterScreen: React.FC = () => {
 
           <div className="flex items-center space-x-1.5 text-slate-700 font-semibold text-[11px]">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
-            <span>Strict Cash/Raast Counter</span>
+            <span>Mandi Trading Terminal</span>
             <span className="urdu-text text-slate-500 font-bold" dir="rtl">
-              (فوری نقد اور راست ادائیگی - ادھار مکمل بند ہے)
+              (نقد، راست و منظور شدہ ادھار کھاتہ سہولت)
             </span>
           </div>
         </div>
