@@ -45,11 +45,17 @@ export const ReceiptPrintModal: React.FC = () => {
             className="w-[280px] bg-white p-4 shadow-sm border border-slate-200 text-slate-900 font-mono text-[11px] leading-tight select-text"
           >
             {/* Header */}
-            <div className="text-center border-b border-dashed border-slate-400 pb-2 mb-2">
-              <h2 className="text-sm font-bold tracking-tight">BUKHARI RICE TRADERS</h2>
-              <p className="urdu-text text-xs text-slate-800 font-semibold" dir="rtl">بخاری رائس ٹریڈرز</p>
-              <p className="text-[9px] text-slate-600">G.T. Road, New Grain Market, Lahore</p>
-              <p className="text-[9px] text-slate-600">Phone: 0300-8452199 • NTN: 489210-4</p>
+            <div className="text-center border-b border-dashed border-slate-400 pb-3 mb-2.5">
+              <h2 className="text-sm font-bold tracking-wide">BUKHARI RICE TRADERS</h2>
+              <div className="py-1.5">
+                <p className="urdu-text text-sm text-slate-800 font-bold !leading-tight" dir="rtl">
+                  بخاری رائس ٹریڈرز
+                </p>
+              </div>
+              <div className="pt-0.5 space-y-0.5">
+                <p className="text-[9px] text-slate-600">G.T. Road, New Grain Market, Lahore</p>
+                <p className="text-[9px] text-slate-600">Phone: 0300-8452199 • NTN: 489210-4</p>
+              </div>
             </div>
 
             {/* Receipt Metadata */}
@@ -129,12 +135,14 @@ export const ReceiptPrintModal: React.FC = () => {
             </div>
 
             {/* Footer */}
-            <div className="text-center text-[9px] text-slate-600 space-y-1">
-              <p className="urdu-text font-semibold text-slate-800 text-[10px]" dir="rtl">
-                چاول خریدنے کا شکریہ! خریدا ہوا مال واپس اور تبدیل ہر بار ہو جائے گا۔
-              </p>
-              <p className="text-[10px] text-emerald-800 font-medium">Bukhari Rice Traders • 100% کوالٹی و وزن گارنٹی</p>
-              <p className="text-[8px] text-slate-400 mt-2">Powered by Bukhari Rice ERP System</p>
+            <div className="text-center text-[9px] text-slate-600 pt-2 space-y-1 border-t border-dashed border-slate-300">
+              <div className="py-1">
+                <p className="urdu-text font-bold text-slate-800 text-[11px] !leading-normal" dir="rtl">
+                  چاول خریدنے کا شکریہ! خریدا ہوا مال واپس اور تبدیل ہر بار ہو جائے گا۔
+                </p>
+              </div>
+              <p className="text-[10px] text-emerald-800 font-bold">Bukhari Rice Traders • 100% کوالٹی و وزن گارنٹی</p>
+              <p className="text-[8px] text-slate-400 mt-1">Powered by Bukhari Rice ERP System</p>
             </div>
           </div>
         </div>
