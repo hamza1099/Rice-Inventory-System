@@ -10,7 +10,8 @@ interface DrawerAuditCardProps {
 
 export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({ activePeriod = 'today' }) => {
   const navigate = useNavigate();
-  const { isDayClosed } = usePos();
+  const { isDayClosed, openingFloat, language } = usePos();
+  const isUr = language === 'ur';
 
   // Show active handover ONLY for today's unclosed shift
   const isCurrentUnclosedDay = activePeriod === 'today' && !isDayClosed;
@@ -23,12 +24,14 @@ export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({ activePeriod =
           <div className="flex items-center space-x-2">
             <ShieldCheck className="w-4 h-4 text-emerald-700" />
             <h3 className="font-extrabold text-sm text-slate-900 tracking-tight">
-              Shift Reconciliation & Drawer Audit
+              {isUr ? 'شفٹ حساب و گلہ آڈٹ' : 'Shift Reconciliation & Drawer Audit'}
             </h3>
           </div>
           <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
             <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-            <span>ALL SPOT INVOICES MATCHED • ZERO DISCREPANCY</span>
+            <span>
+              {isUr ? 'تمام رسیدیں درست • صفر فرق' : 'ALL SPOT INVOICES MATCHED • ZERO DISCREPANCY'}
+            </span>
           </span>
         </div>
 
@@ -36,26 +39,34 @@ export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({ activePeriod =
         <div className="grid grid-cols-3 gap-3 font-mono-num bg-slate-50 p-2.5 rounded-lg border border-slate-100">
           <div>
             <span className="text-[10px] text-slate-500 font-sans block">
-              OPENING FLOAT (صبح کا کیش):
+              {isUr ? 'صبح کا ابتدائی کیش:' : 'OPENING FLOAT:'}
             </span>
-            <span className="text-base font-black text-slate-900">PKR 15,000</span>
-            <span className="text-[10px] text-slate-400 block font-sans">Base Change Float</span>
+            <span className="text-base font-black text-slate-900">
+              PKR {openingFloat.toLocaleString()}
+            </span>
+            <span className="text-[10px] text-slate-400 block font-sans">
+              {isUr ? 'ابتدائی فلوٹ' : 'Base Change Float'}
+            </span>
           </div>
 
           <div>
             <span className="text-[10px] text-slate-500 font-sans block">
-              DAY SPOT CASH (کاؤنٹر کیش):
+              {isUr ? 'کاؤنٹر نقد وصولی:' : 'DAY SPOT CASH:'}
             </span>
             <span className="text-base font-black text-emerald-800">PKR 112,000</span>
-            <span className="text-[10px] text-slate-400 block font-sans">68 Cash Vouchers</span>
+            <span className="text-[10px] text-slate-400 block font-sans">
+              {isUr ? '68 نقد واؤچرز' : '68 Cash Vouchers'}
+            </span>
           </div>
 
           <div>
             <span className="text-[10px] text-slate-500 font-sans block">
-              ONLINE RAAST SETTLEMENT:
+              {isUr ? 'آن لائن و راست وصولی:' : 'ONLINE RAAST SETTLEMENT:'}
             </span>
             <span className="text-base font-black text-blue-800">PKR 36,250</span>
-            <span className="text-[10px] text-slate-400 block font-sans">16 Verified IBFT</span>
+            <span className="text-[10px] text-slate-400 block font-sans">
+              {isUr ? '16 تصدیق شدہ راست' : '16 Verified IBFT'}
+            </span>
           </div>
         </div>
 
@@ -63,12 +74,12 @@ export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({ activePeriod =
         <div className="flex items-center justify-between border-t border-slate-100 pt-2 font-mono-num">
           <div>
             <span className="text-[10px] uppercase font-bold text-slate-500 font-sans block">
-              TOTAL PHYSICAL CASH FOR HANDOVER:
+              {isUr ? 'کل کیش برائے ہینڈ اوور:' : 'TOTAL PHYSICAL CASH FOR HANDOVER:'}
             </span>
             <div className="text-xl font-black text-slate-900">
-              PKR 127,000{' '}
+              PKR {(openingFloat + 112000).toLocaleString()}{' '}
               <span className="text-[11px] font-medium text-slate-500">
-                (Float 15,000 + Drawer 112,000)
+                (Float {openingFloat.toLocaleString()} + Drawer 112,000)
               </span>
             </div>
           </div>
@@ -155,7 +166,7 @@ export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({ activePeriod =
 
             <div className="w-full py-2 px-3 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-800 font-bold text-xs flex items-center justify-center space-x-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Shift Closed & Handed Over (شفت کلوز ہو چکی ہے)</span>
+              <span>{isUr ? 'شفٹ کلوز ہو چکی ہے' : 'Shift Closed & Handed Over'}</span>
             </div>
           </div>
         ) : (
@@ -165,32 +176,34 @@ export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({ activePeriod =
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider flex items-center gap-1">
                   <CalendarCheck className="w-3.5 h-3.5 text-slate-600" />
-                  ARCHIVED RECORD
+                  {isUr ? 'محفوظ شدہ ریکارڈ' : 'ARCHIVED RECORD'}
                 </span>
                 <span className="text-[9px] bg-slate-100 text-slate-600 font-bold px-1.5 py-0.5 rounded">
-                  CLOSED
+                  {isUr ? 'بند' : 'CLOSED'}
                 </span>
               </div>
 
               <p className="text-[11px] text-slate-600 leading-tight mb-2 font-sans">
-                Yeh pichli tareekh ka record hai. Is din ka day-end closing aur cash audit pehle se mukammal ho chuka hai.
+                {isUr
+                  ? 'یہ پچھلی تاریخ کا ریکارڈ ہے۔ اس دن کا روزانہ اختتام اور کیش آڈٹ مکمل ہو چکا ہے۔'
+                  : 'This is a past archived record. Day-end closing and cash audit are already completed for this date.'}
               </p>
 
               <div className="space-y-0.5 text-[10px] text-slate-500 bg-slate-50 p-2 rounded border border-slate-200 font-mono-num mb-2">
                 <div className="flex justify-between">
-                  <span>Status:</span>
-                  <strong className="text-slate-800">Audited & Reconciled</strong>
+                  <span>{isUr ? 'حالت:' : 'Status:'}</span>
+                  <strong className="text-slate-800">{isUr ? 'آڈٹ شدہ' : 'Audited & Reconciled'}</strong>
                 </div>
                 <div className="flex justify-between">
-                  <span>Register:</span>
-                  <strong className="text-slate-700">Sealed Past Ledger</strong>
+                  <span>{isUr ? 'رجسٹر:' : 'Register:'}</span>
+                  <strong className="text-slate-700">{isUr ? 'سیل شدہ روزنامچہ' : 'Sealed Past Ledger'}</strong>
                 </div>
               </div>
             </div>
 
             <div className="w-full py-2 px-3 rounded-lg bg-slate-100 border border-slate-200 text-slate-600 font-semibold text-xs flex items-center justify-center space-x-1.5">
               <Lock className="w-3.5 h-3.5 text-slate-400" />
-              <span>Past Day Closed (ماضی کا روزنامچہ کلوز ہے)</span>
+              <span>{isUr ? 'ماضی کا روزنامچہ کلوز ہے' : 'Past Day Closed'}</span>
             </div>
           </div>
         )}

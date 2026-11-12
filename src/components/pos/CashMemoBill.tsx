@@ -14,7 +14,8 @@ export const CashMemoBill: React.FC = () => {
     setPaymentMode,
     cashReceived,
     setCashReceived,
-    completeSale
+    completeSale,
+    language
   } = usePos();
 
   const [customerType, setCustomerType] = useState<string>('Spot Customer');
@@ -26,43 +27,42 @@ export const CashMemoBill: React.FC = () => {
 
   const handleCheckout = () => {
     if (cart.length === 0) {
-      notifyWarning('Cart is empty! Add products first. (بل میں چاول شامل کریں)');
+      notifyWarning(language === 'ur' ? 'بل خالی ہے! پہلے پروڈکٹس شامل کریں۔' : 'Cart is empty! Add products first.');
       return;
     }
     const sale = completeSale();
     if (sale) {
-      notifySuccess(`Cash Memo ${sale.memoNo} completed successfully!`);
+      notifySuccess(
+        language === 'ur'
+          ? `کیش میمو ${sale.memoNo} مکمل ہو گیا!`
+          : `Cash Memo ${sale.memoNo} completed successfully!`
+      );
     }
   };
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg shadow-xs flex flex-col justify-between h-full text-xs overflow-hidden">
       {/* Memo Header */}
-      <div className="shrink-0 p-3 border-b border-slate-200 bg-slate-50/70">
+      <div className="shrink-0 p-2.5 border-b border-slate-200 bg-slate-50/70 space-y-1.5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-black text-slate-900 tracking-tight font-mono-num">
-              Cash Memo #1085
-            </span>
-            <span className="flex items-center space-x-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-              <User className="w-2.5 h-2.5" />
-              <span>{customerType} •</span>
-            </span>
-          </div>
+          <span className="text-sm font-black text-slate-900 tracking-tight font-mono-num whitespace-nowrap">
+            {language === 'ur' ? 'کیش میمو #1085' : 'Cash Memo #1085'}
+          </span>
           <button
             onClick={clearCart}
-            title="Clear all rows"
-            className="text-[10px] text-red-600 hover:text-red-800 font-bold hover:underline cursor-pointer"
+            title={language === 'ur' ? 'تمام لسٹ خالی کریں' : 'Clear all rows'}
+            className="text-[10.5px] text-red-600 hover:text-red-800 font-bold hover:underline cursor-pointer whitespace-nowrap"
           >
-            Clear Bill [DEL]
+            {language === 'ur' ? 'بل صاف کریں [DEL]' : 'Clear Bill [DEL]'}
           </button>
         </div>
 
-        <div className="flex items-center justify-between text-[11px] text-slate-500 mt-1 font-mono-num">
-          <span>24 Oct 2024 • 14:32</span>
-          <span className="font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 text-[10px]">
-            AUTHORIZED TERMINAL BILLING
+        <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono-num">
+          <span className="inline-flex items-center space-x-1 text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap">
+            <User className="w-2.5 h-2.5 shrink-0" />
+            <span>{language === 'ur' ? 'عام گاہک (نقد)' : customerType}</span>
           </span>
+          <span className="text-[10.5px] text-slate-500 whitespace-nowrap">24 Oct 2024 • 14:32</span>
         </div>
       </div>
 
@@ -71,53 +71,62 @@ export const CashMemoBill: React.FC = () => {
         <table className="w-full text-left text-xs border-collapse">
           <thead className="bg-slate-100 text-slate-600 text-[10px] font-bold uppercase sticky top-0 border-b border-slate-200">
             <tr>
-              <th className="py-2 px-3">Item Description</th>
-              <th className="py-2 px-2 text-right">Rate</th>
-              <th className="py-2 px-2 text-right">Net Wt/Qty</th>
-              <th className="py-2 px-3 text-right">Amount (PKR)</th>
-              <th className="py-2 px-1 text-center w-8"></th>
+              <th className="py-2 px-2.5">{language === 'ur' ? 'تفصیل' : 'Item'}</th>
+              <th className="py-2 px-1 text-right">{language === 'ur' ? 'ریٹ' : 'Rate'}</th>
+              <th className="py-2 px-1.5 text-right">{language === 'ur' ? 'وزن' : 'Qty'}</th>
+              <th className="py-2 px-2 text-right">{language === 'ur' ? 'رقم' : 'Amount'}</th>
+              <th className="py-2 px-1 text-center w-6"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-mono-num">
             {cart.length === 0 ? (
               <tr>
                 <td colSpan={5} className="py-8 text-center text-slate-400">
-                  <p className="font-sans text-xs">No items added to current memo.</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Click "Weigh & Add" on any variety.</p>
+                  <p className="font-sans text-xs">
+                    {language === 'ur' ? 'بل میں کوئی آئٹم شامل نہیں ہے۔' : 'No items added to current memo.'}
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    {language === 'ur' ? 'کسی بھی پروڈکٹ پر "وزن کریں" پر کلک کریں۔' : 'Click "Weigh & Add" on any variety.'}
+                  </p>
                 </td>
               </tr>
             ) : (
               cart.map((item) => (
                 <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="py-2 px-3">
-                    <span className="font-bold text-slate-900 block leading-tight font-sans">
-                      {item.product.name}
-                    </span>
-                    <span className="urdu-text text-[10px] text-slate-500 block leading-none font-sans" dir="rtl">
-                      {item.product.urduName}
-                    </span>
+                  <td className="py-2 px-2.5">
+                    {language === 'ur' ? (
+                      <span className="urdu-text font-bold text-slate-900 block leading-tight text-[12px]" dir="rtl">
+                        {item.product.urduName || item.product.name}
+                      </span>
+                    ) : (
+                      <span className="font-bold text-slate-900 block leading-tight font-sans text-xs">
+                        {item.product.name}
+                      </span>
+                    )}
                     {item.tareWeight > 0 && (
                       <span className="text-[9px] text-slate-400 block font-sans">
-                        Tare: -{item.tareWeight.toFixed(2)} kg ({item.tareName})
+                        {language === 'ur'
+                          ? `کاٹ: -${item.tareWeight.toFixed(2)} کلو`
+                          : `Tare: -${item.tareWeight.toFixed(2)} kg`}
                       </span>
                     )}
                   </td>
-                  <td className="py-2 px-2 text-right text-slate-700 font-medium">
+                  <td className="py-2 px-1 text-right text-slate-700 font-medium text-[11px]">
                     {item.ratePerKg}
                   </td>
-                  <td className="py-2 px-2 text-right font-bold text-slate-900">
+                  <td className="py-2 px-1.5 text-right font-bold text-slate-900 text-[11px]">
                     {item.mode === 'packet'
-                      ? `${Math.round(item.netWeight)} ${item.product.unitLabel ? item.product.unitLabel.replace('/', '').trim() : 'pkt'}`
-                      : `${item.netWeight.toFixed(2)} kg`}
+                      ? `${Math.round(item.netWeight)}`
+                      : `${item.netWeight < 1 && item.netWeight > 0 ? parseFloat(item.netWeight.toFixed(3)) : item.netWeight.toFixed(2)} ${language === 'ur' ? 'کلو' : 'kg'}`}
                   </td>
-                  <td className="py-2 px-3 text-right font-extrabold text-slate-900">
+                  <td className="py-2 px-2 text-right font-extrabold text-slate-900 text-xs">
                     {Math.round(item.subtotal).toLocaleString()}
                   </td>
                   <td className="py-2 px-1 text-center">
                     <button
                       onClick={() => removeFromCart(item.id)}
-                      className="text-slate-400 hover:text-red-600 p-1 transition-colors"
-                      title="Void row"
+                      className="text-slate-400 hover:text-red-600 p-0.5 transition-colors cursor-pointer"
+                      title={language === 'ur' ? 'حذف کریں' : 'Void row'}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -134,13 +143,17 @@ export const CashMemoBill: React.FC = () => {
         {/* Calculations */}
         <div className="space-y-1 font-mono-num text-xs">
           <div className="flex items-center justify-between text-slate-600">
-            <span>Gross Subtotal ({totalNetKg.toFixed(2)} KG):</span>
+            <span>
+              {language === 'ur'
+                ? `کل میزان (${totalNetKg.toFixed(2)} کلو):`
+                : `Gross Subtotal (${totalNetKg.toFixed(2)} KG):`}
+            </span>
             <span className="font-bold text-slate-800">PKR {Math.round(grossSubtotal).toLocaleString()}</span>
           </div>
 
           <div className="flex items-center justify-between text-amber-800">
             <span className="flex items-center gap-1 font-sans text-[11px]">
-              Mandi Spot Rounding / Discount:
+              {language === 'ur' ? 'منڈی کٹوتی / رعایت:' : 'Mandi Spot Rounding / Discount:'}
             </span>
             <div className="flex items-center space-x-1">
               <span>- PKR</span>
@@ -155,7 +168,7 @@ export const CashMemoBill: React.FC = () => {
 
           <div className="flex items-baseline justify-between border-t border-slate-200 pt-2 text-slate-900">
             <span className="font-extrabold uppercase tracking-tight text-xs font-sans">
-              TOTAL PAYABLE:
+              {language === 'ur' ? 'کل واجب الادا:' : 'TOTAL PAYABLE:'}
             </span>
             <span className="text-2xl font-black text-emerald-800 tracking-tight">
               PKR {Math.round(totalPayable).toLocaleString()}
@@ -166,30 +179,30 @@ export const CashMemoBill: React.FC = () => {
         {/* Payment Channels (Spot Cash / Raast) */}
         <div>
           <span className="text-[10px] uppercase font-bold text-slate-500 block mb-1">
-            Payment Channel / طریقہ ادائیگی:
+            {language === 'ur' ? 'طریقہ ادائیگی:' : 'Payment Channel:'}
           </span>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
             <button
               onClick={() => setPaymentMode('SPOT CASH')}
-              className={`py-2 px-3 rounded-lg border font-bold text-xs flex items-center justify-center space-x-1.5 transition-all ${
+              className={`py-1.5 px-2 rounded-lg border font-bold text-xs flex items-center justify-center space-x-1 transition-all cursor-pointer ${
                 paymentMode === 'SPOT CASH'
                   ? 'bg-emerald-800 text-white border-emerald-900 shadow-xs'
                   : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
               }`}
             >
               <Banknote className="w-3.5 h-3.5" />
-              <span>Spot Cash [F8]</span>
+              <span>{language === 'ur' ? 'نقد رقم [F8]' : 'Cash [F8]'}</span>
             </button>
             <button
               onClick={() => setPaymentMode('RAAST ONLINE')}
-              className={`py-2 px-3 rounded-lg border font-bold text-xs flex items-center justify-center space-x-1.5 transition-all ${
+              className={`py-1.5 px-2 rounded-lg border font-bold text-xs flex items-center justify-center space-x-1 transition-all cursor-pointer ${
                 paymentMode === 'RAAST ONLINE'
                   ? 'bg-blue-800 text-white border-blue-900 shadow-xs'
                   : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
               }`}
             >
               <CreditCard className="w-3.5 h-3.5" />
-              <span>RAAST / Online [F7]</span>
+              <span>{language === 'ur' ? 'راست آن لائن [F7]' : 'RAAST [F7]'}</span>
             </button>
           </div>
         </div>
@@ -197,7 +210,9 @@ export const CashMemoBill: React.FC = () => {
         {/* Cash Tender & Change Due */}
         <div className="grid grid-cols-2 gap-2 font-mono-num bg-white p-2 rounded-lg border border-slate-200">
           <div>
-            <span className="text-[10px] text-slate-500 block font-sans">Cash Received (PKR):</span>
+            <span className="text-[10px] text-slate-500 block font-sans">
+              {language === 'ur' ? 'نقد وصولی:' : 'Cash Received:'}
+            </span>
             <input
               type="number"
               value={cashReceived}
@@ -206,7 +221,9 @@ export const CashMemoBill: React.FC = () => {
             />
           </div>
           <div>
-            <span className="text-[10px] text-slate-500 block font-sans">Change Due (بقایا رقم):</span>
+            <span className="text-[10px] text-slate-500 block font-sans">
+              {language === 'ur' ? 'بقایا رقم:' : 'Change Due:'}
+            </span>
             <div className="text-base font-black text-amber-700 mt-1.5">
               PKR {Math.round(changeDue).toLocaleString()}
             </div>
@@ -216,11 +233,13 @@ export const CashMemoBill: React.FC = () => {
         {/* Big Complete Sale CTA */}
         <button
           onClick={handleCheckout}
-          className="w-full py-3 px-4 rounded-lg bg-emerald-800 hover:bg-emerald-900 active:scale-98 text-white font-extrabold text-sm flex items-center justify-center space-x-2 shadow-md transition-all uppercase tracking-wide cursor-pointer"
+          className="w-full py-2.5 px-3 rounded-lg bg-emerald-800 hover:bg-emerald-900 active:scale-98 text-white font-extrabold text-xs flex items-center justify-center space-x-1.5 shadow-md transition-all uppercase tracking-wide cursor-pointer"
         >
-          <Printer className="w-4 h-4" />
-          <span>
-            Complete Sale & Print Receipt [ENTER] - PKR {Math.round(totalPayable).toLocaleString()}
+          <Printer className="w-4 h-4 shrink-0" />
+          <span className="truncate">
+            {language === 'ur'
+              ? `بل پرنٹ و مکمل کریں [ENTER] - PKR ${Math.round(totalPayable).toLocaleString()}`
+              : `Print Receipt [ENTER] - PKR ${Math.round(totalPayable).toLocaleString()}`}
           </span>
         </button>
       </div>

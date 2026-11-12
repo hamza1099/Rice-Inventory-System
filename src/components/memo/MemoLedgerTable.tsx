@@ -1,6 +1,6 @@
 import React from 'react';
 import type { MemoRecord } from '../../types';
-import { Printer, AlertCircle } from 'lucide-react';
+import { Printer } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 
 interface MemoLedgerTableProps {
@@ -12,17 +12,6 @@ export const MemoLedgerTable: React.FC<MemoLedgerTableProps> = ({ memos }) => {
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden text-xs">
-      {/* Policy Reminder Banner */}
-      <div className="bg-amber-50/70 border-b border-amber-200 px-4 py-1.5 flex items-center justify-between text-amber-900 text-[11px]">
-        <div className="flex items-center space-x-1.5 font-bold">
-          <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
-          <span>STRICT POLICY: NO CREDIT / KHATA (ادھار پر مال دینا سخت منع ہے)</span>
-        </div>
-        <span className="text-[10px] text-amber-800">
-          All counter sales recorded as instant settled transactions.
-        </span>
-      </div>
-
       {/* Main Data Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">

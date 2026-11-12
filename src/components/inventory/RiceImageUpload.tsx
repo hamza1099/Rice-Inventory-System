@@ -14,23 +14,30 @@ interface RiceImageUploadProps {
 export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
   imageUrl,
   onChange,
-  label = 'Product Image (پروڈکٹ تصویر):',
-  urduLabel = 'سامان یا چاول کی اصلی تصویر اپلوڈ کریں'
+  label,
+  urduLabel
 }) => {
-  const { openImagePreview } = usePos();
+  const { openImagePreview, language } = usePos();
+  const isUr = language === 'ur';
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const defaultLabel = isUr ? 'پروڈکٹ تصویر:' : 'Product Image:';
+  const defaultUrduSub = isUr ? 'سامان یا چاول کی اصلی تصویر اپلوڈ کریں' : 'Upload actual commodity or product photo';
+
+  const displayLabel = label || defaultLabel;
+  const displaySub = urduLabel || defaultUrduSub;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      notifyWarning('Please upload a valid image file (صرف تصویر فائل منتخب کریں)');
+      notifyWarning(isUr ? 'صرف تصویر فائل منتخب کریں' : 'Please upload a valid image file');
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      notifyWarning('Image size should be less than 5MB (تصویر 5 ایم بی سے کم ہونی چاہیے)');
+      notifyWarning(isUr ? 'تصویر 5 ایم بی سے کم ہونی چاہیے' : 'Image size should be less than 5MB');
       return;
     }
 
@@ -39,7 +46,7 @@ export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
       const base64 = event.target?.result as string;
       if (base64) {
         onChange(base64);
-        notifySuccess('Image uploaded successfully! (تصویر اپلوڈ ہو گئی)');
+        notifySuccess(isUr ? 'تصویر اپلوڈ ہو گئی!' : 'Image uploaded successfully!');
       }
     };
     reader.readAsDataURL(file);
@@ -58,10 +65,10 @@ export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
       <div className="flex items-center justify-between">
         <label className="text-[11px] font-bold text-slate-700 flex items-center space-x-1.5">
           <ImageIcon className="w-3.5 h-3.5 text-emerald-700" />
-          <span>{label}</span>
+          <span>{displayLabel}</span>
         </label>
-        <span className="urdu-text text-[11px] font-semibold text-emerald-800" dir="rtl">
-          {urduLabel}
+        <span className="text-[11px] font-semibold text-emerald-800 font-sans">
+          {displaySub}
         </span>
       </div>
 
@@ -95,14 +102,14 @@ export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
               onClick={() =>
                 openImagePreview({
                   imageUrl,
-                  title: label,
-                  urduTitle: urduLabel
+                  title: displayLabel,
+                  urduTitle: displaySub
                 })
               }
               className="px-2.5 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-[11px] shadow-xs cursor-pointer flex items-center space-x-1 transition-all"
             >
               <ZoomIn className="w-3.5 h-3.5" />
-              <span>Preview</span>
+              <span>{isUr ? 'بڑا کر کے دیکھیں' : 'Preview'}</span>
             </button>
             <button
               type="button"
@@ -110,7 +117,7 @@ export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
               className="px-3 py-1.5 rounded-lg bg-white/95 hover:bg-white text-slate-800 font-bold text-[11px] shadow-xs cursor-pointer flex items-center space-x-1 transition-all"
             >
               <UploadCloud className="w-3.5 h-3.5 text-emerald-700" />
-              <span>Change</span>
+              <span>{isUr ? 'تبدیل کریں' : 'Change'}</span>
             </button>
             <button
               type="button"
@@ -118,21 +125,21 @@ export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
               className="px-2.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] shadow-xs cursor-pointer flex items-center space-x-1 transition-all"
             >
               <X className="w-3.5 h-3.5" />
-              <span>Remove</span>
+              <span>{isUr ? 'ہٹائیں' : 'Remove'}</span>
             </button>
           </div>
 
           <div className="p-2 bg-emerald-50/90 border-t border-emerald-200 flex items-center justify-between text-[10px] text-emerald-900 font-semibold">
             <span className="flex items-center space-x-1">
               <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
-              <span>Photo Attached (تصویر منسلک ہے)</span>
+              <span>{isUr ? 'تصویر منسلک ہے' : 'Photo Attached'}</span>
             </span>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="text-emerald-700 hover:text-emerald-900 underline font-bold cursor-pointer"
             >
-              Replace
+              {isUr ? 'تبدیل کریں' : 'Replace'}
             </button>
           </div>
         </div>
@@ -146,10 +153,10 @@ export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
             <UploadCloud className="w-5 h-5 text-emerald-700" />
           </div>
           <span className="font-bold text-xs text-slate-800">
-            Click to Upload Item / Rice Photo (تصویر منتخب کریں)
+            {isUr ? 'چاول یا آئٹم کی تصویر اپلوڈ کریں' : 'Click to Upload Item / Rice Photo'}
           </span>
           <span className="text-[10px] text-slate-500 mt-0.5">
-            Supports JPG, PNG, WEBP (Max 5MB) • Crisp product photo
+            {isUr ? 'سپورٹ: JPG, PNG, WEBP (زیادہ سے زیادہ 5MB)' : 'Supports JPG, PNG, WEBP (Max 5MB) • Crisp product photo'}
           </span>
         </div>
       )}
@@ -159,7 +166,7 @@ export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
         <div className="flex items-center justify-between mb-1.5 text-[10px] text-slate-500 font-semibold">
           <span className="flex items-center space-x-1 text-slate-700">
             <Sparkles className="w-3 h-3 text-amber-500" />
-            <span>Or Pick from Catalog Samples (یا نمونہ منتخب کریں):</span>
+            <span>{isUr ? 'یا کیٹلاگ نمونہ منتخب کریں:' : 'Or Pick from Catalog Samples:'}</span>
           </span>
         </div>
         <div className="grid grid-cols-4 gap-1.5 max-h-24 overflow-y-auto pr-1">
@@ -169,7 +176,7 @@ export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
               type="button"
               onClick={() => {
                 onChange(preset.imageUrl);
-                notifySuccess(`Applied ${preset.name} photo!`);
+                notifySuccess(isUr ? `${preset.name} کی تصویر لگ گئی!` : `Applied ${preset.name} photo!`);
               }}
               className={`p-1 rounded-lg border text-left flex items-center space-x-1.5 transition-all cursor-pointer ${
                 imageUrl === preset.imageUrl

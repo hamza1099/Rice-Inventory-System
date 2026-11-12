@@ -13,7 +13,8 @@ interface EditVarietyModalProps {
 }
 
 export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClose, onDelete }) => {
-  const { updateInventoryItem, deleteInventoryItem } = usePos();
+  const { updateInventoryItem, deleteInventoryItem, language } = usePos();
+  const isUr = language === 'ur';
 
   const [varietyName, setVarietyName] = useState<string>('');
   const [urduName, setUrduName] = useState<string>('');
@@ -96,7 +97,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!varietyName.trim()) {
-      notifyWarning('Please enter variety name (چاول کا نام درج کریں)');
+      notifyWarning(isUr ? 'چاول کا نام درج کریں' : 'Please enter variety name');
       return;
     }
 
@@ -114,19 +115,23 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
       qualityNotes: qualityNotes.trim()
     });
 
-    notifySuccess(`Rates & Details updated successfully for ${varietyName}!`);
+    notifySuccess(isUr ? `${varietyName} کے ریٹ و تفصیل کامیابی سے تبدیل ہو گئے!` : `Rates & Details updated successfully for ${varietyName}!`);
     onClose();
   };
 
   const handleDelete = () => {
-    const confirm = window.confirm(`Are you sure you want to delete ${item.varietyName} from inventory?`);
+    const confirm = window.confirm(
+      isUr
+        ? `کیا آپ واقعی ${item.varietyName} کو لسٹ سے حذف کرنا چاہتے ہیں؟`
+        : `Are you sure you want to delete ${item.varietyName} from inventory?`
+    );
     if (confirm) {
       if (onDelete) {
         onDelete(item.id);
       } else {
         deleteInventoryItem(item.id);
       }
-      notifyInfo(`${item.varietyName} removed from inventory.`);
+      notifyInfo(isUr ? `${item.varietyName} گودام لسٹ سے نکال دیا گیا۔` : `${item.varietyName} removed from inventory.`);
       onClose();
     }
   };
@@ -140,7 +145,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
             <DollarSign className="w-5 h-5 text-emerald-400" />
             <div>
               <h3 className="font-bold text-sm">
-                Edit Variety & Adjust Rates (چاول کی تفصیل و ریٹ تبدیل کریں)
+                {isUr ? 'چاول کی تفصیل و ریٹ تبدیل کریں' : 'Edit Variety & Adjust Rates'}
               </h3>
               <p className="text-[11px] text-slate-300 font-mono">
                 {item.sku} • {item.varietyName}
@@ -158,7 +163,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                Variety Name (انگریزی نام):
+                {isUr ? 'انگریزی نام:' : 'Variety Name:'}
               </label>
               <input
                 type="text"
@@ -171,25 +176,26 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-[11px] font-bold text-slate-700">
-                  Urdu Name (اردو نام):
+                <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                  <span>{isUr ? 'اردو نام:' : 'Urdu Name:'}</span>
                 </label>
                 <button
                   type="button"
                   onClick={() => setUrduName(transliterateEnglishToUrduName(varietyName))}
-                  className="text-[10px] text-emerald-700 hover:text-emerald-900 font-semibold cursor-pointer flex items-center gap-0.5"
-                  title="خودکار ترجمہ کریں"
+                  className="text-[10px] text-emerald-700 hover:text-emerald-900 font-semibold cursor-pointer flex items-center gap-0.5 underline"
+                  title={isUr ? 'خودکار ترجمہ کریں' : 'Auto Transliterator'}
                 >
-                  <Sparkles className="w-2.5 h-2.5" />
-                  <span>Auto</span>
+                  <Sparkles className="w-2.5 h-2.5 text-emerald-700" />
+                  <span>{isUr ? 'خودکار' : 'Auto Sync'}</span>
                 </button>
               </div>
               <input
                 type="text"
                 value={urduName}
                 onChange={(e) => setUrduName(e.target.value)}
+                placeholder={isUr ? 'انگریزی نام سے خودکار اردو بنے گی...' : 'Auto-generated variety name...'}
                 dir="rtl"
-                className="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-emerald-600 focus:outline-hidden urdu-text text-sm font-medium"
+                className="w-full px-2.5 py-1.5 border border-emerald-300/80 bg-emerald-50/30 rounded focus:border-emerald-600 focus:bg-white focus:outline-hidden urdu-text text-sm font-semibold text-emerald-950 transition-colors"
               />
             </div>
           </div>
@@ -198,19 +204,19 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
           <RiceImageUpload
             imageUrl={imageUrl}
             onChange={setImageUrl}
-            label="Product Photo (چاول کی تصویر):"
-            urduLabel="تصویر تبدیل یا اپلوڈ کریں"
+            label={isUr ? 'پروڈکٹ کی تصویر:' : 'Product Photo:'}
+            urduLabel={isUr ? 'تصویر تبدیل یا اپلوڈ کریں' : 'Change or upload photo'}
           />
 
           {/* Pricing & Profit CRUD Section (Core Request) */}
           <div className="bg-slate-50 border border-slate-300 rounded-lg p-3 space-y-3">
             <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
               <span className="font-extrabold text-xs text-slate-900">
-                Rate & Price Management (خریداری اور کاؤنٹر فروخت ریٹ)
+                {isUr ? 'خریداری اور کاؤنٹر فروخت ریٹ' : 'Rate & Price Management'}
               </span>
               {item.previousCostPerKg && item.previousCostPerKg !== item.costPerKg && (
                 <span className="text-[10px] font-mono-num text-slate-500">
-                  Previous Cost: PKR {item.previousCostPerKg.toFixed(2)}/kg
+                  {isUr ? 'سابقہ لاگت:' : 'Previous Cost:'} PKR {item.previousCostPerKg.toFixed(2)}/kg
                 </span>
               )}
             </div>
@@ -219,11 +225,11 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
               {/* Purchase Cost */}
               <div className="bg-white p-2.5 rounded border border-amber-300 space-y-1.5">
                 <span className="text-[10px] font-black text-amber-900 uppercase block">
-                  Purchase Cost (خریداری لاگت)
+                  {isUr ? 'خریداری لاگت' : 'Purchase Cost'}
                 </span>
                 <div>
                   <label className="block text-[10px] text-slate-600 mb-0.5 font-bold">
-                    Cost per KG (فی کلو):
+                    {isUr ? 'لاگت فی کلو:' : 'Cost per KG:'}
                   </label>
                   <input
                     type="number"
@@ -236,7 +242,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
                 </div>
                 <div>
                   <label className="block text-[10px] text-slate-600 mb-0.5 font-bold">
-                    Cost per Bag (فی بوری):
+                    {isUr ? 'لاگت فی بوری:' : 'Cost per Bag:'}
                   </label>
                   <input
                     type="number"
@@ -251,11 +257,11 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
               {/* Selling Counter Rate */}
               <div className="bg-white p-2.5 rounded border-2 border-emerald-600 space-y-1.5">
                 <span className="text-[10px] font-black text-emerald-800 uppercase block">
-                  Counter Selling Rate (فروخت ریٹ)
+                  {isUr ? 'فروخت ریٹ' : 'Counter Selling Rate'}
                 </span>
                 <div>
                   <label className="block text-[10px] text-slate-600 mb-0.5 font-bold">
-                    Selling Rate per KG (فی کلو):
+                    {isUr ? 'ریٹ فی کلو:' : 'Selling Rate per KG:'}
                   </label>
                   <input
                     type="number"
@@ -268,7 +274,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
                 </div>
                 <div>
                   <label className="block text-[10px] text-slate-600 mb-0.5 font-bold">
-                    Selling Rate per Bag (فی بوری):
+                    {isUr ? 'ریٹ فی بوری:' : 'Selling Rate per Bag:'}
                   </label>
                   <input
                     type="number"
@@ -285,7 +291,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
             <div className="bg-emerald-50 border border-emerald-200 rounded p-2.5 flex items-center justify-between font-mono-num">
               <div>
                 <span className="text-[11px] font-bold text-emerald-950 block">
-                  Current Profit Margin (موجودہ منافع):
+                  {isUr ? 'موجودہ منافع:' : 'Current Profit Margin:'}
                 </span>
                 <span className="text-[10px] text-emerald-700">
                   Rate (PKR {counterRatePerKg}) - Cost (PKR {costPerKg}) =
@@ -310,7 +316,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                Godown Stock Bags (تعداد بوری):
+                {isUr ? 'گودام سٹاک بوریاں:' : 'Godown Stock Bags:'}
               </label>
               <input
                 type="number"
@@ -323,7 +329,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
 
             <div>
               <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                Total Physical Stock (KG):
+                {isUr ? 'کل فزیکل سٹاک (کلو):' : 'Total Physical Stock (KG):'}
               </label>
               <input
                 type="number"
@@ -339,35 +345,35 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                Item Category (کیٹگری):
+                {isUr ? 'کیٹگری:' : 'Item Category:'}
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full px-2.5 py-1.5 border border-slate-300 rounded bg-white text-xs font-bold"
               >
-                <option value="Rice (چاول)">Rice (چاول)</option>
-                <option value="Pulses / Daal (دالیں)">Pulses / Daal (دالیں)</option>
-                <option value="Spices (کھلا مصالحہ)">Spices / Masala (کھلا مصالحہ)</option>
-                <option value="Shan & National (ڈبہ مصالحہ)">Shan & National (ڈبہ مصالحہ)</option>
-                <option value="Oil & Ghee (تیل و گھی)">Oil & Ghee (تیل و گھی)</option>
-                <option value="Atta & Sugar (آٹا و چینی)">Atta & Sugar (آٹا و چینی)</option>
-                <option value="Basmati Classic">Basmati Classic</option>
-                <option value="Long Grain">Long Grain / Kainat 1121</option>
-                <option value="Sella (Parboiled)">Sella (Parboiled)</option>
-                <option value="Broken / Tota">Broken / Tota</option>
+                <option value="Rice">{isUr ? 'چاول' : 'Rice'}</option>
+                <option value="Pulses / Daal">{isUr ? 'دالیں' : 'Pulses / Daal'}</option>
+                <option value="Spices">{isUr ? 'کھلا مصالحہ' : 'Spices / Masala'}</option>
+                <option value="Shan & National">{isUr ? 'ڈبہ مصالحہ' : 'Shan & National'}</option>
+                <option value="Oil & Ghee">{isUr ? 'تیل و گھی' : 'Oil & Ghee'}</option>
+                <option value="Atta & Sugar">{isUr ? 'آٹا و چینی' : 'Atta & Sugar'}</option>
+                <option value="Basmati Classic">{isUr ? 'باسمتی کلاسک' : 'Basmati Classic'}</option>
+                <option value="Long Grain">{isUr ? 'کائنات ۱۱۲۱' : 'Long Grain / Kainat 1121'}</option>
+                <option value="Sella (Parboiled)">{isUr ? 'سیلا گولڈن' : 'Sella (Parboiled)'}</option>
+                <option value="Broken / Tota">{isUr ? 'ٹوٹا کوالٹی' : 'Broken / Tota'}</option>
               </select>
             </div>
 
             <div>
               <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                Quality / Lot Notes:
+                {isUr ? 'کوالٹی تفصیل:' : 'Quality / Lot Notes:'}
               </label>
               <input
                 type="text"
                 value={qualityNotes}
                 onChange={(e) => setQualityNotes(e.target.value)}
-                placeholder="e.g. Old Crop 2023 Vintage"
+                placeholder={isUr ? 'مثلاً فریش سیزن آمد' : 'e.g. Old Crop 2023 Vintage'}
                 className="w-full px-2.5 py-1.5 border border-slate-300 rounded text-xs"
               />
             </div>
@@ -381,7 +387,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
               className="px-3 py-1.5 rounded text-red-600 hover:bg-red-50 border border-red-200 font-bold text-xs flex items-center space-x-1 cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span>Delete Variety</span>
+              <span>{isUr ? 'حذف کریں' : 'Delete Variety'}</span>
             </button>
 
             <div className="flex items-center space-x-2">
@@ -390,14 +396,14 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
                 onClick={onClose}
                 className="px-4 py-1.5 rounded border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs cursor-pointer"
               >
-                Cancel
+                {isUr ? 'منسوخ' : 'Cancel'}
               </button>
               <button
                 type="submit"
                 className="px-5 py-1.5 rounded bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs flex items-center space-x-1.5 shadow-xs cursor-pointer"
               >
                 <Check className="w-4 h-4" />
-                <span>Save Changes (ریٹ تبدیل کریں)</span>
+                <span>{isUr ? 'تبدیلیاں محفوظ کریں' : 'Save Changes'}</span>
               </button>
             </div>
           </div>

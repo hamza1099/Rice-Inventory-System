@@ -26,7 +26,8 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
   item: initialItem,
   onClose
 }) => {
-  const { inventory, addStockInward } = usePos();
+  const { inventory, addStockInward, language } = usePos();
+  const isUr = language === 'ur';
   const [selectedItemId, setSelectedItemId] = useState<string>('');
 
   const [bags, setBags] = useState<number>(20);
@@ -149,15 +150,15 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
 
   const handleConfirm = () => {
     if (!activeItem) {
-      notifyWarning('Please select a rice variety first (پہلے چاول کی جنس منتخب کریں)');
+      notifyWarning(isUr ? 'پہلے چاول کی جنس منتخب کریں' : 'Please select a rice variety first');
       return;
     }
     if (bags <= 0) {
-      notifyWarning('Please enter a valid number of bags (تعداد بوری درج کریں)');
+      notifyWarning(isUr ? 'تعداد بوری درج کریں' : 'Please enter a valid number of bags');
       return;
     }
     if (inwardCostPerKg <= 0) {
-      notifyWarning('Please enter a valid purchase cost (خریداری ریٹ درج کریں)');
+      notifyWarning(isUr ? 'خریداری ریٹ درج کریں' : 'Please enter a valid purchase cost');
       return;
     }
 
@@ -170,7 +171,9 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
     );
 
     notifySuccess(
-      `Stock Inward Confirmed! Added ${bags} bags (${totalInwardKg.toLocaleString()} KG) of ${activeItem.varietyName}. Total Bill: PKR ${totalInwardAmount.toLocaleString()}`
+      isUr
+        ? `مال آمد محفوظ ہو گئی! ${activeItem.urduName || activeItem.varietyName} کی ${bags} بوریاں شامل ہو گئیں۔ کل بل: PKR ${totalInwardAmount.toLocaleString()}`
+        : `Stock Inward Confirmed! Added ${bags} bags (${totalInwardKg.toLocaleString()} KG) of ${activeItem.varietyName}. Total Bill: PKR ${totalInwardAmount.toLocaleString()}`
     );
     onClose();
   };
@@ -184,10 +187,10 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
             <ArrowDownToLine className="w-5 h-5 text-emerald-200" />
             <div>
               <h3 className="font-bold text-sm">
-                New Stock Inward & Cost Accounting (آمد گودام اور لاگت کا حساب)
+                {isUr ? 'آمد گودام اور لاگت کا حساب' : 'New Stock Inward & Cost Accounting'}
               </h3>
-              <p className="text-[11px] text-emerald-100 urdu-text" dir="rtl">
-                {activeItem ? `${activeItem.varietyName} • ${activeItem.urduName}` : 'آمد برائے نئی جنس منتخب کریں'}
+              <p className="text-[11px] text-emerald-100 font-sans">
+                {activeItem ? (isUr ? (activeItem.urduName || activeItem.varietyName) : activeItem.varietyName) : (isUr ? 'آمد برائے جنس منتخب کریں' : 'Select variety for inward arrival')}
               </p>
             </div>
           </div>
@@ -203,21 +206,20 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
             <div className="flex items-center justify-between">
               <label className="text-xs font-black text-emerald-950 flex items-center gap-1.5">
                 <Layers className="w-4 h-4 text-emerald-700" />
-                <span>Select Rice Variety (کس چاول کی آمد درج کرنی ہے؟):</span>
+                <span>{isUr ? 'کس چاول کی آمد درج کرنی ہے؟:' : 'Select Rice Variety:'}</span>
               </label>
-              <span className="text-[10px] text-emerald-800 font-bold urdu-text" dir="rtl">
-                (جنس منتخب کریں)
-              </span>
             </div>
             <select
               value={selectedItemId}
               onChange={(e) => setSelectedItemId(e.target.value)}
               className="w-full text-xs font-bold px-3 py-2 border-2 border-emerald-600 rounded bg-white text-slate-900 shadow-2xs focus:outline-hidden cursor-pointer"
             >
-              <option value="">-- چاول کی جنس کا انتخاب کریں (Select Rice Variety) --</option>
+              <option value="">{isUr ? '-- چاول کی جنس کا انتخاب کریں --' : '-- Select Rice Variety --'}</option>
               {inventory.map((inv) => (
                 <option key={inv.id} value={inv.id}>
-                  {inv.varietyName} ({inv.urduName}) • Stock: {inv.physicalStockKg.toLocaleString()} KG ({inv.bagsCount} bori) • Prev Cost: PKR {inv.costPerKg}/kg
+                  {isUr
+                    ? `${inv.urduName || inv.varietyName} • سٹاک: ${inv.physicalStockKg.toLocaleString()} کلو (${inv.bagsCount} بوری) • سابقہ لاگت: PKR ${inv.costPerKg}/کلو`
+                    : `${inv.varietyName} • Stock: ${inv.physicalStockKg.toLocaleString()} KG (${inv.bagsCount} bags) • Prev Cost: PKR ${inv.costPerKg}/kg`}
                 </option>
               ))}
             </select>
@@ -230,10 +232,10 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                 <PackagePlus className="w-6 h-6" />
               </div>
               <h4 className="font-bold text-sm text-slate-800">
-                پہلے اوپر دی گئی لسٹ سے چاول کی جنس منتخب کریں
+                {isUr ? 'پہلے اوپر دی گئی لسٹ سے چاول کی جنس منتخب کریں' : 'Please select a rice variety from the list above'}
               </h4>
               <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-                جیسے ہی آپ چاول کی جنس منتخب کریں گے، اس کا موجودہ سٹاک، سابقہ خریداری لاگت اور منافع کا موازنہ خودکار طور پر ظاہر ہو جائے گا۔
+                {isUr ? 'جیسے ہی آپ چاول کی جنس منتخب کریں گے، اس کا موجودہ سٹاک، سابقہ خریداری لاگت اور منافع کا موازنہ خودکار طور پر ظاہر ہو جائے گا۔' : 'Selecting a variety will load its current godown stock, historical cost, and profit comparison.'}
               </p>
             </div>
           ) : (
@@ -303,7 +305,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Number of Bags (تعداد بوری):
+                    {isUr ? 'تعداد بوری:' : 'Number of Bags:'}
                   </label>
                   <input
                     type="number"
@@ -316,17 +318,17 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
 
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Bag Standard Weight:
+                    {isUr ? 'پیکنگ وزن:' : 'Bag Standard Weight:'}
                   </label>
                   <select
                     value={weightPerBag}
                     onChange={(e) => setWeightPerBag(parseInt(e.target.value))}
                     className="w-full text-xs font-bold px-2 py-2 border border-slate-300 rounded bg-white"
                   >
-                    <option value={50}>50 KG (Standard Jute Bori)</option>
-                    <option value={25}>25 KG (Poly Woven Bag)</option>
-                    <option value={40}>40 KG (1 Mund Pakka)</option>
-                    <option value={100}>100 KG (Katta)</option>
+                    <option value={50}>{isUr ? '50 کلو (معیاری جوٹ بوری)' : '50 KG (Standard Jute Bori)'}</option>
+                    <option value={25}>{isUr ? '25 کلو (پی پی بیگ)' : '25 KG (Poly Woven Bag)'}</option>
+                    <option value={40}>{isUr ? '40 کلو (1 من پکا)' : '40 KG (1 Maan Pakka)'}</option>
+                    <option value={100}>{isUr ? '100 کلو (کٹا)' : '100 KG (Katta)'}</option>
                   </select>
                 </div>
               </div>
@@ -336,7 +338,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-bold text-amber-950 flex items-center gap-1.5">
                     <Calculator className="w-3.5 h-3.5 text-amber-700" />
-                    <span>New Inward Purchase Cost (اس بار مال کتنے کا پڑا ہے؟):</span>
+                    <span>{isUr ? 'اس بار مال کتنے کا پڑا ہے؟:' : 'New Inward Purchase Cost:'}</span>
                   </label>
                   <div className="flex items-center space-x-1 bg-amber-100/70 p-0.5 rounded text-[10px] font-bold">
                     <button
@@ -348,7 +350,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                           : 'text-amber-900 hover:bg-amber-200'
                       }`}
                     >
-                      Per Bag (فی بوری)
+                      {isUr ? 'فی بوری' : 'Per Bag'}
                     </button>
                     <button
                       type="button"
@@ -359,7 +361,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                           : 'text-amber-900 hover:bg-amber-200'
                       }`}
                     >
-                      Per KG (فی کلو)
+                      {isUr ? 'فی کلو' : 'Per KG'}
                     </button>
                   </div>
                 </div>
@@ -367,7 +369,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-600 mb-0.5">
-                      Cost Rate per Bag (ریٹ فی بوری):
+                      {isUr ? 'ریٹ فی بوری:' : 'Cost Rate per Bag:'}
                     </label>
                     <div className="relative">
                       <span className="absolute left-2.5 top-1.5 text-slate-400 font-bold font-mono">
@@ -387,7 +389,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
 
                   <div>
                     <label className="block text-[10px] font-bold text-slate-600 mb-0.5">
-                      Equivalent Rate per KG (ریٹ فی کلو):
+                      {isUr ? 'ریٹ فی کلو:' : 'Equivalent Rate per KG:'}
                     </label>
                     <div className="relative">
                       <span className="absolute left-2.5 top-1.5 text-slate-400 font-bold font-mono">
@@ -410,10 +412,10 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                 <div className="bg-white p-2 rounded border border-amber-200 flex items-center justify-between font-mono-num text-[11px]">
                   <div>
                     <span className="text-slate-600 block text-[10px]">
-                      Total Inward Shipment Bill (کل خریداری بل برائے منڈی):
+                      {isUr ? 'کل خریداری بل برائے منڈی:' : 'Total Inward Shipment Bill:'}
                     </span>
                     <span className="font-bold text-slate-800">
-                      {bags} Bags × PKR {inwardCostPerBag.toLocaleString()} =
+                      {bags} {isUr ? 'بوریاں' : 'Bags'} × PKR {inwardCostPerBag.toLocaleString()} =
                     </span>
                   </div>
                   <div className="text-base font-black text-amber-900">
@@ -428,7 +430,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                   <div className="flex items-center space-x-1.5">
                     <BadgePercent className="w-4 h-4 text-emerald-800" />
                     <h4 className="font-extrabold text-xs text-slate-900">
-                      Cost Shift & Profit Analysis (لاگت میں فرق اور منافع کا موازنہ)
+                      {isUr ? 'لاگت میں فرق اور منافع کا موازنہ' : 'Cost Shift & Profit Analysis'}
                     </h4>
                   </div>
                   {costDiffPerBag !== 0 && (
@@ -447,7 +449,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                       <span>
                         {costDiffPerBag > 0 ? '+' : ''}PKR {costDiffPerBag.toLocaleString()}/bag (
                         {costPercentDiff > 0 ? '+' : ''}
-                        {costPercentDiff.toFixed(1)}% {costDiffPerBag > 0 ? 'مہنگا ہوا' : 'سستا ہوا'})
+                        {costPercentDiff.toFixed(1)}% {costDiffPerBag > 0 ? (isUr ? 'مہنگا ہوا' : 'Higher') : (isUr ? 'سستا ہوا' : 'Cheaper')})
                       </span>
                     </span>
                   )}
@@ -458,23 +460,23 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                   {/* Old Batch */}
                   <div className="bg-white p-2.5 rounded border border-slate-200 space-y-1">
                     <div className="text-[10px] font-bold text-slate-500 uppercase flex items-center justify-between">
-                      <span>Previous Batch (پچھلا مال)</span>
-                      <span className="text-slate-400">{oldStockBags} Bags</span>
+                      <span>{isUr ? 'پچھلا مال' : 'Previous Batch'}</span>
+                      <span className="text-slate-400">{oldStockBags} {isUr ? 'بوریاں' : 'Bags'}</span>
                     </div>
                     <div className="flex justify-between text-slate-600">
-                      <span>Purchase Cost:</span>
+                      <span>{isUr ? 'خریداری لاگت:' : 'Purchase Cost:'}</span>
                       <strong className="text-slate-800">
                         PKR {oldCostPerBag.toLocaleString()}/bag
                       </strong>
                     </div>
                     <div className="flex justify-between text-slate-600">
-                      <span>Counter Sale Rate:</span>
+                      <span>{isUr ? 'فروخت ریٹ:' : 'Counter Sale Rate:'}</span>
                       <strong className="text-slate-800">
                         PKR {sellingRatePerBag.toLocaleString()}/bag
                       </strong>
                     </div>
                     <div className="border-t border-slate-100 pt-1 flex justify-between font-bold">
-                      <span>Profit Margin (منافع):</span>
+                      <span>{isUr ? 'منافع:' : 'Profit Margin:'}</span>
                       <span
                         className={
                           profitOldPerBag >= 0 ? 'text-emerald-700' : 'text-red-700'
@@ -497,23 +499,23 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                     }`}
                   >
                     <div className="text-[10px] font-bold text-slate-700 uppercase flex items-center justify-between">
-                      <span>New Inward Batch (نیا مال)</span>
-                      <span className="text-slate-500">{bags} Bags</span>
+                      <span>{isUr ? 'نیا مال' : 'New Inward Batch'}</span>
+                      <span className="text-slate-500">{bags} {isUr ? 'بوریاں' : 'Bags'}</span>
                     </div>
                     <div className="flex justify-between text-slate-600">
-                      <span>Purchase Cost:</span>
+                      <span>{isUr ? 'خریداری لاگت:' : 'Purchase Cost:'}</span>
                       <strong className="text-amber-900">
                         PKR {inwardCostPerBag.toLocaleString()}/bag
                       </strong>
                     </div>
                     <div className="flex justify-between text-slate-600">
-                      <span>Counter Sale Rate:</span>
+                      <span>{isUr ? 'فروخت ریٹ:' : 'Counter Sale Rate:'}</span>
                       <strong className="text-slate-800">
                         PKR {sellingRatePerBag.toLocaleString()}/bag
                       </strong>
                     </div>
                     <div className="border-t border-slate-200 pt-1 flex justify-between font-bold">
-                      <span>Profit Margin (منافع):</span>
+                      <span>{isUr ? 'منافع:' : 'Profit Margin:'}</span>
                       <span
                         className={
                           profitNewPerBag >= 0 ? 'text-emerald-800' : 'text-red-700'
@@ -543,15 +545,11 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                     <div>
                       {profitDifferencePerBag < 0 ? (
                         <span>
-                          <strong>منافع میں کمی کا انتباہ:</strong> نیا مال پچھلے مال سے{' '}
-                          <strong>PKR {Math.abs(costDiffPerBag).toLocaleString()} فی بوری مہنگا</strong> ہے، جس سے منافع فی بوری{' '}
-                          <strong>PKR {Math.abs(profitDifferencePerBag).toLocaleString()} کم</strong> ہو جائے گا، اگر فروخت ریٹ نہ بڑھایا گیا۔
+                          <strong>{isUr ? 'منافع میں کمی کا انتباہ:' : 'Profit Warning:'}</strong> {isUr ? `نیا مال پچھلے مال سے PKR ${Math.abs(costDiffPerBag).toLocaleString()} فی بوری مہنگا ہے، جس سے منافع فی بوری PKR ${Math.abs(profitDifferencePerBag).toLocaleString()} کم ہو جائے گا، اگر فروخت ریٹ نہ بڑھایا گیا۔` : `New batch cost is PKR ${Math.abs(costDiffPerBag).toLocaleString()} higher per bag, reducing profit margin by PKR ${Math.abs(profitDifferencePerBag).toLocaleString()} per bag unless selling rate is adjusted.`}
                         </span>
                       ) : (
                         <span>
-                          <strong>خوشخبری:</strong> نیا مال پچھلے مال سے{' '}
-                          <strong>PKR {Math.abs(costDiffPerBag).toLocaleString()} فی بوری سستا</strong> ملا ہے، جس سے منافع{' '}
-                          <strong>PKR {profitDifferencePerBag.toLocaleString()} بڑھ گیا ہے</strong>!
+                          <strong>{isUr ? 'خوشخبری:' : 'Profit Boost:'}</strong> {isUr ? `نیا مال پچھلے مال سے PKR ${Math.abs(costDiffPerBag).toLocaleString()} فی بوری سستا ملا ہے، جس سے منافع PKR ${profitDifferencePerBag.toLocaleString()} بڑھ گیا ہے!` : `New batch cost is PKR ${Math.abs(costDiffPerBag).toLocaleString()} lower per bag, boosting margin by PKR ${profitDifferencePerBag.toLocaleString()} per bag!`}
                         </span>
                       )}
                     </div>
@@ -562,10 +560,10 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                 <div className="bg-emerald-900 text-white p-2.5 rounded-lg flex items-center justify-between font-mono-num">
                   <div>
                     <span className="text-[10px] text-emerald-200 font-sans block">
-                      New Weighted Average Cost (نئی مجموعی اوسط لاگت - کل {totalCombinedBags} بوری):
+                      {isUr ? `نئی مجموعی اوسط لاگت (کل ${totalCombinedBags} بوری):` : `New Weighted Average Cost (Total ${totalCombinedBags} Bags):`}
                     </span>
                     <span className="text-xs text-emerald-100">
-                      (سابقہ {oldStockBags} بوری × {oldCostPerBag} + نئی {bags} بوری × {inwardCostPerBag}) ÷ {totalCombinedBags} =
+                      {isUr ? `(سابقہ ${oldStockBags} بوری × ${oldCostPerBag} + نئی ${bags} بوری × ${inwardCostPerBag}) ÷ ${totalCombinedBags} =` : `(${oldStockBags} bags × ${oldCostPerBag} + ${bags} bags × ${inwardCostPerBag}) ÷ ${totalCombinedBags} =`}
                     </span>
                   </div>
                   <div className="text-right">
@@ -583,11 +581,11 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
               <div className="bg-slate-100/80 p-3 rounded-lg border border-slate-200 space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-bold text-slate-800">
-                    Adjust Counter Selling Rate (فروخت ریٹ اپ ڈیٹ کریں):
+                    {isUr ? 'فروخت ریٹ اپ ڈیٹ کریں:' : 'Adjust Counter Selling Rate:'}
                   </label>
                   {isSellingRateModified && (
                     <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                      ✓ Modified
+                      ✓ {isUr ? 'تبدیل شدہ' : 'Modified'}
                     </span>
                   )}
                 </div>
@@ -595,7 +593,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] text-slate-600 mb-0.5 font-bold">
-                      Selling Rate per Bag (فروخت ریٹ فی بوری):
+                      {isUr ? 'فروخت ریٹ فی بوری:' : 'Selling Rate per Bag:'}
                     </label>
                     <input
                       type="number"
@@ -607,7 +605,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
 
                   <div>
                     <label className="block text-[10px] text-slate-600 mb-0.5 font-bold">
-                      Selling Rate per KG (فروخت ریٹ فی کلو):
+                      {isUr ? 'فروخت ریٹ فی کلو:' : 'Selling Rate per KG:'}
                     </label>
                     <input
                       type="number"
@@ -620,7 +618,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                 </div>
 
                 <div className="flex items-center justify-between text-[10px] text-slate-600 pt-1">
-                  <span>Expected Average Profit with this Rate:</span>
+                  <span>{isUr ? 'متوقع اوسط منافع:' : 'Expected Average Profit:'}</span>
                   <strong className="text-emerald-800 font-bold font-mono-num">
                     +PKR {Math.round(profitBlendedPerBag).toLocaleString()} / bag ({profitBlendedMarginPct.toFixed(1)}% Margin)
                   </strong>
@@ -631,7 +629,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
-                    Source Mandi / Seller (منڈی / بیوپاری):
+                    {isUr ? 'منڈی / بیوپاری:' : 'Source Mandi / Seller:'}
                   </label>
                   <input
                     type="text"
@@ -643,7 +641,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
 
                 <div>
                   <label className="block text-[10px] font-bold text-slate-700 mb-0.5">
-                    Inward Lot Chit Notes:
+                    {isUr ? 'آمد لاٹ تفصیل:' : 'Inward Lot Chit Notes:'}
                   </label>
                   <input
                     type="text"
@@ -662,13 +660,13 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
           <div className="text-[11px] font-mono-num text-slate-600">
             {activeItem ? (
               <>
-                Total Inward Added:{' '}
+                {isUr ? 'کل آمد شامل شدہ:' : 'Total Inward Added:'}{' '}
                 <strong className="text-emerald-800">
-                  +{bags} Bags (+{totalInwardKg.toLocaleString()} KG)
+                  +{bags} {isUr ? 'بوریاں' : 'Bags'} (+{totalInwardKg.toLocaleString()} KG)
                 </strong>
               </>
             ) : (
-              <span className="text-slate-400">کوئی جنس منتخب نہیں ہے</span>
+              <span className="text-slate-400">{isUr ? 'کوئی جنس منتخب نہیں ہے' : 'No variety selected'}</span>
             )}
           </div>
           <div className="flex items-center space-x-2">
@@ -676,7 +674,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
               onClick={onClose}
               className="px-4 py-1.5 rounded border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs cursor-pointer"
             >
-              Cancel
+              {isUr ? 'منسوخ' : 'Cancel'}
             </button>
             <button
               onClick={handleConfirm}
@@ -688,7 +686,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
               }`}
             >
               <PackagePlus className="w-4 h-4" />
-              <span>Confirm Inward Entry (آمد محفوظ کریں)</span>
+              <span>{isUr ? 'آمد محفوظ کریں' : 'Confirm Inward Entry'}</span>
             </button>
           </div>
         </div>

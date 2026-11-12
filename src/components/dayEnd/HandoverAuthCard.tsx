@@ -10,17 +10,19 @@ export const HandoverAuthCard: React.FC = () => {
     handoverNotes,
     setHandoverNotes,
     finalizeDayEnd,
-    isDayClosed
+    isDayClosed,
+    language
   } = usePos();
+  const isUr = language === 'ur';
 
   const handleFinalize = () => {
     if (supervisorPin.length < 4) {
-      notifyWarning('Please enter valid 4-digit supervisor password/code.');
+      notifyWarning(isUr ? 'برائے مہربانی 4 ہندسوں کا درست ایڈمن پاس ورڈ درج کریں' : 'Please enter valid 4-digit admin password/code.');
       return;
     }
     const success = finalizeDayEnd();
     if (success) {
-      notifySuccess('Z-Report generated successfully! Day-End Register has been sealed and locked for handover.');
+      notifySuccess(isUr ? 'دن کا اختتام کامیابی سے فائنل ہو گیا!' : 'Z-Report generated successfully! Day-End Register has been sealed and locked for handover.');
     }
   };
 
@@ -30,20 +32,20 @@ export const HandoverAuthCard: React.FC = () => {
         <div className="flex items-center space-x-2">
           <Lock className="w-4 h-4 text-emerald-700" />
           <h3 className="font-extrabold text-sm text-slate-900 tracking-tight">
-            Closing Authorization & Handover Protocol
+            {isUr ? 'اختتامِ شفٹ اور کیش ہینڈ اوور' : 'Closing Authorization & Handover Protocol'}
           </h3>
         </div>
         <span className="text-[10px] text-amber-800 font-semibold bg-amber-50 px-2 py-0.5 rounded border border-amber-200 flex items-center gap-1">
           <ShieldAlert className="w-3 h-3 text-amber-600" />
-          Shift will be permanently sealed upon final confirmation
+          {isUr ? 'فائنل تصدیق کے بعد شفٹ مستقل طور پر بند ہو جائے گی' : 'Shift will be permanently sealed upon final confirmation'}
         </span>
       </div>
 
       <div className="grid grid-cols-12 gap-4">
-        {/* Supervisor Password */}
+        {/* Admin Password */}
         <div className="col-span-4">
           <label className="block text-[11px] font-bold text-slate-700 mb-1">
-            Supervisor Password (سپروائزر پاس ورڈ):
+            {isUr ? 'ایڈمن پاس ورڈ:' : 'Admin Password:'}
           </label>
           <div className="relative">
             <input
@@ -59,14 +61,14 @@ export const HandoverAuthCard: React.FC = () => {
             </span>
           </div>
           <p className="text-[10px] text-slate-500 mt-1">
-            Supervisor: <strong>bilal.bukhari@bukharirice.com</strong>
+            {isUr ? 'ایڈمن:' : 'Admin:'} <strong>bilal.bukhari@bukharirice.com</strong>
           </p>
         </div>
 
         {/* Handover Notes */}
         <div className="col-span-8">
           <label className="block text-[11px] font-bold text-slate-700 mb-1">
-            Cashier Signature / Handover Notes (کیشیئر ریمارکس برائے گودام):
+            {isUr ? 'کیشیئر ریمارکس برائے گودام:' : 'Cashier Signature / Handover Notes:'}
           </label>
           <input
             type="text"
@@ -109,7 +111,7 @@ export const HandoverAuthCard: React.FC = () => {
           }`}
         >
           <CheckCircle2 className="w-4 h-4" />
-          <span>{isDayClosed ? 'Shift Sealed & Register Locked' : 'Finalize Day-End & Lock Register [ENTER]'}</span>
+          <span>{isDayClosed ? (isUr ? 'شفٹ بند و رجسٹر مقفل' : 'Shift Sealed & Register Locked') : (isUr ? 'دن کا اختتام فائنل کریں [ENTER]' : 'Finalize Day-End & Lock Register [ENTER]')}</span>
         </button>
       </div>
     </div>

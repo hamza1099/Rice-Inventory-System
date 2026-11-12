@@ -10,7 +10,7 @@ import { notifySuccess, notifyInfo } from '../utils/toast';
 import { DollarSign, Wallet, CreditCard, TrendingUp, X } from 'lucide-react';
 
 export const DailyMemoScreen: React.FC = () => {
-  const { memos } = usePos();
+  const { memos, language } = usePos();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [activePeriod, setActivePeriod] = useState<string>('7days');
   const [selectedPayment, setSelectedPayment] = useState<string>('ALL');
@@ -24,22 +24,23 @@ export const DailyMemoScreen: React.FC = () => {
   // Handle Preset Clicks (Today, Yesterday, Last 7 Days, This Month, Custom Range)
   const handlePresetClick = (periodId: string) => {
     setActivePeriod(periodId);
+    const isUr = language === 'ur';
     if (periodId === 'today') {
       setCustomStart('2024-10-24');
       setCustomEnd('2024-10-24');
-      setDateRangeLabel('24 OCT 2024 (Today • آج)');
+      setDateRangeLabel(isUr ? '24 OCT 2024 (آج)' : '24 OCT 2024 (Today)');
     } else if (periodId === 'yesterday') {
       setCustomStart('2024-10-23');
       setCustomEnd('2024-10-23');
-      setDateRangeLabel('23 OCT 2024 (Yesterday • گزشتہ روز)');
+      setDateRangeLabel(isUr ? '23 OCT 2024 (گزشتہ روز)' : '23 OCT 2024 (Yesterday)');
     } else if (periodId === '7days') {
       setCustomStart('2024-10-18');
       setCustomEnd('2024-10-24');
-      setDateRangeLabel('18 OCT 2024 to 24 OCT 2024 (7 Days)');
+      setDateRangeLabel(isUr ? '18 تا 24 OCT 2024 (گزشتہ ۷ دن)' : '18 OCT 2024 to 24 OCT 2024 (7 Days)');
     } else if (periodId === 'month') {
       setCustomStart('2024-10-01');
       setCustomEnd('2024-10-31');
-      setDateRangeLabel('01 OCT 2024 to 31 OCT 2024 (This Month)');
+      setDateRangeLabel(isUr ? '01 تا 31 OCT 2024 (موجودہ ماہ)' : '01 OCT 2024 to 31 OCT 2024 (This Month)');
     } else if (periodId === 'custom') {
       setIsCalendarOpen(true);
     }

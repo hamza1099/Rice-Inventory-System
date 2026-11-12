@@ -49,21 +49,21 @@ export const NATIONAL_NIHARI_IMAGE =
 
 // Preset library across all categories for quick selection during inventory entry
 export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
-  // 1. RICE (چاول کی بوریاں)
+  // 1. RICE
   {
     id: 'pr-rice-basmati',
-    name: 'Super Basmati Old (50kg Bori)',
+    name: 'Super Basmati Old (25kg Bag)',
     urduName: 'سوپر باسمتی چاول پرانا بوری',
-    category: 'Rice (چاول)',
+    category: 'Rice',
     rate: 380,
     unit: 'kg',
     imageUrl: BORI_BASMATI_IMAGE
   },
   {
     id: 'pr-rice-kainat',
-    name: 'Kainat 1121 Steam (50kg Bori)',
+    name: 'Kainat 1121 Steam (25kg Bag)',
     urduName: 'کائنات ۱۱۲۱ سٹیم بوری',
-    category: 'Rice (چاول)',
+    category: 'Rice',
     rate: 340,
     unit: 'kg',
     imageUrl: BORI_KAINAT_IMAGE
@@ -72,54 +72,54 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
     id: 'pr-rice-super',
     name: 'Super Kernel Basmati Vintage',
     urduName: 'سوپر کرنل باسمتی نایاب بوری',
-    category: 'Rice (چاول)',
+    category: 'Rice',
     rate: 420,
     unit: 'kg',
     imageUrl: BORI_SUPER_IMAGE
   },
   {
     id: 'pr-rice-sella',
-    name: 'Golden Sella Basmati (50kg Bori)',
+    name: 'Golden Sella Basmati (25kg Bag)',
     urduName: 'سیلا گولڈن باسمتی بوری',
-    category: 'Rice (چاول)',
+    category: 'Rice',
     rate: 360,
     unit: 'kg',
     imageUrl: BORI_SELLA_IMAGE
   },
   {
     id: 'pr-rice-tota',
-    name: 'White Broken Tota (بوری)',
+    name: 'White Broken Tota (25kg Bag)',
     urduName: 'سفید ٹوٹا چاول بوری',
-    category: 'Rice (چاول)',
+    category: 'Rice',
     rate: 210,
     unit: 'kg',
     imageUrl: BORI_BASMATI_IMAGE
   },
   {
     id: 'pr-rice-stack',
-    name: '50kg Super Bori Godown Stack',
-    urduName: '۵۰ کلو سوپر باسمتی بوری گودام سٹیک',
-    category: 'Rice (چاول)',
+    name: '25kg Super Bori Godown Stack',
+    urduName: '۲۵ کلو سوپر باسمتی بوری گودام سٹیک',
+    category: 'Rice',
     rate: 370,
     unit: 'kg',
     imageUrl: BORI_STACK_IMAGE
   },
 
-  // 2. PULSES / DAAL (دالوں کی بوریاں)
+  // 2. PULSES / DAAL
   {
     id: 'pr-daal-chana',
-    name: 'Daal Chana Special (50kg Bori)',
+    name: 'Daal Chana Special (25kg Bag)',
     urduName: 'دال چنا سپیشل واش بوری',
-    category: 'Pulses / Daal (دالیں)',
+    category: 'Pulses / Daal',
     rate: 260,
     unit: 'kg',
     imageUrl: BORI_DAAL_CHANA_IMAGE
   },
   {
     id: 'pr-daal-moong',
-    name: 'Daal Moong Dhooli (50kg Bori)',
+    name: 'Daal Moong Dhooli (25kg Bag)',
     urduName: 'دال مونگ دھلی ہوئی بوری',
-    category: 'Pulses / Daal (دالیں)',
+    category: 'Pulses / Daal',
     rate: 290,
     unit: 'kg',
     imageUrl: BORI_DAAL_MOONG_IMAGE
@@ -128,7 +128,7 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
     id: 'pr-daal-masoor',
     name: 'Daal Masoor Red Imported',
     urduName: 'دال مسور سرخ امپورٹڈ بوری',
-    category: 'Pulses / Daal (دالیں)',
+    category: 'Pulses / Daal',
     rate: 275,
     unit: 'kg',
     imageUrl: BORI_DAAL_MOONG_IMAGE
@@ -137,7 +137,7 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
     id: 'pr-daal-mash',
     name: 'Daal Mash Dhooli Extra',
     urduName: 'دال ماش دھلی سپیشل بوری',
-    category: 'Pulses / Daal (دالیں)',
+    category: 'Pulses / Daal',
     rate: 420,
     unit: 'kg',
     imageUrl: BORI_DAAL_CHANA_IMAGE
@@ -146,18 +146,18 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
     id: 'pr-safaid-chana',
     name: 'Safaid Kabuli Chana Moata',
     urduName: 'سفید چنا کابل موٹا بوری',
-    category: 'Pulses / Daal (دالیں)',
+    category: 'Pulses / Daal',
     rate: 340,
     unit: 'kg',
     imageUrl: BORI_DAAL_CHANA_IMAGE
   },
 
-  // 3. SPICES / KHULA MASALA (کھلا مصالحہ جات)
+  // 3. SPICES / KHULA MASALA
   {
     id: 'pr-masala-zeera',
-    name: 'Sabut Zeera Safaid Pure (بوری)',
+    name: 'Sabut Zeera Safaid Pure',
     urduName: 'سفید زیرہ خالص بوری',
-    category: 'Spices (کھلا مصالحہ)',
+    category: 'Spices',
     rate: 1850,
     unit: 'kg',
     imageUrl: BORI_SPICES_ZEERA_IMAGE
@@ -166,7 +166,7 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
     id: 'pr-masala-haldi',
     name: 'Haldi Powder Pure Desi',
     urduName: 'ہلدی پاؤڈر خالص دیسی',
-    category: 'Spices (کھلا مصالحہ)',
+    category: 'Spices',
     rate: 480,
     unit: 'kg',
     imageUrl: BORI_SPICES_ZEERA_IMAGE
@@ -175,7 +175,7 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
     id: 'pr-masala-mirch',
     name: 'Lal Mirch Powder Pure',
     urduName: 'سرخ مرچ پسی ہوئی خالص',
-    category: 'Spices (کھلا مصالحہ)',
+    category: 'Spices',
     rate: 650,
     unit: 'kg',
     imageUrl: BORI_SPICES_ZEERA_IMAGE
@@ -184,18 +184,18 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
     id: 'pr-masala-garam',
     name: 'Garam Masala Mix Whole Special',
     urduName: 'گرم مصالحہ ثابت سپیشل بوری',
-    category: 'Spices (کھلا مصالحہ)',
+    category: 'Spices',
     rate: 1400,
     unit: 'kg',
     imageUrl: BORI_SPICES_ZEERA_IMAGE
   },
 
-  // 4. SHAN & NATIONAL (برانڈڈ ڈبہ مصالحہ جات)
+  // 4. SHAN & NATIONAL
   {
     id: 'pr-shan-biryani',
     name: 'Shan Bombay Biryani Masala',
     urduName: 'شان بمبئی بریانی مصالحہ',
-    category: 'Shan & National (ڈبہ مصالحہ)',
+    category: 'Shan & National',
     brand: 'Shan Foods',
     rate: 140,
     unit: 'pkt',
@@ -205,7 +205,7 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
     id: 'pr-national-biryani',
     name: 'National Special Biryani',
     urduName: 'نیشنل اسپیشل بریانی مصالحہ',
-    category: 'Shan & National (ڈبہ مصالحہ)',
+    category: 'Shan & National',
     brand: 'National Foods',
     rate: 140,
     unit: 'pkt',
@@ -215,7 +215,7 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
     id: 'pr-shan-tikka',
     name: 'Shan Chicken Tikka Masala',
     urduName: 'شان چکن تکہ مصالحہ',
-    category: 'Shan & National (ڈبہ مصالحہ)',
+    category: 'Shan & National',
     brand: 'Shan Foods',
     rate: 135,
     unit: 'pkt',
@@ -225,7 +225,7 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
     id: 'pr-national-qorma',
     name: 'National Qorma Masala',
     urduName: 'نیشنل قورمہ مصالحہ',
-    category: 'Shan & National (ڈبہ مصالحہ)',
+    category: 'Shan & National',
     brand: 'National Foods',
     rate: 140,
     unit: 'pkt',
@@ -235,7 +235,7 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
     id: 'pr-shan-chaat',
     name: 'Shan Chaat Masala 100g',
     urduName: 'شان چاٹ مصالحہ',
-    category: 'Shan & National (ڈبہ مصالحہ)',
+    category: 'Shan & National',
     brand: 'Shan Foods',
     rate: 160,
     unit: 'pkt',
@@ -245,19 +245,19 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
     id: 'pr-national-nihari',
     name: 'National Nihari Masala',
     urduName: 'نیشنل نہاری مصالحہ',
-    category: 'Shan & National (ڈبہ مصالحہ)',
+    category: 'Shan & National',
     brand: 'National Foods',
     rate: 145,
     unit: 'pkt',
     imageUrl: NATIONAL_NIHARI_IMAGE
   },
 
-  // 5. OIL, GHEE, FLOUR & SUGAR (تیل، گھی، آٹا، چینی)
+  // 5. OIL, GHEE, FLOUR & SUGAR
   {
     id: 'pr-oil-dalda',
     name: 'Dalda Cooking Oil 5 Litre Tin',
     urduName: 'ڈالڈا کوکنگ آئل ۵ لیٹر',
-    category: 'Oil & Ghee (تیل و گھی)',
+    category: 'Oil & Ghee',
     brand: 'Dalda',
     rate: 2650,
     unit: 'tin',
@@ -267,7 +267,7 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
     id: 'pr-ghee-habib',
     name: 'Habib Banaspati Ghee 1kg Packet',
     urduName: 'حبیب بناسپتی گھی ۱ کلو',
-    category: 'Oil & Ghee (تیل و گھی)',
+    category: 'Oil & Ghee',
     brand: 'Habib',
     rate: 510,
     unit: 'pkt',
@@ -275,9 +275,9 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
   },
   {
     id: 'pr-atta-chakki',
-    name: 'Chakki Atta 10kg Bag (خالص آٹا بوری)',
+    name: 'Chakki Atta 10kg Bag',
     urduName: 'خالص دیسی چکی آٹا ۱۰ کلو تھیلا',
-    category: 'Atta & Sugar (آٹا و چینی)',
+    category: 'Atta & Sugar',
     brand: 'Bukhari Flour',
     rate: 1350,
     unit: 'bag',
@@ -285,9 +285,9 @@ export const ALL_PRODUCT_PRESETS: ProductPreset[] = [
   },
   {
     id: 'pr-sugar-cheeni',
-    name: 'Refined White Sugar 50kg Bori',
+    name: 'Refined White Sugar 25kg Bag',
     urduName: 'سفید دانے دار چینی بوری',
-    category: 'Atta & Sugar (آٹا و چینی)',
+    category: 'Atta & Sugar',
     rate: 145,
     unit: 'kg',
     imageUrl: BORI_STACK_IMAGE

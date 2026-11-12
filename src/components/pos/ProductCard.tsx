@@ -9,7 +9,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { setSelectedProductForModal, openImagePreview } = usePos();
+  const { setSelectedProductForModal, openImagePreview, language } = usePos();
 
   const isPackaged = product.unitLabel === '/ pkt' || product.unitLabel === '/ tin' || product.unitLabel === '/ bag';
 
@@ -34,8 +34,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Top Prominent Image Banner (Click to Preview) */}
         <div
           onClick={handleImageClick}
-          className="relative w-full h-28 bg-slate-100 overflow-hidden border-b border-slate-100 cursor-pointer group/img"
-          title="Click to view full image (بڑی تصویر دیکھیں)"
+          className="relative w-full h-24 bg-slate-100 overflow-hidden border-b border-slate-100 cursor-pointer group/img"
+          title={language === 'ur' ? 'بڑی تصویر دیکھیں' : 'Click to view full image'}
         >
           <img
             src={product.imageUrl || DEFAULT_RICE_IMAGE}
@@ -54,61 +54,68 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
           {/* Hover Zoom Preview Pill */}
           <div className="absolute inset-0 bg-slate-950/25 opacity-0 group-hover/img:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
-            <span className="px-2.5 py-1 rounded-full bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold shadow-md flex items-center space-x-1.5 border border-white/20 scale-95 group-hover/img:scale-100 transition-transform">
+            <span className="px-2 py-0.5 rounded-full bg-slate-900/85 backdrop-blur-xs text-white text-[9px] font-bold shadow-md flex items-center space-x-1 border border-white/20 scale-95 group-hover/img:scale-100 transition-transform">
               <ZoomIn className="w-3 h-3 text-emerald-400" />
-              <span>Click to Preview (تصویر دیکھیں)</span>
+              <span>{language === 'ur' ? 'تصویر دیکھیں' : 'Preview'}</span>
             </span>
           </div>
 
           {/* Floating Category/Badge Pill (Top-Left) */}
-          <span className="absolute top-2 left-2 text-[9px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-md bg-slate-900/80 backdrop-blur-xs text-white border border-white/20 shadow-xs">
+          <span className="absolute top-1.5 left-1.5 text-[8.5px] uppercase font-extrabold tracking-wider px-1.5 py-0.5 rounded bg-slate-900/80 backdrop-blur-xs text-white border border-white/20 shadow-xs">
             {product.badgeLabel}
           </span>
 
           {/* Floating Shortcut Pill (Top-Right) */}
-          <span className="absolute top-2 right-2 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-white/95 backdrop-blur-xs text-slate-800 shadow-xs border border-slate-200">
+          <span className="absolute top-1.5 right-1.5 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-white/95 backdrop-blur-xs text-slate-800 shadow-xs border border-slate-200">
             {product.shortcut}
           </span>
 
           {/* Floating Brand Badge (Bottom-Left) if branded */}
           {product.brand && (
-            <span className="absolute bottom-1.5 left-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-900/85 text-emerald-100 backdrop-blur-xs shadow-xs">
+            <span className="absolute bottom-1 left-1.5 text-[8.5px] font-bold px-1.5 py-0.5 rounded bg-emerald-900/85 text-emerald-100 backdrop-blur-xs shadow-xs">
               {product.brand}
             </span>
           )}
         </div>
 
         {/* Card Body: Names, Price, and Stock Details */}
-        <div className="p-2.5 pb-1.5 space-y-2">
-          {/* Product Names: English & Urdu */}
-          <div>
-            <h3 className="text-xs font-bold text-slate-900 leading-snug group-hover:text-emerald-800 transition-colors truncate">
-              {product.name}
-            </h3>
-            <p className="urdu-text text-[11px] text-slate-600 font-medium !leading-tight mt-0.5 truncate" dir="rtl">
-              {product.urduName}
-            </p>
+        <div className="p-2 pb-1 space-y-1.5">
+          {/* Product Name (Single Language - No Mix Up) */}
+          <div className="h-6 flex items-center">
+            {language === 'ur' ? (
+              <h3 className="urdu-text text-[13px] font-bold text-slate-900 !leading-tight group-hover:text-emerald-800 transition-colors truncate w-full text-right" dir="rtl">
+                {product.urduName || product.name}
+              </h3>
+            ) : (
+              <h3 className="text-xs font-bold text-slate-900 leading-tight group-hover:text-emerald-800 transition-colors truncate w-full">
+                {product.name}
+              </h3>
+            )}
           </div>
 
           {/* Pricing & Stock Details Strip */}
-          <div className="space-y-1 bg-slate-50/90 p-1.5 rounded-lg border border-slate-150">
+          <div className="space-y-0.5 bg-slate-50/90 p-1.5 rounded-lg border border-slate-150 text-[10.5px]">
             <div className="flex items-baseline justify-between">
-              <span className="text-[11px] text-slate-500 font-medium">Rate:</span>
-              <span className="text-xs font-bold text-slate-900 font-mono-num text-right">
+              <span className="text-slate-500 font-medium">
+                {language === 'ur' ? 'ریٹ:' : 'Rate:'}
+              </span>
+              <span className="font-bold text-slate-900 font-mono-num text-right">
                 PKR {product.ratePerKg.toLocaleString()}{' '}
-                <span className="text-[10px] text-slate-500 font-normal">
-                  {product.unitLabel || '/ kg'}
+                <span className="text-[9px] text-slate-500 font-normal">
+                  {language === 'ur' ? (product.unitLabel === '/ kg' ? '/ کلو' : product.unitLabel) : (product.unitLabel || '/ kg')}
                 </span>
                 {product.isWholesalePack && (
-                  <span className="text-[10px] text-slate-400 font-normal block">
-                    (PKR {product.wholesaleBoriPrice?.toLocaleString()} / 50kg bori)
+                  <span className="text-[9px] text-slate-400 font-normal block leading-none">
+                    (PKR {product.wholesaleBoriPrice?.toLocaleString()} / {language === 'ur' ? `${product.boriWeightKg || 25} کلو` : `${product.boriWeightKg || 25}kg`})
                   </span>
                 )}
               </span>
             </div>
 
-            <div className="flex items-center justify-between text-[10px]">
-              <span className="text-slate-500">Available:</span>
+            <div className="flex items-center justify-between text-[9.5px]">
+              <span className="text-slate-500">
+                {language === 'ur' ? 'موجود سٹاک:' : 'Available:'}
+              </span>
               <div className="flex items-center space-x-1">
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${
@@ -116,15 +123,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   }`}
                 />
                 <span className={`font-semibold ${product.isLowStock ? 'text-amber-700' : 'text-slate-700'}`}>
-                  {product.availableStockLabel || `${product.availableKg} KG`} ({product.binLocation})
+                  {product.availableStockLabel || `${product.availableKg} KG`}
                 </span>
               </div>
             </div>
 
             {product.isLowStock && (
-              <div className="flex items-center space-x-1 text-[9px] text-amber-700 font-bold pt-0.5">
+              <div className="flex items-center space-x-1 text-[8.5px] text-amber-700 font-bold pt-0.5">
                 <AlertCircle className="w-2.5 h-2.5 shrink-0" />
-                <span>Low Stock Alert!</span>
+                <span>{language === 'ur' ? 'سٹاک کم ہے!' : 'Low Stock!'}</span>
               </div>
             )}
           </div>
@@ -132,13 +139,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
 
       {/* Action Button: Weigh & Add or Select & Add */}
-      <div className="p-2.5 pt-0">
+      <div className="p-2 pt-0">
         <button
           onClick={() => setSelectedProductForModal(product)}
-          className="w-full py-1.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition-all shadow-2xs active:scale-98 bg-emerald-50 hover:bg-emerald-800 hover:text-white text-emerald-800 border border-emerald-300 hover:border-emerald-800 cursor-pointer"
+          className="w-full py-1 px-2 rounded-lg font-bold text-[11px] flex items-center justify-center space-x-1 transition-all shadow-2xs active:scale-98 bg-emerald-50 hover:bg-emerald-800 hover:text-white text-emerald-800 border border-emerald-300 hover:border-emerald-800 cursor-pointer"
         >
-          {isPackaged ? <ShoppingBag className="w-3.5 h-3.5" /> : <Scale className="w-3.5 h-3.5" />}
-          <span>{isPackaged ? 'Select & Add' : 'Weigh & Add'}</span>
+          {isPackaged ? <ShoppingBag className="w-3 h-3" /> : <Scale className="w-3 h-3" />}
+          <span>
+            {language === 'ur'
+              ? (isPackaged ? 'شامل کریں' : 'وزن کریں')
+              : (isPackaged ? 'Select & Add' : 'Weigh & Add')}
+          </span>
         </button>
       </div>
     </div>

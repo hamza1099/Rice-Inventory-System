@@ -19,7 +19,8 @@ import loginBg from '../assets/login background.jpg';
 
 export const LoginScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { setIsTerminalLocked } = usePos();
+  const { setIsTerminalLocked, language } = usePos();
+  const isUr = language === 'ur';
 
   const [email, setEmail] = useState<string>('trade.partner@gulfcommodities.ae');
   const [password, setPassword] = useState<string>('••••••••••••••');
@@ -37,11 +38,11 @@ export const LoginScreen: React.FC = () => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !email.includes('@')) {
-      notifyError('Please enter a valid email address (درست ای میل درج کریں)');
+      notifyError(isUr ? 'براہ کرم درست ای میل درج کریں۔' : 'Please enter a valid email address.');
       return;
     }
     if (!actualPassword.trim()) {
-      notifyError('Please enter your password (پاس ورڈ درج کریں)');
+      notifyError(isUr ? 'براہ کرم اپنا پاس ورڈ درج کریں۔' : 'Please enter your password.');
       return;
     }
 
@@ -50,13 +51,21 @@ export const LoginScreen: React.FC = () => {
     setTimeout(() => {
       setIsLoading(false);
       setIsTerminalLocked(false);
-      notifySuccess('Terminal access authorized! Welcome to Bukhari Rice Traders.');
+      notifySuccess(
+        isUr
+          ? 'ٹرمینل میں خوش آمدید! بخاری رائس ٹریڈرز'
+          : 'Terminal access authorized! Welcome to Bukhari Rice Traders.'
+      );
       navigate(RouteName.POS_COUNTER);
     }, 400);
   };
 
   const handleForgotPassword = () => {
-    notifyInfo('Please contact Terminal Supervisor (0331-7726262) or Trade Desk to reset credentials.');
+    notifyInfo(
+      isUr
+        ? 'پاس ورڈ ری سیٹ کے لیے سسٹم ایڈمن (0331-7726262) سے رابطہ کریں۔'
+        : 'Please contact System Admin (0331-7726262) or Trade Desk to reset credentials.'
+    );
   };
 
   return (

@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
-import { X, Printer, Phone, MapPin, Calendar, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { X, Printer, Phone, MapPin } from 'lucide-react';
 import type { KhataCustomer, KhataTransaction } from '../../types';
+import { usePos } from '../../context/PosContext';
 
 interface KhataStatementPrintModalProps {
   isOpen?: boolean;
@@ -16,6 +17,8 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
   onClose,
 }) => {
   const printAreaRef = useRef<HTMLDivElement>(null);
+  const { language } = usePos();
+  const isUr = language === 'ur';
 
   if (!isOpen) return null;
 
@@ -37,7 +40,7 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
       {/* Print-specific style tag */}
       <style>{`
         @media print {
@@ -72,23 +75,23 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
               <Printer className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold">Khata Statement & Parchi (کھاتہ پرچی)</h2>
+              <h2 className="text-lg font-bold">{isUr ? 'کھاتہ پرچی و گوشوارہ' : 'Khata Statement & Parchi'}</h2>
               <p className="text-xs text-emerald-200">
-                Official Account Statement for {customer.shopName}
+                {isUr ? `کھاتہ نقل برائے ${customer.urduName || customer.shopName}` : `Official Account Statement for ${customer.shopName}`}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-semibold shadow transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-semibold shadow transition-colors cursor-pointer"
             >
               <Printer className="w-4 h-4" />
-              <span>Print Statement (پرنٹ کریں)</span>
+              <span>{isUr ? 'پرنٹ کریں' : 'Print Statement'}</span>
             </button>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-emerald-800 text-white/80 hover:text-white rounded-xl transition-colors"
+              className="p-2 hover:bg-emerald-800 text-white/80 hover:text-white rounded-xl transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -113,11 +116,11 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
                   <h1 className="text-2xl font-black text-emerald-950 tracking-wide font-serif">
                     BUKHARI RICE TRADERS
                   </h1>
-                  <h2 className="text-lg font-bold text-emerald-800 font-urdu mt-0.5">
-                    بخاری رائس ٹریڈرز (کمیشن ایجنٹس و غلہ آڑھت)
+                  <h2 className="text-lg font-bold text-emerald-800 font-sans mt-0.5">
+                    {isUr ? 'بخاری رائس ٹریڈرز (کمیشن ایجنٹس و غلہ آڑھت)' : 'Commission Agents & Wholesale Grain Market'}
                   </h2>
                   <p className="text-xs text-slate-600 mt-1">
-                    Main Grain Market (غلہ منڈی), Depalpur Road, Okara | Ph: +92 300 7589211, +92 44 2521190
+                    {isUr ? 'غلہ منڈی، دیپالپور روڈ، اوکاڑہ | فون: 0300-7589211' : 'Main Grain Market, Depalpur Road, Okara | Ph: +92 300 7589211, +92 44 2521190'}
                   </p>
                 </div>
                 <div className="text-right text-xs text-slate-500">
@@ -126,28 +129,25 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
                 </div>
               </div>
               <div className="mt-3 inline-block bg-emerald-900 text-white px-4 py-0.5 rounded-full text-xs font-bold tracking-wider uppercase">
-                Customer Ledger Statement / ادھار کھاتہ نقل
+                {isUr ? 'ادھار کھاتہ نقل' : 'Customer Ledger Statement'}
               </div>
             </div>
 
             {/* Customer Details Card */}
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 grid grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase">Khata Holder / دکان یا گاہک کا نام</p>
-                <p className="text-base font-bold text-slate-900">{customer.shopName}</p>
-                {customer.urduName && (
-                  <p className="text-sm font-semibold text-emerald-800 font-urdu">{customer.urduName}</p>
-                )}
+                <p className="text-xs font-semibold text-slate-500 uppercase">{isUr ? 'دکان یا گاہک کا نام:' : 'Khata Holder / Shop:'}</p>
+                <p className="text-base font-bold text-slate-900">{isUr ? (customer.urduName || customer.shopName) : customer.shopName}</p>
                 <p className="text-xs text-slate-600 mt-1">
-                  Proprietor: <span className="font-medium text-slate-800">{customer.customerName}</span>
+                  {isUr ? 'مالک:' : 'Proprietor:'} <span className="font-medium text-slate-800">{customer.customerName}</span>
                 </p>
               </div>
 
               <div className="text-right">
-                <p className="text-xs font-semibold text-slate-500 uppercase">Contact & Limit / فون و حد ادھار</p>
+                <p className="text-xs font-semibold text-slate-500 uppercase">{isUr ? 'رابطہ و حد ادھار:' : 'Contact & Credit Limit:'}</p>
                 <p className="text-sm font-bold text-slate-800 flex items-center justify-end gap-1.5 mt-0.5">
                   <Phone className="w-3.5 h-3.5 text-slate-400" />
-                  {customer.phone}
+                  {customer.phone || (isUr ? 'فون نمبر نہیں' : 'No Phone')}
                 </p>
                 {customer.address && (
                   <p className="text-xs text-slate-600 flex items-center justify-end gap-1 mt-1">
@@ -156,7 +156,7 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
                   </p>
                 )}
                 <p className="text-xs text-slate-500 mt-1">
-                  Credit Limit: <span className="font-semibold text-slate-700">PKR {(customer.creditLimit || 0).toLocaleString()}</span>
+                  {isUr ? 'حد ادھار:' : 'Credit Limit:'} <span className="font-semibold text-slate-700">PKR {(customer.creditLimit || 0).toLocaleString()}</span>
                 </p>
               </div>
             </div>
@@ -164,13 +164,13 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
             {/* Account Summary Strip */}
             <div className="grid grid-cols-3 gap-3 mb-6 text-center">
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <p className="text-xs text-amber-700 font-semibold uppercase">Total Purchases (بنام)</p>
+                <p className="text-xs text-amber-700 font-semibold uppercase">{isUr ? 'کل خریداری (بنام)' : 'Total Purchases (Debit)'}</p>
                 <p className="text-lg font-black text-amber-900 mt-0.5">
                   PKR {customer.totalDebit.toLocaleString()}
                 </p>
               </div>
               <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                <p className="text-xs text-emerald-700 font-semibold uppercase">Total Paid (جمع)</p>
+                <p className="text-xs text-emerald-700 font-semibold uppercase">{isUr ? 'کل ادائیگی (جمع)' : 'Total Paid (Credit)'}</p>
                 <p className="text-lg font-black text-emerald-900 mt-0.5">
                   PKR {customer.totalCredit.toLocaleString()}
                 </p>
@@ -180,12 +180,12 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
                   ? 'bg-rose-50 border-rose-300 text-rose-900'
                   : 'bg-emerald-50 border-emerald-300 text-emerald-900'
               }`}>
-                <p className="text-xs font-bold uppercase tracking-wider">Net Balance (بقایا واجب الادا)</p>
+                <p className="text-xs font-bold uppercase tracking-wider">{isUr ? 'بقایا واجب الادا' : 'Net Balance'}</p>
                 <p className="text-xl font-black mt-0.5">
                   PKR {customer.currentBalance.toLocaleString()}
                 </p>
-                <p className="text-[11px] font-medium font-urdu mt-0.5">
-                  {customer.currentBalance > 0 ? 'واجب الادا بقایا رقم' : 'کھاتہ مکمل بیباق ہے'}
+                <p className="text-[11px] font-medium mt-0.5">
+                  {customer.currentBalance > 0 ? (isUr ? 'واجب الادا بقایا رقم' : 'Outstanding Balance Due') : (isUr ? 'کھاتہ مکمل بیباق ہے' : 'Zero Balance / Fully Settled')}
                 </p>
               </div>
             </div>
@@ -195,18 +195,18 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
               <table className="w-full text-xs text-left">
                 <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-300">
                   <tr>
-                    <th className="py-2.5 px-3 w-28">Date (تاریخ)</th>
-                    <th className="py-2.5 px-3">Description & Items (تفصیل خریداری / ادائیگی)</th>
-                    <th className="py-2.5 px-3 text-right w-24">Debit (+) بنام</th>
-                    <th className="py-2.5 px-3 text-right w-24">Credit (-) جمع</th>
-                    <th className="py-2.5 px-3 text-right w-28">Balance (بقایا)</th>
+                    <th className="py-2.5 px-3 w-28">{isUr ? 'تاریخ' : 'Date'}</th>
+                    <th className="py-2.5 px-3">{isUr ? 'تفصیل خریداری / ادائیگی' : 'Description & Items'}</th>
+                    <th className="py-2.5 px-3 text-right w-24">{isUr ? 'بنام (+)' : 'Debit (+)'}</th>
+                    <th className="py-2.5 px-3 text-right w-24">{isUr ? 'جمع (-)' : 'Credit (-)'}</th>
+                    <th className="py-2.5 px-3 text-right w-28">{isUr ? 'بقایا' : 'Balance'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {sortedTxns.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-6 text-center text-slate-400">
-                        No transactions recorded yet.
+                        {isUr ? 'کوئی ٹرانزیکشن ریکارڈ نہیں ہے۔' : 'No transactions recorded yet.'}
                       </td>
                     </tr>
                   ) : (
@@ -233,7 +233,7 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
                                 {txn.items.map((it, itemIdx) => (
                                   <div key={itemIdx} className="text-[11px] text-slate-600 flex justify-between">
                                     <span>
-                                      • {it.productName} ({it.quantity} {it.unit} @ Rs. {it.rate})
+                                      • {isUr ? (it.urduName || it.productName) : it.productName} ({it.quantity} {isUr && it.unit === 'kg' ? 'کلو' : it.unit} @ Rs. {it.rate})
                                     </span>
                                     <span className="font-medium text-slate-700">Rs. {it.subtotal.toLocaleString()}</span>
                                   </div>
@@ -244,7 +244,7 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
                             {/* Payment mode details */}
                             {isPayment && (
                               <div className="text-[11px] text-emerald-700 mt-0.5">
-                                Mode: <span className="font-semibold uppercase">{txn.paymentMode || 'Cash'}</span>
+                                {isUr ? 'طریقہ ادائیگی:' : 'Mode:'} <span className="font-semibold uppercase">{txn.paymentMode || 'Cash'}</span>
                                 {txn.referenceNo && ` • Ref: ${txn.referenceNo}`}
                               </div>
                             )}
@@ -273,7 +273,7 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
                 <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300">
                   <tr>
                     <td colSpan={2} className="py-2.5 px-3 text-right uppercase text-slate-700">
-                      Total Ledger Summary (میزان):
+                      {isUr ? 'کل میزان:' : 'Total Ledger Summary:'}
                     </td>
                     <td className="py-2.5 px-3 text-right text-amber-900">
                       PKR {customer.totalDebit.toLocaleString()}
@@ -291,25 +291,33 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
 
             {/* Note & Legal Notice */}
             <div className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded p-3 mb-8">
-              <p className="font-semibold text-slate-700">اہم ہدایات / Terms of Credit:</p>
-              <ul className="list-disc pl-4 space-y-0.5 mt-1 font-urdu text-[12px] text-slate-600">
-                <li>تمام سودے غلہ منڈی اوکاڑہ کے مقررہ قواعد و ضوابط کے تحت طے پاتے ہیں۔</li>
-                <li>کسی بھی اندراج میں اختلاف کی صورت میں 3 یوم کے اندر اندر دفتر سے رابطہ فرما کر تصحیح کرائیں۔</li>
-                <li>براہ کرم ادائیگی کے بعد کمپیوٹرائزڈ پرچی وصول فرما کر ریکارڈ اپنے پاس محفوظ رکھیں۔</li>
-              </ul>
+              <p className="font-semibold text-slate-700">{isUr ? 'اہم ہدایات:' : 'Terms of Credit & Important Instructions:'}</p>
+              {isUr ? (
+                <ul className="list-disc pl-4 space-y-0.5 mt-1 text-[12px] text-slate-600">
+                  <li>تمام سودے غلہ منڈی اوکاڑہ کے مقررہ قواعد و ضوابط کے تحت طے پاتے ہیں۔</li>
+                  <li>کسی بھی اندراج میں اختلاف کی صورت میں 3 یوم کے اندر اندر دفتر سے رابطہ فرما کر تصحیح کرائیں۔</li>
+                  <li>براہ کرم ادائیگی کے بعد کمپیوٹرائزڈ پرچی وصول فرما کر ریکارڈ اپنے پاس محفوظ رکھیں۔</li>
+                </ul>
+              ) : (
+                <ul className="list-disc pl-4 space-y-0.5 mt-1 text-[11px] text-slate-600">
+                  <li>All trades governed by Okara Grain Market standards and regulations.</li>
+                  <li>In case of any discrepancy, please notify the office within 3 days for rectification.</li>
+                  <li>Kindly retain official computerized receipts upon payment for your records.</li>
+                </ul>
+              )}
             </div>
 
             {/* Signatures */}
             <div className="grid grid-cols-2 gap-12 pt-6 border-t border-slate-300 text-xs text-center">
               <div>
                 <div className="w-44 border-b border-slate-400 mx-auto mb-1.5 h-8"></div>
-                <p className="font-semibold text-slate-800">Prepared By (دستخط منشی / کیشیئر)</p>
+                <p className="font-semibold text-slate-800">{isUr ? 'دستخط منشی / کیشیئر' : 'Prepared By / Cashier'}</p>
                 <p className="text-[10px] text-slate-400">Bukhari Rice Traders Terminal</p>
               </div>
               <div>
                 <div className="w-44 border-b border-slate-400 mx-auto mb-1.5 h-8"></div>
-                <p className="font-semibold text-slate-800">Customer Signature (دستخط خریدار / مہر)</p>
-                <p className="text-[10px] text-slate-400">{customer.shopName}</p>
+                <p className="font-semibold text-slate-800">{isUr ? 'دستخط خریدار / مہر' : 'Customer Signature / Stamp'}</p>
+                <p className="text-[10px] text-slate-400">{isUr ? (customer.urduName || customer.shopName) : customer.shopName}</p>
               </div>
             </div>
           </div>
@@ -320,9 +328,9 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
           <span>Khata ID: #{customer.id} • Registered: {customer.createdAt}</span>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-200 text-slate-700 font-medium transition-colors"
+            className="px-4 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-200 text-slate-700 font-medium transition-colors cursor-pointer"
           >
-            Close (بند کریں)
+            {isUr ? 'بند کریں' : 'Close'}
           </button>
         </div>
       </div>

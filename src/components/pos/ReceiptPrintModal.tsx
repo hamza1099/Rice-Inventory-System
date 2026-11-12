@@ -3,7 +3,7 @@ import { Printer, X, CheckCircle } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 
 export const ReceiptPrintModal: React.FC = () => {
-  const { activeReceipt, setActiveReceipt } = usePos();
+  const { activeReceipt, setActiveReceipt, language } = usePos();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -28,7 +28,9 @@ export const ReceiptPrintModal: React.FC = () => {
         <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between text-xs">
           <div className="flex items-center space-x-1.5 font-bold">
             <CheckCircle className="w-4 h-4 text-emerald-400" />
-            <span>Sale Completed • Thermal Slip Preview</span>
+            <span>
+              {language === 'ur' ? 'فروخت مکمل • تھرمل پرچی' : 'Sale Completed • Thermal Slip Preview'}
+            </span>
           </div>
           <button
             onClick={() => setActiveReceipt(null)}
@@ -96,7 +98,9 @@ export const ReceiptPrintModal: React.FC = () => {
                         <span className="font-bold block">{item.product.name}</span>
                         <span className="text-[9px] text-slate-500 font-sans">{item.product.urduName}</span>
                       </td>
-                      <td className="py-1 text-right font-medium">{item.netWeight.toFixed(1)}k</td>
+                      <td className="py-1 text-right font-medium">
+                        {item.netWeight < 1 && item.netWeight > 0 ? parseFloat(item.netWeight.toFixed(3)) : item.netWeight.toFixed(2)} kg
+                      </td>
                       <td className="py-1 text-right font-medium">{item.ratePerKg}</td>
                       <td className="py-1 text-right font-bold">{Math.round(item.subtotal)}</td>
                     </tr>
@@ -151,16 +155,16 @@ export const ReceiptPrintModal: React.FC = () => {
         <div className="p-3 bg-white border-t border-slate-200 flex items-center justify-between">
           <button
             onClick={() => setActiveReceipt(null)}
-            className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-800 rounded border border-slate-200"
+            className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-800 rounded border border-slate-200 cursor-pointer"
           >
-            Close [ESC]
+            {language === 'ur' ? 'بند کریں [ESC]' : 'Close [ESC]'}
           </button>
           <button
             onClick={() => window.print()}
-            className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-800 hover:bg-emerald-900 rounded flex items-center space-x-1.5 shadow-xs"
+            className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-800 hover:bg-emerald-900 rounded flex items-center space-x-1.5 shadow-xs cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
-            <span>Print Thermal Receipt [Ctrl+P]</span>
+            <span>{language === 'ur' ? 'پرچی پرنٹ کریں [Ctrl+P]' : 'Print Thermal Receipt [Ctrl+P]'}</span>
           </button>
         </div>
       </div>

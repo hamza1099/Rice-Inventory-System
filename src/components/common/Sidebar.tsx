@@ -10,9 +10,11 @@ import {
   BookOpen
 } from 'lucide-react';
 import { RouteName } from '../../routes/RouteName';
+import { usePos } from '../../context/PosContext';
 
 export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
+  const { language } = usePos();
 
   // Keyboard shortcut listener for F1, F2, F3, F4, F8, F9
   useEffect(() => {
@@ -68,7 +70,7 @@ export const Sidebar: React.FC = () => {
     },
     {
       to: RouteName.KHATA,
-      label: 'Customer Khata (ادھار)',
+      label: 'Customer Khata',
       urdu: 'ادھار کھاتہ رجسٹر',
       key: 'F5',
       icon: BookOpen
@@ -93,12 +95,12 @@ export const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-56 shrink-0 bg-white border-r border-slate-200 flex flex-col justify-between h-full text-xs select-none">
+    <aside className="w-56 shrink-0 bg-[#064e3b] border-r border-[#033728] flex flex-col justify-between h-full text-xs select-none shadow-sm">
       <div className="p-2 space-y-4">
         {/* Workstation Operations */}
         <div>
-          <span className="text-[10px] uppercase font-bold text-slate-600 tracking-wider px-2 block mb-1.5">
-            Workstation Operations
+          <span className="text-[10px] uppercase font-extrabold text-emerald-300/85 tracking-wider px-2.5 block mb-1.5">
+            {language === 'ur' ? 'ورک سٹیشن آپریشنز' : 'Workstation Operations'}
           </span>
           <nav className="space-y-1">
             {navItems.map((item) => (
@@ -106,25 +108,18 @@ export const Sidebar: React.FC = () => {
                 key={item.key}
                 to={item.to}
                 className={({ isActive }) =>
-                  `flex items-center justify-between px-2.5 py-2 rounded font-medium transition-all ${
+                  `flex items-center space-x-2.5 px-3 py-2.5 rounded-lg font-medium transition-all ${
                     isActive
-                      ? 'bg-emerald-800 text-white shadow-xs font-semibold'
-                      : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                      ? 'bg-white text-emerald-950 shadow-md font-bold'
+                      : 'text-emerald-100/90 hover:bg-emerald-800/70 hover:text-white'
                   }`
                 }
               >
                 {({ isActive }) => (
                   <>
-                    <div className="flex items-center space-x-2">
-                      <item.icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-500'}`} />
-                      <span>{item.label}</span>
-                    </div>
-                    <span
-                      className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${
-                        isActive ? 'bg-emerald-900 text-emerald-200' : 'bg-slate-100 text-slate-500'
-                      }`}
-                    >
-                      {item.key}
+                    <item.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-emerald-800' : 'text-emerald-300'}`} />
+                    <span className={language === 'ur' ? 'font-urdu font-semibold text-[13px]' : 'text-xs'}>
+                      {language === 'ur' ? item.urdu : item.label}
                     </span>
                   </>
                 )}
@@ -135,8 +130,8 @@ export const Sidebar: React.FC = () => {
 
         {/* Terminal Admin */}
         <div>
-          <span className="text-[10px] uppercase font-bold text-slate-600 tracking-wider px-2 block mb-1.5">
-            Terminal Admin
+          <span className="text-[10px] uppercase font-extrabold text-emerald-300/85 tracking-wider px-2.5 block mb-1.5">
+            {language === 'ur' ? 'ٹرمینل ایڈمن' : 'Terminal Admin'}
           </span>
           <nav className="space-y-1">
             {adminItems.map((item) => (
@@ -144,25 +139,18 @@ export const Sidebar: React.FC = () => {
                 key={item.key}
                 to={item.to}
                 className={({ isActive }) =>
-                  `flex items-center justify-between px-2.5 py-2 rounded font-medium transition-all ${
+                  `flex items-center space-x-2.5 px-3 py-2.5 rounded-lg font-medium transition-all ${
                     isActive
-                      ? 'bg-emerald-800 text-white shadow-xs font-semibold'
-                      : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                      ? 'bg-white text-emerald-950 shadow-md font-bold'
+                      : 'text-emerald-100/90 hover:bg-emerald-800/70 hover:text-white'
                   }`
                 }
               >
                 {({ isActive }) => (
                   <>
-                    <div className="flex items-center space-x-2">
-                      <item.icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-500'}`} />
-                      <span>{item.label}</span>
-                    </div>
-                    <span
-                      className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${
-                        isActive ? 'bg-emerald-900 text-emerald-200' : 'bg-slate-100 text-slate-500'
-                      }`}
-                    >
-                      {item.key}
+                    <item.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-emerald-800' : 'text-emerald-300'}`} />
+                    <span className={language === 'ur' ? 'font-urdu font-semibold text-[13px]' : 'text-xs'}>
+                      {language === 'ur' ? item.urdu : item.label}
                     </span>
                   </>
                 )}
@@ -170,6 +158,15 @@ export const Sidebar: React.FC = () => {
             ))}
           </nav>
         </div>
+      </div>
+
+      {/* Subtle Terminal Watermark Footer */}
+      <div className="p-3 border-t border-emerald-800/60 text-[10.5px] text-emerald-200/70 flex items-center justify-between font-mono">
+        <span>{language === 'ur' ? 'ٹرمینل #01' : 'TERMINAL #01'}</span>
+        <span className="flex items-center space-x-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span className="text-[9.5px] uppercase font-bold text-emerald-300">ONLINE</span>
+        </span>
       </div>
     </aside>
   );

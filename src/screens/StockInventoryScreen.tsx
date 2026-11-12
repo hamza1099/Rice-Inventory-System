@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { usePos } from '../context/PosContext';
 import { StatCard } from '../components/common/StatCard';
 import { InventoryTable } from '../components/inventory/InventoryTable';
-import { GodownStats } from '../components/inventory/GodownStats';
 import { StockInwardModal } from '../components/inventory/StockInwardModal';
 import { EditVarietyModal } from '../components/inventory/EditVarietyModal';
 import { AddVarietyModal } from '../components/inventory/AddVarietyModal';
@@ -11,7 +10,6 @@ import {
   Boxes,
   BadgeDollarSign,
   AlertTriangle,
-  Droplets,
   Plus,
   FileText,
   Search,
@@ -19,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export const StockInventoryScreen: React.FC = () => {
-  const { inventory, setIsMandiChitOpen, deleteInventoryItem } = usePos();
+  const { inventory, setIsMandiChitOpen, deleteInventoryItem, language } = usePos();
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -28,6 +26,8 @@ export const StockInventoryScreen: React.FC = () => {
   const [isInwardOpen, setIsInwardOpen] = useState<boolean>(false);
   const [rateEditItem, setRateEditItem] = useState<InventoryItem | null>(null);
   const [isAddVarietyOpen, setIsAddVarietyOpen] = useState<boolean>(false);
+
+  const isUr = language === 'ur';
 
   // Dynamic calculations
   const totalValuation = inventory.reduce(
@@ -41,14 +41,14 @@ export const StockInventoryScreen: React.FC = () => {
   ).length;
 
   const filterChips = [
-    { id: 'All', label: `All Items [${inventory.length}]` },
-    { id: 'Rice', label: 'Rice (چاول)' },
-    { id: 'Pulses', label: 'Pulses / Daal (دالیں)' },
-    { id: 'Spices', label: 'Spices (کھلا مصالحہ)' },
-    { id: 'Packaged', label: 'Shan & National (ڈبہ)' },
-    { id: 'Oil', label: 'Oil & Ghee' },
-    { id: 'AttaSugar', label: 'Atta & Sugar' },
-    { id: 'LowStock', label: `Low Stock Only [${lowStockCount}]` }
+    { id: 'All', label: isUr ? `سب اشیاء [${inventory.length}]` : `All Items [${inventory.length}]` },
+    { id: 'Rice', label: isUr ? 'چاول' : 'Rice' },
+    { id: 'Pulses', label: isUr ? 'دالیں' : 'Pulses / Daal' },
+    { id: 'Spices', label: isUr ? 'کھلا مصالحہ' : 'Spices' },
+    { id: 'Packaged', label: isUr ? 'ڈبہ مصالحہ' : 'Shan & National' },
+    { id: 'Oil', label: isUr ? 'تیل و گھی' : 'Oil & Ghee' },
+    { id: 'AttaSugar', label: isUr ? 'آٹا و چینی' : 'Atta & Sugar' },
+    { id: 'LowStock', label: isUr ? `کم سٹاک [${lowStockCount}]` : `Low Stock Only [${lowStockCount}]` }
   ];
 
   const filteredInventory = inventory.filter((item) => {
@@ -79,9 +79,9 @@ export const StockInventoryScreen: React.FC = () => {
   });
 
   return (
-    <div className="space-y-3">
+    <div className="h-full flex flex-col space-y-2 overflow-hidden min-h-0">
       {/* Top Banner & Quick Inward Action */}
-      <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-xs flex items-center justify-between text-xs flex-wrap gap-2">
+      <div className="shrink-0 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-xs flex items-center justify-between text-xs flex-wrap gap-2">
         <div className="flex items-center space-x-2">
           <button
             onClick={() => {
@@ -91,42 +91,33 @@ export const StockInventoryScreen: React.FC = () => {
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>+ New Stock Inward (آمد گودام)</span>
+            <span>{isUr ? '+ گودام مال آمد' : '+ New Stock Inward'}</span>
           </button>
           <button
             onClick={() => setIsAddVarietyOpen(true)}
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold text-xs transition-colors cursor-pointer"
           >
             <PlusCircle className="w-4 h-4 text-emerald-700" />
-            <span>+ Add New Item / Variety (نئی جنس / آئٹم)</span>
+            <span>{isUr ? '+ نئی جنس / آئٹم' : '+ Add New Item / Variety'}</span>
           </button>
           <button 
             onClick={() => setIsMandiChitOpen(true)}
             className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200 transition-colors cursor-pointer"
           >
             <FileText className="w-3.5 h-3.5 text-slate-500" />
-            <span>Mandi Stock Chit [Alt+P]</span>
+            <span>{isUr ? 'منڈی سٹاک چٹ [Alt+P]' : 'Mandi Stock Chit [Alt+P]'}</span>
           </button>
-        </div>
-
-        <div className="flex items-center space-x-3 text-[11px] font-mono-num text-slate-600">
-          <span className="bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded border border-emerald-200 font-bold">
-            • MANDI YARD INWARD ACTIVE
-          </span>
-          <span className="text-slate-400">|</span>
-          <span>
-            TARE DEDUCTION RULE: Jute 50kg Bori (-0.95kg) | PP Bag (-0.12kg)
-          </span>
         </div>
       </div>
 
-      {/* 4 Stat Cards from Image 4 */}
-      <div className="grid grid-cols-4 gap-3">
+      {/* 3 Stat Cards (Compact Mode for maximum table visibility) */}
+      <div className="shrink-0 grid grid-cols-3 gap-2">
         <StatCard
+          compact
           title="VARIETIES TRACKED"
           urduTitle="اجناس لسٹ"
           value={`${inventory.length} Active Lots`}
-          subValue={`${inventory.length - lowStockCount} Normal • ${lowStockCount} Critical/Low Stock`}
+          subValue={`${inventory.length - lowStockCount} Normal • ${lowStockCount} Low Stock`}
           badge={`SKU: ${inventory.length}`}
           badgeColor="emerald"
           icon={Boxes}
@@ -135,10 +126,11 @@ export const StockInventoryScreen: React.FC = () => {
         />
 
         <StatCard
+          compact
           title="TOTAL STOCK VALUATION"
           urduTitle="کل مالیت گودام"
           value={`PKR ${Math.round(totalValuation).toLocaleString()}`}
-          subValue={`Bulk Weight: ${totalBulkKg.toLocaleString()} kg (~${totalBags} Bori)`}
+          subValue={`Bulk: ${totalBulkKg.toLocaleString()} kg (~${totalBags} Bags)`}
           badge="Cost Value"
           badgeColor="blue"
           icon={BadgeDollarSign}
@@ -147,6 +139,7 @@ export const StockInventoryScreen: React.FC = () => {
         />
 
         <StatCard
+          compact
           title="THRESHOLD ALERTS"
           urduTitle="سٹاک وارننگ"
           value={`${String(lowStockCount).padStart(2, '0')} Varieties`}
@@ -157,31 +150,23 @@ export const StockInventoryScreen: React.FC = () => {
           iconBg="bg-red-100"
           iconColor="text-red-800"
         />
-
-        <StatCard
-          title="MANDI QUALITY INDEX"
-          urduTitle="معیار نمی"
-          value="11.4% Avg"
-          subValue="Moisture Safe < 12.5% • Grain Aeration Running"
-          badge="Graded"
-          badgeColor="emerald"
-          icon={Droplets}
-          iconBg="bg-amber-100"
-          iconColor="text-amber-800"
-        />
       </div>
 
-      {/* Search & Filter Bar */}
-      <div className="bg-white border border-slate-200 rounded-lg p-2.5 shadow-xs space-y-2">
-        <div className="relative">
+      {/* Search & Filter Bar with High-Contrast Search Input */}
+      <div className="shrink-0 bg-white border border-slate-200 rounded-lg p-2 shadow-xs space-y-1.5">
+        <div className="relative group">
           <input
             type="text"
-            placeholder="Search rice variety (e.g. Kainat, Basmati, کائنات, Super Kernel), SKU code, or Moisture... [F3]"
+            placeholder={
+              isUr
+                ? 'یہاں چاول، جنس، دال یا SKU کوڈ تلاش کریں...'
+                : 'Search rice variety, grain SKU, category or code here...'
+            }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900 focus:bg-white focus:outline-hidden focus:border-emerald-600"
+            className="w-full pl-9 pr-3 py-2 bg-emerald-50/70 hover:bg-emerald-50 border-2 border-emerald-500/80 focus:border-emerald-700 focus:bg-white rounded-lg text-xs font-semibold text-slate-900 placeholder-emerald-800/70 shadow-xs focus:outline-hidden focus:ring-2 focus:ring-emerald-600/20 transition-all"
           />
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+          <Search className="w-4 h-4 text-emerald-700 absolute left-3 top-2.5 pointer-events-none group-focus-within:text-emerald-800 group-focus-within:scale-110 transition-all" />
         </div>
 
         {/* Filter Chips */}
@@ -190,7 +175,7 @@ export const StockInventoryScreen: React.FC = () => {
             <button
               key={chip.id}
               onClick={() => setSelectedFilter(chip.id)}
-              className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all whitespace-nowrap ${
+              className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all whitespace-nowrap cursor-pointer ${
                 selectedFilter === chip.id
                   ? 'bg-emerald-800 text-white shadow-xs'
                   : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
@@ -202,19 +187,18 @@ export const StockInventoryScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* Live Godown Table */}
-      <InventoryTable
-        inventory={filteredInventory}
-        onOpenInward={(item) => {
-          setInwardItem(item);
-          setIsInwardOpen(true);
-        }}
-        onOpenRateEdit={(item) => setRateEditItem(item)}
-        onDeleteItem={(id) => deleteInventoryItem(id)}
-      />
-
-      {/* Bottom Godown Warehouse Status Cards */}
-      <GodownStats />
+      {/* Live Godown Table (Takes all remaining height and scrolls internally) */}
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        <InventoryTable
+          inventory={filteredInventory}
+          onOpenInward={(item) => {
+            setInwardItem(item);
+            setIsInwardOpen(true);
+          }}
+          onOpenRateEdit={(item) => setRateEditItem(item)}
+          onDeleteItem={(id) => deleteInventoryItem(id)}
+        />
+      </div>
 
       {/* Modals */}
       <StockInwardModal

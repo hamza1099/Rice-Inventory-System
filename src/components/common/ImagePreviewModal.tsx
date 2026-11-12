@@ -4,7 +4,7 @@ import { usePos } from '../../context/PosContext';
 import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/productImages';
 
 export const ImagePreviewModal: React.FC = () => {
-  const { imagePreview, closeImagePreview, setSelectedProductForModal } = usePos();
+  const { imagePreview, closeImagePreview, setSelectedProductForModal, language } = usePos();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -49,20 +49,21 @@ export const ImagePreviewModal: React.FC = () => {
             </div>
             <div className="min-w-0">
               <div className="flex items-center space-x-2">
-                <h2 className="text-sm sm:text-base font-bold text-white truncate">
-                  {imagePreview.title}
-                </h2>
+                {language === 'ur' ? (
+                  <h2 className="urdu-text text-base sm:text-lg font-bold text-white truncate" dir="rtl">
+                    {imagePreview.urduTitle || imagePreview.title}
+                  </h2>
+                ) : (
+                  <h2 className="text-sm sm:text-base font-bold text-white truncate">
+                    {imagePreview.title}
+                  </h2>
+                )}
                 {imagePreview.badgeLabel && (
                   <span className="text-[9px] uppercase font-extrabold px-2 py-0.5 rounded bg-emerald-900/60 text-emerald-300 border border-emerald-700/50">
                     {imagePreview.badgeLabel}
                   </span>
                 )}
               </div>
-              {imagePreview.urduTitle && (
-                <p className="urdu-text text-xs text-emerald-300 font-semibold !leading-tight mt-0.5" dir="rtl">
-                  {imagePreview.urduTitle}
-                </p>
-              )}
             </div>
           </div>
 
@@ -113,11 +114,13 @@ export const ImagePreviewModal: React.FC = () => {
           <div className="flex items-center space-x-4 font-mono-num text-xs">
             {imagePreview.rate !== undefined && (
               <div>
-                <span className="text-[10px] text-slate-400 block font-sans">ریٹ (Rate):</span>
+                <span className="text-[10px] text-slate-400 block font-sans">
+                  {language === 'ur' ? 'ریٹ:' : 'Rate:'}
+                </span>
                 <span className="text-base font-black text-white">
                   PKR {imagePreview.rate.toLocaleString()}{' '}
                   <span className="text-xs text-slate-400 font-normal font-sans">
-                    {imagePreview.unitLabel || '/ kg'}
+                    {language === 'ur' && imagePreview.unitLabel === '/ kg' ? '/ کلو' : (imagePreview.unitLabel || '/ kg')}
                   </span>
                 </span>
               </div>
@@ -125,7 +128,9 @@ export const ImagePreviewModal: React.FC = () => {
 
             {imagePreview.stock && (
               <div className="border-l border-slate-800 pl-4">
-                <span className="text-[10px] text-slate-400 block font-sans">دستیاب اسٹاک (Stock):</span>
+                <span className="text-[10px] text-slate-400 block font-sans">
+                  {language === 'ur' ? 'دستیاب سٹاک:' : 'Available Stock:'}
+                </span>
                 <span className="text-sm font-bold text-emerald-400">
                   {imagePreview.stock}
                 </span>
@@ -138,7 +143,7 @@ export const ImagePreviewModal: React.FC = () => {
               onClick={closeImagePreview}
               className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs transition-colors cursor-pointer"
             >
-              Close (بند کریں)
+              {language === 'ur' ? 'بند کریں' : 'Close'}
             </button>
             {imagePreview.product && (
               <button
@@ -146,7 +151,11 @@ export const ImagePreviewModal: React.FC = () => {
                 className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-950/50 flex items-center space-x-1.5 transition-all active:scale-98 cursor-pointer"
               >
                 {isPackaged ? <ShoppingBag className="w-3.5 h-3.5" /> : <Scale className="w-3.5 h-3.5" />}
-                <span>{isPackaged ? 'Select & Add to Bill' : 'Weigh & Add to Bill'}</span>
+                <span>
+                  {language === 'ur'
+                    ? (isPackaged ? 'بل میں شامل کریں' : 'وزن اور بل میں شامل کریں')
+                    : (isPackaged ? 'Select & Add to Bill' : 'Weigh & Add to Bill')}
+                </span>
               </button>
             )}
           </div>

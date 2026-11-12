@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
-import { Users, UserPlus, Shield, Check, X, Mail, Key } from 'lucide-react';
+import { Users, UserPlus, Shield, Check, X, Mail, Key, Edit3, Trash2 } from 'lucide-react';
 import { AddUserModal, type TerminalUser } from '../components/users/AddUserModal';
+import { EditUserModal } from '../components/users/EditUserModal';
 import { ResetPasswordModal } from '../components/users/ResetPasswordModal';
 import { notifySuccess, notifyInfo } from '../utils/toast';
+import { usePos } from '../context/PosContext';
 
 export const UserManagementScreen: React.FC = () => {
+  const { language } = usePos();
+  const isUr = language === 'ur';
+
   const [users, setUsers] = useState<TerminalUser[]>([
     {
       id: 'usr-1',
@@ -22,8 +27,8 @@ export const UserManagementScreen: React.FC = () => {
       name: 'Haji M. Bilal Bukhari',
       urduName: 'حاجی بلال بخاری',
       email: 'bilal.bukhari@bukharirice.com',
-      role: 'Supervisor',
-      terminal: 'All Workstations (Supervisor Pass)',
+      role: 'Admin',
+      terminal: 'All Workstations (Admin Pass)',
       shift: 'Full Day In-Charge',
       status: 'Active',
       phone: '0301-4421882'
@@ -44,7 +49,7 @@ export const UserManagementScreen: React.FC = () => {
       name: 'Munshi Bashir Ahmad',
       urduName: 'منشی بشیر احمد',
       email: 'munshi.bashir@bukharirice.com',
-      role: 'Munshi',
+      role: 'Cashier',
       terminal: 'Godown Scale Platform #01',
       shift: 'Mandi Arrival Shift',
       status: 'Active',
@@ -54,9 +59,20 @@ export const UserManagementScreen: React.FC = () => {
 
   const [isAddUserOpen, setIsAddUserOpen] = useState<boolean>(false);
   const [selectedUserForPassword, setSelectedUserForPassword] = useState<TerminalUser | null>(null);
+  const [selectedUserForEdit, setSelectedUserForEdit] = useState<TerminalUser | null>(null);
+  const [userToDelete, setUserToDelete] = useState<TerminalUser | null>(null);
 
   const handleAddUser = (newUser: TerminalUser) => {
     setUsers([...users, newUser]);
+  };
+
+  const handleUpdateUser = (updatedUser: TerminalUser) => {
+    setUsers(users.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    setUsers(users.filter((u) => u.id !== userId));
+    setUserToDelete(null);
   };
 
   const handleToggleStatus = (id: string) => {
@@ -75,14 +91,13 @@ export const UserManagementScreen: React.FC = () => {
           <div className="flex items-center space-x-2">
             <Users className="w-5 h-5 text-emerald-800" />
             <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
-              User Management & Access Control
+              {isUr ? 'صارفین اور رسائی کنٹرول' : 'User Management & Access Control'}
             </h2>
-            <span className="urdu-text text-sm text-emerald-800 font-bold" dir="rtl">
-              (صارفین اور لاگ ان اکاؤنٹس)
-            </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-0.5">
-            Manage cashier logins, role-based access permissions, and account passwords via email.
+            {isUr
+              ? 'کیشئرز کے لاگ ان، اجازت نامے اور پاس ورڈز کا انتظام کریں۔'
+              : 'Manage cashier logins, role-based access permissions, and account passwords.'}
           </p>
         </div>
 
@@ -91,7 +106,7 @@ export const UserManagementScreen: React.FC = () => {
           className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-xs cursor-pointer transition-colors"
         >
           <UserPlus className="w-4 h-4" />
-          <span>+ Add New User (نیا صارف)</span>
+          <span>{isUr ? '+ نیا صارف شامل کریں' : '+ Add New User'}</span>
         </button>
       </div>
 
@@ -100,13 +115,13 @@ export const UserManagementScreen: React.FC = () => {
         <table className="w-full text-left border-collapse">
           <thead className="bg-slate-100 text-slate-600 text-[10px] font-bold uppercase border-b border-slate-200">
             <tr>
-              <th className="py-2.5 px-4">USER NAME</th>
-              <th className="py-2.5 px-3">LOGIN EMAIL</th>
-              <th className="py-2.5 px-3">ROLE & PERMISSION</th>
-              <th className="py-2.5 px-3">ASSIGNED WORKSTATION</th>
-              <th className="py-2.5 px-3">SHIFT TIMING</th>
-              <th className="py-2.5 px-3 text-center">STATUS</th>
-              <th className="py-2.5 px-3 text-center">ACTION</th>
+              <th className="py-2.5 px-4">{isUr ? 'صارف کا نام' : 'USER NAME'}</th>
+              <th className="py-2.5 px-3">{isUr ? 'لاگ ان ای میل' : 'LOGIN EMAIL'}</th>
+              <th className="py-2.5 px-3">{isUr ? 'عہدہ و اختیارات' : 'ROLE & PERMISSION'}</th>
+              <th className="py-2.5 px-3">{isUr ? 'کاؤنٹر' : 'ASSIGNED WORKSTATION'}</th>
+              <th className="py-2.5 px-3">{isUr ? 'موبائل نمبر' : 'PHONE NO'}</th>
+              <th className="py-2.5 px-3 text-center">{isUr ? 'حالت' : 'STATUS'}</th>
+              <th className="py-2.5 px-3 text-center">{isUr ? 'عمل' : 'ACTION'}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-mono-num">
@@ -114,9 +129,8 @@ export const UserManagementScreen: React.FC = () => {
               <tr key={u.id} className="hover:bg-slate-50 transition-colors">
                 {/* User Name */}
                 <td className="py-3 px-4 font-sans">
-                  <span className="font-bold text-slate-900 block text-xs">{u.name}</span>
-                  <span className="urdu-text text-[11px] text-emerald-900 font-semibold" dir="rtl">
-                    {u.urduName}
+                  <span className="font-bold text-slate-900 block text-xs">
+                    {isUr ? (u.urduName || u.name) : u.name}
                   </span>
                 </td>
 
@@ -132,15 +146,13 @@ export const UserManagementScreen: React.FC = () => {
                 <td className="py-3 px-3">
                   <span
                     className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
-                      u.role === 'Supervisor'
+                      u.role === 'Admin'
                         ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                        : u.role === 'Admin'
-                        ? 'bg-red-100 text-red-800 border border-red-200'
                         : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                     }`}
                   >
                     <Shield className="w-2.5 h-2.5 mr-1" />
-                    {u.role}
+                    {isUr ? (u.role === 'Admin' ? 'ایڈمن' : 'کیشیئر') : u.role}
                   </span>
                 </td>
 
@@ -149,9 +161,9 @@ export const UserManagementScreen: React.FC = () => {
                   {u.terminal}
                 </td>
 
-                {/* Shift */}
-                <td className="py-3 px-3 font-sans text-slate-600">
-                  {u.shift}
+                {/* Phone */}
+                <td className="py-3 px-3 font-mono text-slate-700">
+                  {u.phone || '-'}
                 </td>
 
                 {/* Status Toggle */}
@@ -170,15 +182,38 @@ export const UserManagementScreen: React.FC = () => {
                   </button>
                 </td>
 
-                {/* Action Password Reset */}
+                {/* Actions: Edit, Password, Delete */}
                 <td className="py-3 px-3 text-center font-sans">
-                  <button 
-                    onClick={() => setSelectedUserForPassword(u)}
-                    className="inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold border border-slate-200 cursor-pointer transition-colors"
-                  >
-                    <Key className="w-3 h-3 text-slate-500" />
-                    <span>Password</span>
-                  </button>
+                  <div className="flex items-center justify-center space-x-1.5">
+                    {/* Edit User Button */}
+                    <button
+                      onClick={() => setSelectedUserForEdit(u)}
+                      className="inline-flex items-center space-x-1 px-2 py-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-200 cursor-pointer transition-colors shadow-2xs"
+                      title={isUr ? 'صارف ایڈٹ کریں' : 'Edit User Details'}
+                    >
+                      <Edit3 className="w-3 h-3 text-emerald-700" />
+                      <span>{isUr ? 'ایڈٹ' : 'Edit'}</span>
+                    </button>
+
+                    {/* Reset Password Button */}
+                    <button 
+                      onClick={() => setSelectedUserForPassword(u)}
+                      className="inline-flex items-center space-x-1 px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold border border-slate-200 cursor-pointer transition-colors shadow-2xs"
+                      title={isUr ? 'پاس ورڈ تبدیل کریں' : 'Reset Password'}
+                    >
+                      <Key className="w-3 h-3 text-slate-500" />
+                      <span>{isUr ? 'پاس ورڈ' : 'Password'}</span>
+                    </button>
+
+                    {/* Delete User Button */}
+                    <button
+                      onClick={() => setUserToDelete(u)}
+                      className="inline-flex items-center p-1 rounded bg-red-50 hover:bg-red-100 text-red-700 text-[10px] font-bold border border-red-200 cursor-pointer transition-colors shadow-2xs"
+                      title={isUr ? 'صارف ڈیلیٹ کریں' : 'Delete User'}
+                    >
+                      <Trash2 className="w-3 h-3 text-red-600" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -200,6 +235,54 @@ export const UserManagementScreen: React.FC = () => {
         onClose={() => setSelectedUserForPassword(null)}
         onSave={handleSavePassword}
       />
+
+      {/* Edit User Modal */}
+      <EditUserModal
+        isOpen={!!selectedUserForEdit}
+        user={selectedUserForEdit}
+        onClose={() => setSelectedUserForEdit(null)}
+        onUpdateUser={handleUpdateUser}
+        onDeleteUser={handleDeleteUser}
+      />
+
+      {/* Standalone Delete User Confirmation Modal */}
+      {userToDelete && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in duration-150">
+          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 max-w-sm w-full p-5 text-xs text-slate-800 space-y-4">
+            <div className="flex items-center space-x-2 text-red-600">
+              <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 className="w-4 h-4 text-red-600" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">
+                {isUr ? 'صارف حذف کرنے کی تصدیق' : 'Confirm User Deletion'}
+              </h3>
+            </div>
+
+            <p className="text-slate-600 text-xs">
+              {isUr
+                ? `کیا آپ واقعی صارف "${userToDelete.urduName || userToDelete.name}" (${userToDelete.email}) کو سسٹم سے مستقل حذف کرنا چاہتے ہیں؟`
+                : `Are you sure you want to permanently delete user "${userToDelete.name}" (${userToDelete.email})?`}
+            </p>
+
+            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setUserToDelete(null)}
+                className="px-3 py-1.5 rounded border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold cursor-pointer"
+              >
+                {isUr ? 'منسوخ' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteUser(userToDelete.id)}
+                className="px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 text-white font-bold cursor-pointer shadow-xs transition-colors"
+              >
+                {isUr ? 'ہاں، صارف حذف کریں' : 'Yes, Delete User'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

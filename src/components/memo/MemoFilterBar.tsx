@@ -1,5 +1,6 @@
 import React from 'react';
 import { Download, FileSpreadsheet, Printer, Search, Calendar } from 'lucide-react';
+import { usePos } from '../../context/PosContext';
 
 interface MemoFilterBarProps {
   searchTerm: string;
@@ -26,12 +27,15 @@ export const MemoFilterBar: React.FC<MemoFilterBarProps> = ({
   onExportCSV,
   onDownloadPDF
 }) => {
+  const { language } = usePos();
+  const isUr = language === 'ur';
+
   const periods = [
-    { id: 'today', label: 'Today (آج)' },
-    { id: 'yesterday', label: 'Yesterday (گزشتہ روز)' },
-    { id: '7days', label: 'Last 7 Days (گزشتہ ۷ دن)' },
-    { id: 'month', label: 'This Month (موجودہ ماہ)' },
-    { id: 'custom', label: 'Custom Range (تاریخ کا انتخاب)' }
+    { id: 'today', label: isUr ? 'آج' : 'Today' },
+    { id: 'yesterday', label: isUr ? 'گزشتہ روز' : 'Yesterday' },
+    { id: '7days', label: isUr ? 'گزشتہ ۷ دن' : 'Last 7 Days' },
+    { id: 'month', label: isUr ? 'موجودہ ماہ' : 'This Month' },
+    { id: 'custom', label: isUr ? 'تاریخ کا انتخاب' : 'Custom Range' }
   ];
 
   return (
@@ -40,18 +44,23 @@ export const MemoFilterBar: React.FC<MemoFilterBarProps> = ({
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <div className="flex items-center space-x-2">
-            <h2 className="text-base font-extrabold text-slate-900 tracking-tight flex items-center gap-1.5">
-              Daily Memo Ledger & Archives
-            </h2>
-            <span className="urdu-text text-sm text-emerald-800 font-bold" dir="rtl">
-              (روزنامچہ اور یومیہ وصولات)
-            </span>
+            {isUr ? (
+              <h2 className="urdu-text text-lg font-bold text-slate-900 tracking-wide" dir="rtl">
+                روزنامچہ اور یومیہ وصولات
+              </h2>
+            ) : (
+              <h2 className="text-base font-extrabold text-slate-900 tracking-tight flex items-center gap-1.5">
+                Daily Memo Ledger & Archives
+              </h2>
+            )}
             <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
-              ARCHIVES & AUDIT
+              {isUr ? 'آڈٹ ریکارڈ' : 'ARCHIVES & AUDIT'}
             </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-0.5">
-            Query past spot cash receipts, daily roznamcha records, and audit drawer turnovers
+            {isUr
+              ? 'گزشتہ کیش رسیدیں، روزنامچہ اور کیش دراز آڈٹ ریکارڈ'
+              : 'Query past spot cash receipts, daily roznamcha records, and audit drawer turnovers'}
           </p>
         </div>
 
@@ -62,21 +71,21 @@ export const MemoFilterBar: React.FC<MemoFilterBarProps> = ({
             className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded border border-slate-200 transition-colors cursor-pointer"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700" />
-            <span>Export CSV</span>
+            <span>{isUr ? 'ایکسپورٹ CSV' : 'Export CSV'}</span>
           </button>
           <button 
             onClick={onDownloadPDF}
             className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded border border-slate-200 transition-colors cursor-pointer"
           >
             <Download className="w-3.5 h-3.5 text-blue-700" />
-            <span>Download PDF Report</span>
+            <span>{isUr ? 'رپورٹ PDF' : 'Download PDF Report'}</span>
           </button>
           <button 
             onClick={() => window.print()}
             className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded shadow-xs transition-colors cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
-            <span>Print Period Roznamcha [F5]</span>
+            <span>{isUr ? 'روزنامچہ پرنٹ کریں' : 'Print Period Roznamcha [F5]'}</span>
           </button>
         </div>
       </div>
@@ -106,13 +115,13 @@ export const MemoFilterBar: React.FC<MemoFilterBarProps> = ({
         {/* Dynamic Clickable Date Range Box */}
         <div 
           onClick={onOpenCalendar}
-          title="Click to change date range via calendar"
+          title={isUr ? 'کیلنڈر سے تاریخ منتخب کریں' : 'Click to change date range via calendar'}
           className="col-span-3 flex items-center space-x-2 bg-slate-50 hover:bg-emerald-50/50 hover:border-emerald-300 transition-all px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-mono-num cursor-pointer group"
         >
           <Calendar className="w-4 h-4 text-emerald-700 shrink-0 group-hover:scale-110 transition-transform" />
           <div className="leading-tight overflow-hidden">
             <span className="text-[9px] uppercase font-bold text-slate-400 block group-hover:text-emerald-700">
-              SELECTED DATE RANGE
+              {isUr ? 'منتخب مدت / تاریخ' : 'SELECTED DATE RANGE'}
             </span>
             <span className="text-[11px] font-bold text-slate-900 truncate block">
               {dateRangeLabel}
@@ -122,9 +131,9 @@ export const MemoFilterBar: React.FC<MemoFilterBarProps> = ({
 
         <div className="col-span-3">
           <select className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 font-bold text-slate-700 focus:outline-hidden">
-            <option>Cashier & Terminal: Counter 01 (S. Bukhari)</option>
-            <option>Counter 02 (M. Hamza)</option>
-            <option>All Terminal Workstations</option>
+            <option>{isUr ? 'کاؤنٹر 01 (سید بخاری)' : 'Counter 01 (S. Bukhari)'}</option>
+            <option>{isUr ? 'کاؤنٹر 02 (محمد حمزہ)' : 'Counter 02 (M. Hamza)'}</option>
+            <option>{isUr ? 'تمام ٹرمینلز' : 'All Terminal Workstations'}</option>
           </select>
         </div>
 
@@ -134,21 +143,21 @@ export const MemoFilterBar: React.FC<MemoFilterBarProps> = ({
             onChange={(e) => setSelectedPayment(e.target.value)}
             className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 font-bold text-slate-700 focus:outline-hidden"
           >
-            <option value="ALL">Payment Mode: All Modes (Spot Only)</option>
-            <option value="SPOT CASH">Spot Cash Only</option>
-            <option value="RAAST ONLINE">RAAST & Online IBFT Only</option>
+            <option value="ALL">{isUr ? 'تمام ادائیگیاں (نقد و راست)' : 'Payment Mode: All Modes (Spot Only)'}</option>
+            <option value="SPOT CASH">{isUr ? 'صرف نقد رقم' : 'Spot Cash Only'}</option>
+            <option value="RAAST ONLINE">{isUr ? 'صرف راست / آن لائن' : 'RAAST & Online IBFT Only'}</option>
           </select>
         </div>
 
-        <div className="col-span-3 relative">
+        <div className="col-span-3 relative group">
           <input
             type="text"
-            placeholder="Memo #, Buyer, or Phone... [F3]"
+            placeholder={isUr ? 'میمو نمبر، خریدار یا فون...' : 'Memo #, Buyer, or Phone...'}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-medium text-slate-900 focus:outline-hidden focus:border-emerald-600 focus:bg-white text-xs"
+            className="w-full pl-8 pr-3 py-1.5 bg-emerald-50/70 hover:bg-emerald-50 border-2 border-emerald-500/80 focus:border-emerald-700 focus:bg-white rounded-lg font-semibold text-slate-900 placeholder-emerald-800/70 shadow-xs focus:outline-hidden focus:ring-2 focus:ring-emerald-600/20 text-xs transition-all"
           />
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+          <Search className="w-3.5 h-3.5 text-emerald-700 absolute left-2.5 top-2 pointer-events-none group-focus-within:text-emerald-800 group-focus-within:scale-110 transition-all" />
         </div>
       </div>
     </div>

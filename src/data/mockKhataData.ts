@@ -76,7 +76,7 @@ export const INITIAL_KHATA_TRANSACTIONS: KhataTransaction[] = [
     timeStr: '11:15 PKT',
     timestamp: 1729408500000,
     type: 'PURCHASE',
-    description: 'Credit Purchase (چاول و دال خریداری): 2x Super Basmati 50kg, 10kg Daal Chana',
+    description: 'Credit Purchase: 2x Super Basmati 25kg, 10kg Daal Chana',
     items: [
       {
         productName: 'Super Basmati Old',
@@ -108,7 +108,7 @@ export const INITIAL_KHATA_TRANSACTIONS: KhataTransaction[] = [
     timeStr: '16:30 PKT',
     timestamp: 1729769400000,
     type: 'PAYMENT',
-    description: 'Cash Payment Received (نقد وصولی): Rs. 9,000 paid against previous 10,000 bill',
+    description: 'Cash Payment Received: Rs. 9,000 paid against previous 10,000 bill',
     debit: 0,
     credit: 9000,
     balanceAfter: 1000,
@@ -123,7 +123,7 @@ export const INITIAL_KHATA_TRANSACTIONS: KhataTransaction[] = [
     timeStr: '14:20 PKT',
     timestamp: 1730107200000,
     type: 'PURCHASE',
-    description: 'Credit Purchase (چاول ادھار خریداری): 10kg Basmati Super Sella + Spices',
+    description: 'Credit Purchase: 10kg Basmati Super Sella + Spices',
     items: [
       {
         productName: 'Basmati Super Sella',
@@ -171,7 +171,7 @@ export const INITIAL_KHATA_TRANSACTIONS: KhataTransaction[] = [
     timeStr: '18:15 PKT',
     timestamp: 1729605300000,
     type: 'PAYMENT',
-    description: 'Full Balance Settlement (مکمل کھاتہ کلیئرنس بذریعہ راست آن لائن)',
+    description: 'Full Balance Settlement via Raast Online',
     debit: 0,
     credit: 35000,
     balanceAfter: 0,
@@ -188,10 +188,10 @@ export const INITIAL_KHATA_TRANSACTIONS: KhataTransaction[] = [
     timeStr: '12:00 PKT',
     timestamp: 1729234800000,
     type: 'PURCHASE',
-    description: 'Biryani Rice Lot: 1x 50kg Super Bori Wholesale (PKR 18,500)',
-    debit: 18500,
+    description: 'Biryani Rice Lot: 1x 25kg Super Bori Wholesale (PKR 9,250)',
+    debit: 9250,
     credit: 0,
-    balanceAfter: 18500,
+    balanceAfter: 9250,
     referenceNo: 'INV-88040',
     notes: 'Daily catering rice order'
   },
@@ -202,7 +202,7 @@ export const INITIAL_KHATA_TRANSACTIONS: KhataTransaction[] = [
     timeStr: '17:40 PKT',
     timestamp: 1729860000000,
     type: 'PAYMENT',
-    description: 'Partial Cash Payment (جزوی ادائیگی وصولی)',
+    description: 'Partial Cash Payment Received',
     debit: 0,
     credit: 10000,
     balanceAfter: 8500,

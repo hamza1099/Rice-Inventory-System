@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar as CalendarIcon, X, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { usePos } from '../../context/PosContext';
 
 interface CalendarRangeModalProps {
   isOpen: boolean;
@@ -16,6 +17,9 @@ export const CalendarRangeModal: React.FC<CalendarRangeModalProps> = ({
   endDate,
   onApplyRange,
 }) => {
+  const { language } = usePos();
+  const isUr = language === 'ur';
+
   const [tempStart, setTempStart] = useState<string>(startDate || '2024-10-18');
   const [tempEnd, setTempEnd] = useState<string>(endDate || '2024-10-24');
   
@@ -132,9 +136,11 @@ export const CalendarRangeModal: React.FC<CalendarRangeModalProps> = ({
           <div className="flex items-center space-x-2">
             <CalendarIcon className="w-5 h-5 text-emerald-200" />
             <div>
-              <h3 className="font-bold text-sm">Select Custom Date Range</h3>
-              <p className="urdu-text text-[11px] text-emerald-100" dir="rtl">
-                تاریخ کا انتخاب کریں (روزنامچہ اور کیش فلٹر)
+              <h3 className="font-bold text-sm">
+                {isUr ? 'تاریخ کا انتخاب کریں' : 'Select Custom Date Range'}
+              </h3>
+              <p className="text-[11px] text-emerald-100">
+                {isUr ? 'روزنامچہ اور کیش فلٹر' : 'Daily sales ledger and cash transaction filter'}
               </p>
             </div>
           </div>
@@ -147,41 +153,43 @@ export const CalendarRangeModal: React.FC<CalendarRangeModalProps> = ({
         <div className="p-5 space-y-4">
           {/* Quick Preset Buttons Inside Modal */}
           <div className="flex items-center gap-1.5 flex-wrap pb-2 border-b border-slate-100">
-            <span className="text-[10px] font-bold text-slate-400 uppercase mr-1">Presets:</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase mr-1">
+              {isUr ? 'شارٹ کٹ:' : 'Presets:'}
+            </span>
             <button
               type="button"
               onClick={() => setPreset('today')}
               className="px-2.5 py-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 rounded font-semibold text-[11px] border border-slate-200"
             >
-              Today (24 Oct)
+              {isUr ? 'آج (24 Oct)' : 'Today (24 Oct)'}
             </button>
             <button
               type="button"
               onClick={() => setPreset('yesterday')}
               className="px-2.5 py-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 rounded font-semibold text-[11px] border border-slate-200"
             >
-              Yesterday (23 Oct)
+              {isUr ? 'کل (23 Oct)' : 'Yesterday (23 Oct)'}
             </button>
             <button
               type="button"
               onClick={() => setPreset('7days')}
               className="px-2.5 py-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 rounded font-semibold text-[11px] border border-slate-200"
             >
-              Last 7 Days
+              {isUr ? 'پچھلے 7 دن' : 'Last 7 Days'}
             </button>
             <button
               type="button"
               onClick={() => setPreset('month')}
               className="px-2.5 py-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 rounded font-semibold text-[11px] border border-slate-200"
             >
-              This Month (Oct)
+              {isUr ? 'موجودہ مہینہ (Oct)' : 'This Month (Oct)'}
             </button>
             <button
               type="button"
               onClick={() => setPreset('lastMonth')}
               className="px-2.5 py-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 rounded font-semibold text-[11px] border border-slate-200"
             >
-              Last Month (Sep)
+              {isUr ? 'پچھلا مہینہ (Sep)' : 'Last Month (Sep)'}
             </button>
           </div>
 
@@ -189,7 +197,7 @@ export const CalendarRangeModal: React.FC<CalendarRangeModalProps> = ({
           <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 font-mono-num">
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 font-sans">
-                From Date (تاریخ سے):
+                {isUr ? 'تاریخ سے:' : 'From Date:'}
               </label>
               <input
                 type="date"
@@ -201,7 +209,7 @@ export const CalendarRangeModal: React.FC<CalendarRangeModalProps> = ({
 
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 font-sans">
-                To Date (تاریخ تک):
+                {isUr ? 'تاریخ تک:' : 'To Date:'}
               </label>
               <input
                 type="date"
@@ -278,7 +286,7 @@ export const CalendarRangeModal: React.FC<CalendarRangeModalProps> = ({
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs cursor-pointer"
           >
-            Cancel
+            {isUr ? 'منسوخ' : 'Cancel'}
           </button>
 
           <button
@@ -287,7 +295,7 @@ export const CalendarRangeModal: React.FC<CalendarRangeModalProps> = ({
             className="px-5 py-2 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs flex items-center space-x-1.5 shadow-xs cursor-pointer"
           >
             <Check className="w-4 h-4" />
-            <span>Apply Date Range (فلٹر لاگو کریں)</span>
+            <span>{isUr ? 'تاریخ لاگو کریں' : 'Apply Date Range'}</span>
           </button>
         </div>
       </div>

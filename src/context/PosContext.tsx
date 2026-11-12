@@ -57,10 +57,18 @@ interface PosContextType {
     updatedSellingRate?: number
   ) => void;
 
-  // Day-End Reconciliation
+  // Day-End Reconciliation & Cash Drawer Float
   denominations: DenominationRow[];
   updateDenominationCount: (index: number, count: number) => void;
   openingFloat: number;
+  setOpeningFloat: (val: number) => void;
+  isDrawerOpen: boolean;
+  drawerOpenedAt: string | null;
+  isOpeningModalOpen: boolean;
+  setIsOpeningModalOpen: (open: boolean) => void;
+  openDrawer: (amount: number, cashierName?: string, notes?: string) => void;
+  closeDrawer: () => void;
+  startNewDay: () => void;
   supervisorPin: string;
   setSupervisorPin: (pin: string) => void;
   handoverNotes: string;
@@ -112,6 +120,10 @@ interface PosContextType {
     referenceNo?: string
   ) => void;
   deleteKhataTransaction: (txId: string) => void;
+
+  // Language Toggle (English / Urdu)
+  language: 'en' | 'ur';
+  setLanguage: (lang: 'en' | 'ur') => void;
 }
 
 const PosContext = createContext<PosContextType | undefined>(undefined);
@@ -164,7 +176,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [scaleTare, setScaleTare] = useState<number>(0.00);
 
   // Checkout
-  const [spotDiscount, setSpotDiscount] = useState<number>(140);
+  const [spotDiscount, setSpotDiscount] = useState<number>(10);
   const [paymentMode, setPaymentMode] = useState<'SPOT CASH' | 'RAAST ONLINE'>('SPOT CASH');
   const [cashReceived, setCashReceived] = useState<number>(7000);
   const [memos, setMemos] = useState<MemoRecord[]>(INITIAL_MEMOS);
@@ -173,9 +185,52 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Inventory
   const [inventory, setInventory] = useState<InventoryItem[]>(INITIAL_INVENTORY);
 
-  // Day-End
+  // Day-End & Cash Drawer Opening
   const [denominations, setDenominations] = useState<DenominationRow[]>(INITIAL_DENOMINATIONS);
-  const [openingFloat] = useState<number>(15000);
+  const [openingFloat, setOpeningFloatState] = useState<number>(() => {
+    const saved = localStorage.getItem('ricecms_opening_float');
+    return saved ? parseFloat(saved) : 15000;
+  });
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(() => {
+    const saved = localStorage.getItem('ricecms_drawer_active');
+    return saved !== null ? saved === 'true' : true;
+  });
+  const [drawerOpenedAt, setDrawerOpenedAt] = useState<string | null>(() => {
+    return localStorage.getItem('ricecms_drawer_opened_at');
+  });
+  const [isOpeningModalOpen, setIsOpeningModalOpen] = useState<boolean>(false);
+
+  const setOpeningFloat = (val: number) => {
+    setOpeningFloatState(val);
+    localStorage.setItem('ricecms_opening_float', val.toString());
+  };
+
+  const openDrawer = (amount: number, _cashierName?: string, _notes?: string) => {
+    setOpeningFloatState(amount);
+    setIsDrawerOpen(true);
+    setIsDayClosed(false);
+    const now = new Date().toISOString();
+    setDrawerOpenedAt(now);
+    setIsOpeningModalOpen(false);
+    localStorage.setItem('ricecms_opening_float', amount.toString());
+    localStorage.setItem('ricecms_drawer_active', 'true');
+    localStorage.setItem('ricecms_drawer_opened_at', now);
+  };
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+    localStorage.setItem('ricecms_drawer_active', 'false');
+  };
+
+  const startNewDay = () => {
+    setIsDayClosed(false);
+    setIsDrawerOpen(false);
+    localStorage.setItem('ricecms_drawer_active', 'false');
+    setDenominations(INITIAL_DENOMINATIONS);
+    setCart([]);
+    setIsOpeningModalOpen(true);
+  };
+
   const [supervisorPin, setSupervisorPin] = useState<string>('9921');
   const [handoverNotes, setHandoverNotes] = useState<string>(
     'All spot memos cleared, zero credit given. Cash ready for godown safe handover.'
@@ -193,6 +248,16 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const closeImagePreview = () => {
     setImagePreview(null);
+  };
+
+  // Language State: 'en' or 'ur' (Persisted in localStorage)
+  const [language, setLanguageState] = useState<'en' | 'ur'>(() => {
+    return (localStorage.getItem('ricecms_lang') as 'en' | 'ur') || 'en';
+  });
+
+  const setLanguage = (lang: 'en' | 'ur') => {
+    setLanguageState(lang);
+    localStorage.setItem('ricecms_lang', lang);
   };
 
   // ==================== KHATA / UDHAR CUSTOMER BOOK ====================
@@ -340,7 +405,10 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       timeStr,
       timestamp: Date.now(),
       type: 'PAYMENT',
-      description: `وصولی رقم (${paymentMode}): PKR ${amount.toLocaleString()} ادا کی گئی`,
+      description:
+        language === 'ur'
+          ? `وصولی رقم (${paymentMode}): PKR ${amount.toLocaleString()} ادا کی گئی`
+          : `Payment Received (${paymentMode}): PKR ${amount.toLocaleString()}`,
       debit: 0,
       credit: amount,
       balanceAfter: newBalance,
@@ -402,6 +470,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const clearCart = () => {
     setCart([]);
+    setSpotDiscount(10);
   };
 
   const completeSale = (): MemoRecord | null => {
@@ -624,6 +693,8 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const finalizeDayEnd = (): boolean => {
     if (supervisorPin.length >= 4) {
       setIsDayClosed(true);
+      setIsDrawerOpen(false);
+      localStorage.setItem('ricecms_drawer_active', 'false');
       return true;
     }
     return false;
@@ -664,6 +735,14 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         denominations,
         updateDenominationCount,
         openingFloat,
+        setOpeningFloat,
+        isDrawerOpen,
+        drawerOpenedAt,
+        isOpeningModalOpen,
+        setIsOpeningModalOpen,
+        openDrawer,
+        closeDrawer,
+        startNewDay,
         supervisorPin,
         setSupervisorPin,
         handoverNotes,
@@ -687,7 +766,9 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deleteKhataCustomer,
         addKhataPurchase,
         addKhataPayment,
-        deleteKhataTransaction
+        deleteKhataTransaction,
+        language,
+        setLanguage
       }}
     >
       {children}

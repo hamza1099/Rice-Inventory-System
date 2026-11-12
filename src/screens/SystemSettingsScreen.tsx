@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { Settings, Save, Scale, Printer, Shield, Database, Check } from 'lucide-react';
 import { notifySuccess } from '../utils/toast';
+import { usePos } from '../context/PosContext';
 
 export const SystemSettingsScreen: React.FC = () => {
+  const { language } = usePos();
+  const isUr = language === 'ur';
+
   const [comPort, setComPort] = useState<string>('COM1');
   const [baudRate, setBaudRate] = useState<string>('9600');
   const [printerModel, setPrinterModel] = useState<string>('EPSON TM-T88VI (USB/Serial)');
@@ -13,7 +17,7 @@ export const SystemSettingsScreen: React.FC = () => {
 
   const handleSave = () => {
     setSavedSuccess(true);
-    notifySuccess('System & hardware configuration saved successfully! (سیٹنگز محفوظ ہو گئیں)');
+    notifySuccess(isUr ? 'سیٹنگز محفوظ ہو گئیں!' : 'System & hardware configuration saved successfully!');
     setTimeout(() => setSavedSuccess(false), 2500);
   };
 
@@ -25,14 +29,13 @@ export const SystemSettingsScreen: React.FC = () => {
           <div className="flex items-center space-x-2">
             <Settings className="w-5 h-5 text-emerald-800" />
             <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
-              Hardware & System Configuration
+              {isUr ? 'ہارڈویئر اور سسٹم سیٹنگز' : 'Hardware & System Configuration'}
             </h2>
-            <span className="urdu-text text-sm text-emerald-800 font-bold" dir="rtl">
-              (ہارڈویئر اور سسٹم سیٹنگز)
-            </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-0.5">
-            Configure COM platform scales, fiscal thermal receipt printers, and Mandi tare deduction rules.
+            {isUr
+              ? 'ڈیجیٹل الیکٹرانک کانٹا، رسید پرنٹر اور منڈی کاٹ کے ضوابط سیٹ کریں۔'
+              : 'Configure COM platform scales, fiscal thermal receipt printers, and Mandi tare deduction rules.'}
           </p>
         </div>
 
@@ -41,7 +44,7 @@ export const SystemSettingsScreen: React.FC = () => {
           className="flex items-center space-x-1.5 px-4 py-2 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-xs"
         >
           {savedSuccess ? <Check className="w-4 h-4 text-emerald-200" /> : <Save className="w-4 h-4" />}
-          <span>{savedSuccess ? 'Settings Saved!' : 'Save System Settings'}</span>
+          <span>{savedSuccess ? (isUr ? 'سیٹنگز محفوظ!' : 'Settings Saved!') : (isUr ? 'سیٹنگز محفوظ کریں' : 'Save System Settings')}</span>
         </button>
       </div>
 
@@ -137,14 +140,14 @@ export const SystemSettingsScreen: React.FC = () => {
           <div className="flex items-center space-x-2 border-b border-slate-100 pb-2">
             <Shield className="w-4 h-4 text-emerald-700" />
             <h3 className="font-extrabold text-xs text-slate-900 uppercase">
-              Mandi Tare Deduction Standards (کاٹ و تولہ)
+              {isUr ? 'کاٹ و تولہ معیار' : 'Mandi Tare Deduction Standards'}
             </h3>
           </div>
 
           <div className="grid grid-cols-2 gap-3 font-mono-num">
             <div>
               <label className="block text-[11px] font-bold text-slate-700 mb-1 font-sans">
-                50kg Jute Bori Tare:
+                {isUr ? 'جوٹ بوری کاٹ:' : 'Jute Bag Tare:'}
               </label>
               <input
                 type="number"
@@ -153,12 +156,14 @@ export const SystemSettingsScreen: React.FC = () => {
                 onChange={(e) => setJuteTare(parseFloat(e.target.value) || 0)}
                 className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-bold"
               />
-              <span className="text-[10px] text-slate-500 font-sans">KG per sack</span>
+              <span className="text-[10px] text-slate-500 font-sans">
+                {isUr ? 'کلو فی بوری' : 'KG per sack'}
+              </span>
             </div>
 
             <div>
               <label className="block text-[11px] font-bold text-slate-700 mb-1 font-sans">
-                Plastic PP Bag Tare:
+                {isUr ? 'پی پی پلاسٹک بیگ کاٹ:' : 'Plastic PP Bag Tare:'}
               </label>
               <input
                 type="number"
@@ -167,7 +172,9 @@ export const SystemSettingsScreen: React.FC = () => {
                 onChange={(e) => setPpTare(parseFloat(e.target.value) || 0)}
                 className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-bold"
               />
-              <span className="text-[10px] text-slate-500 font-sans">KG per sack</span>
+              <span className="text-[10px] text-slate-500 font-sans">
+                {isUr ? 'کلو فی بوری' : 'KG per sack'}
+              </span>
             </div>
           </div>
         </div>
@@ -177,7 +184,7 @@ export const SystemSettingsScreen: React.FC = () => {
           <div className="flex items-center space-x-2 border-b border-slate-100 pb-2">
             <Database className="w-4 h-4 text-emerald-700" />
             <h3 className="font-extrabold text-xs text-slate-900 uppercase">
-              Terminal Security & Data Backup
+              {isUr ? 'ٹرمینل سیکیورٹی و ڈیٹا بیک اپ' : 'Terminal Security & Data Backup'}
             </h3>
           </div>
 
@@ -190,18 +197,22 @@ export const SystemSettingsScreen: React.FC = () => {
                 className="mt-0.5 accent-emerald-700"
               />
               <div>
-                <span className="font-bold text-amber-900 block">Strict Spot Only Policy (ادھار مکمل بند)</span>
+                <span className="font-bold text-amber-900 block">
+                  {isUr ? 'ادھار مکمل بند پالیسی' : 'Strict Spot Only Policy'}
+                </span>
                 <span className="text-[10px] text-amber-800">
-                  Prevents cashiers from creating non-settled credit memo tickets.
+                  {isUr
+                    ? 'کاؤنٹر کیشئرز کو بغیر ادائیگی کریڈٹ بل بنانے کی اجازت نہیں ہوگی۔'
+                    : 'Prevents cashiers from creating non-settled credit memo tickets.'}
                 </span>
               </div>
             </label>
 
             <button
-              onClick={() => notifySuccess("Local database snapshot exported successfully! (آف لائن بیک اپ ڈاؤن لوڈ ہو گیا)")}
+              onClick={() => notifySuccess(isUr ? 'آف لائن بیک اپ ڈاؤن لوڈ ہو گیا!' : 'Local database snapshot exported successfully!')}
               className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-lg border border-slate-200 transition-colors cursor-pointer"
             >
-              Export Local DB Snapshot (Offline Backup)
+              {isUr ? 'لوکل ڈیٹا بیس بیک اپ ڈاؤن لوڈ کریں' : 'Export Local DB Snapshot (Offline Backup)'}
             </button>
           </div>
         </div>

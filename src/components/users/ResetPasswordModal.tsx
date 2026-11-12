@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Key, Eye, EyeOff, ShieldCheck, Mail } from 'lucide-react';
 import { notifySuccess, notifyWarning } from '../../utils/toast';
 import type { TerminalUser } from './AddUserModal';
+import { usePos } from '../../context/PosContext';
 
 interface ResetPasswordModalProps {
   isOpen: boolean;
@@ -16,6 +17,9 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
   user,
   onSave,
 }) => {
+  const { language } = usePos();
+  const isUr = language === 'ur';
+
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -25,16 +29,16 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPassword || newPassword.length < 4) {
-      notifyWarning('Password must be at least 4 characters long (کم از کم 4 ہندسے یا حروف)');
+      notifyWarning(isUr ? 'پاس ورڈ کم از کم 4 ہندسے یا حروف ہونا چاہیے' : 'Password must be at least 4 characters long');
       return;
     }
     if (newPassword !== confirmPassword) {
-      notifyWarning('Passwords do not match (پاس ورڈ یکساں نہیں ہیں)');
+      notifyWarning(isUr ? 'پاس ورڈ یکساں نہیں ہیں' : 'Passwords do not match');
       return;
     }
 
     onSave(user.id, newPassword);
-    notifySuccess(`Password updated successfully for ${user.name}! (پاس ورڈ کامیابی سے تبدیل ہو گیا)`);
+    notifySuccess(isUr ? `${user.name} کا پاس ورڈ کامیابی سے تبدیل ہو گیا!` : `Password updated successfully for ${user.name}!`);
     setNewPassword('');
     setConfirmPassword('');
     onClose();
@@ -48,7 +52,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
           <div className="flex items-center space-x-2">
             <Key className="w-4 h-4 text-emerald-300" />
             <h3 className="font-extrabold text-sm tracking-tight">
-              Reset Password (پاس ورڈ تبدیل کریں)
+              {isUr ? 'پاس ورڈ تبدیل کریں' : 'Reset Password'}
             </h3>
           </div>
           <button
@@ -63,9 +67,8 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
         <div className="bg-slate-50 border-b border-slate-200 px-5 py-3 flex items-center justify-between">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="font-bold text-slate-900 text-sm">{user.name}</span>
-              <span className="urdu-text text-emerald-800 font-semibold" dir="rtl">
-                {user.urduName}
+              <span className="font-bold text-slate-900 text-sm">
+                {isUr ? (user.urduName || user.name) : user.name}
               </span>
             </div>
             <div className="flex items-center space-x-1.5 text-slate-500 text-[11px] mt-0.5 font-mono">
@@ -74,7 +77,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
             </div>
           </div>
           <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-            {user.role}
+            {isUr ? (user.role === 'Admin' ? 'ایڈمن' : 'کیشیئر') : user.role}
           </span>
         </div>
 
@@ -83,14 +86,14 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
           {/* New Password */}
           <div>
             <label className="block text-slate-700 font-bold mb-1">
-              New Password (نیا پاس ورڈ):
+              {isUr ? 'نیا پاس ورڈ:' : 'New Password:'}
             </label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
+                placeholder={isUr ? 'نیا پاس ورڈ درج کریں' : 'Enter new password'}
                 className="w-full font-mono text-xs border border-slate-300 rounded-lg px-3 py-2 pr-9 bg-slate-50 focus:bg-white focus:outline-hidden focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
                 autoFocus
               />
@@ -107,13 +110,13 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
           {/* Confirm Password */}
           <div>
             <label className="block text-slate-700 font-bold mb-1">
-              Confirm Password (پاس ورڈ کی تصدیق):
+              {isUr ? 'پاس ورڈ کی تصدیق:' : 'Confirm Password:'}
             </label>
             <input
               type={showPassword ? 'text' : 'password'}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Re-enter new password"
+              placeholder={isUr ? 'دوبارہ پاس ورڈ درج کریں' : 'Re-enter new password'}
               className="w-full font-mono text-xs border border-slate-300 rounded-lg px-3 py-2 bg-slate-50 focus:bg-white focus:outline-hidden focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
             />
           </div>
@@ -121,7 +124,9 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
           <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 text-[11px] text-emerald-900 flex items-start space-x-2">
             <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
             <span>
-              The cashier/supervisor will use their email (<strong>{user.email}</strong>) and this new password for workstation login and terminal unlocking.
+              {isUr
+                ? `صارف ورک سٹیشن لاگ ان اور ان لاک کرنے کے لیے اپنا ای میل (${user.email}) اور یہ نیا پاس ورڈ استعمال کرے گا۔`
+                : `The user will use their email (${user.email}) and this new password for workstation login and terminal unlocking.`}
             </span>
           </div>
 
@@ -132,13 +137,13 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
               onClick={onClose}
               className="px-3.5 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold transition-colors cursor-pointer"
             >
-              Cancel (منسوخ)
+              {isUr ? 'منسوخ' : 'Cancel'}
             </button>
             <button
               type="submit"
               className="px-4 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-900 active:scale-98 text-white font-bold transition-all shadow-xs cursor-pointer"
             >
-              Update Password (پاس ورڈ محفوظ کریں)
+              {isUr ? 'پاس ورڈ محفوظ کریں' : 'Update Password'}
             </button>
           </div>
         </form>

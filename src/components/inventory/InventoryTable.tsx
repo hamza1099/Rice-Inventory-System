@@ -18,76 +18,113 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
   onOpenRateEdit,
   onDeleteItem
 }) => {
-  const { openImagePreview } = usePos();
+  const { openImagePreview, language } = usePos();
+  const isUr = language === 'ur';
+
+  const getCleanCategory = (cat: string) => {
+    if (isUr) {
+      if (cat.includes('Rice') || cat.includes('چاول')) return 'چاول';
+      if (cat.includes('Pulses') || cat.includes('Daal') || cat.includes('دال')) return 'دالیں';
+      if (cat.includes('Spices') || cat.includes('مصالحہ')) return 'کھلا مصالحہ';
+      if (cat.includes('Shan') || cat.includes('National')) return 'ڈبہ مصالحہ';
+      if (cat.includes('Oil') || cat.includes('Ghee') || cat.includes('تیل')) return 'تیل و گھی';
+      if (cat.includes('Atta') || cat.includes('Sugar') || cat.includes('آٹا')) return 'آٹا و چینی';
+      return cat.replace(/\([^)]*\)/g, '').trim();
+    }
+    return cat.replace(/\s*\([^)]*[\u0600-\u06FF]+[^)]*\)/g, '').trim();
+  };
+
+  const getCleanPackaging = (pkg: string) => {
+    if (isUr) {
+      if (pkg.includes('50 kg Jute')) return '50 کلو جوٹ بوری';
+      if (pkg.includes('50 kg PP')) return '50 کلو پی پی بوری';
+      if (pkg.includes('25 kg Poly') || pkg.includes('25 kg PP')) return '25 کلو پی پی بیگ';
+      if (pkg.includes('40 kg')) return '40 کلو (1 من)';
+      if (pkg.includes('Master Carton')) return 'ماسٹر کارٹن (72 ڈبے)';
+      if (pkg.includes('Carton')) return 'کارٹن (4 ٹین)';
+      if (pkg.includes('10 kg')) return '10 کلو پرنٹڈ بیگ';
+      return pkg.replace(/\([^)]*\)/g, '').trim();
+    }
+    return pkg.replace(/\s*\([^)]*[\u0600-\u06FF]+[^)]*\)/g, '').trim();
+  };
+
+  const getCleanBagLabel = (label: string) => {
+    if (isUr) {
+      if (label.includes('ڈبے') || label.toLowerCase().includes('packet')) return 'ڈبے';
+      if (label.includes('ٹین') || label.toLowerCase().includes('tin')) return 'ٹین';
+      if (label.includes('تھیلے')) return 'تھیلے';
+      if (label.includes('بوری') || label.toLowerCase().includes('bag')) return 'بوریاں';
+      return label;
+    }
+    return label.replace(/\s*\([^)]*[\u0600-\u06FF]+[^)]*\)/g, '').trim();
+  };
+
   const getStatusBadge = (status: InventoryItem['lotStatus']) => {
     switch (status) {
       case 'In Stock':
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-            • In Stock
+            • {isUr ? 'دستیاب سٹاک' : 'In Stock'}
           </span>
         );
       case 'Critical Low':
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 border border-red-300 animate-pulse">
-            ! Critical Low
+            ! {isUr ? 'انتہائی کم' : 'Critical Low'}
           </span>
         );
       case 'Low Stock':
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
-            • Low Stock
+            • {isUr ? 'کم سٹاک' : 'Low Stock'}
           </span>
         );
       case 'Out of Stock':
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-300">
-            Out of Stock
+            {isUr ? 'ختم' : 'Out of Stock'}
           </span>
         );
     }
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden text-xs">
+    <div className="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden text-xs flex-1 flex flex-col h-full min-h-0">
       {/* Table Header Bar */}
-      <div className="bg-slate-50 border-b border-slate-200 px-4 py-2.5 flex items-center justify-between">
+      <div className="shrink-0 bg-slate-50 border-b border-slate-200 px-4 py-2 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <h3 className="font-extrabold text-sm text-slate-900 tracking-tight">
-            Live Godown & Floor Ledger
+            {isUr ? 'گودام اور بیوپاری لائیو رجسٹر' : 'Live Godown & Floor Ledger'}
           </h3>
-          <span className="urdu-text text-xs text-slate-600 font-semibold" dir="rtl">
-            (گودام اور بیوپاری لائیو رجسٹر)
-          </span>
         </div>
 
         <div className="flex items-center space-x-2 text-[10px] font-mono-num">
           <span className="bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded border border-emerald-200 font-bold">
-            WHOLESALE LOT VERIFIED
+            {isUr ? 'تصدیق شدہ مال' : 'WHOLESALE LOT VERIFIED'}
           </span>
           <button 
             onClick={() => notifyInfo("Generating & Printing Godown Inventory Stock Report...")}
             className="flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200 transition-colors cursor-pointer"
           >
             <FileText className="w-3 h-3" />
-            <span>[Ctrl+R Report]</span>
+            <span>{isUr ? 'رپورٹ پرنٹ' : '[Ctrl+R Report]'}</span>
           </button>
         </div>
       </div>
 
-      {/* Table Contents */}
-      <div className="overflow-x-auto">
+      {/* Table Contents - ONLY THIS AREA SCROLLS */}
+      <div className="flex-1 min-h-0 overflow-auto">
         <table className="w-full text-left border-collapse">
-          <thead className="bg-slate-100 text-slate-600 text-[10px] font-bold uppercase border-b border-slate-200">
+          <thead className="bg-slate-100 text-slate-600 text-[10px] font-bold uppercase border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
             <tr>
-              <th className="py-2.5 px-4">RICE VARIETY & DESCRIPTION</th>
-              <th className="py-2.5 px-3">GRAIN CATEGORY</th>
-              <th className="py-2.5 px-3">PACKAGING STANDARD</th>
-              <th className="py-2.5 px-3 text-right">PHYSICAL STOCK</th>
-              <th className="py-2.5 px-3 text-center">LOT STATUS</th>
-              <th className="py-2.5 px-3 text-right">COST (PKR/KG)</th>
-              <th className="py-2.5 px-3 text-right">COUNTER RATE (PKR/KG)</th>
-              <th className="py-2.5 px-3 text-center">FAST OPERATIONS</th>
+              <th className="py-2.5 px-4">{isUr ? 'اجناس نام و کوڈ' : 'RICE VARIETY & DESCRIPTION'}</th>
+              <th className="py-2.5 px-3">{isUr ? 'کیٹیگری' : 'GRAIN CATEGORY'}</th>
+              <th className="py-2.5 px-3">{isUr ? 'پیکنگ معیار' : 'PACKAGING STANDARD'}</th>
+              <th className="py-2.5 px-3 text-right">{isUr ? 'موجودہ سٹاک' : 'PHYSICAL STOCK'}</th>
+              <th className="py-2.5 px-3 text-center">{isUr ? 'سٹاک اسٹیٹس' : 'LOT STATUS'}</th>
+              <th className="py-2.5 px-3 text-right">{isUr ? 'خریداری لاگت' : 'COST (PKR/KG)'}</th>
+              <th className="py-2.5 px-3 text-right">{isUr ? 'کاؤنٹر ریٹ' : 'COUNTER RATE (PKR/KG)'}</th>
+              <th className="py-2.5 px-3 text-center">{isUr ? 'فوری کارروائی' : 'FAST OPERATIONS'}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-mono-num">
@@ -110,7 +147,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                         })
                       }
                       className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 shrink-0 bg-slate-100 shadow-xs cursor-pointer group hover:border-emerald-600 transition-colors relative"
-                      title="Click to preview image (بڑی تصویر دیکھیں)"
+                      title={isUr ? 'بڑی تصویر دیکھیں' : 'Click to preview image'}
                     >
                       <img
                         src={item.imageUrl || DEFAULT_RICE_IMAGE}
@@ -127,12 +164,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                     <div>
                       <div className="flex items-center space-x-1.5">
                         <span className="font-extrabold text-slate-900 text-xs">
-                          {item.varietyName}
-                        </span>
-                      </div>
-                      <div className="flex items-baseline space-x-2 text-[11px] mt-0.5">
-                        <span className="urdu-text text-emerald-900 font-bold text-xs" dir="rtl">
-                          {item.urduName}
+                          {isUr ? (item.urduName || item.varietyName) : item.varietyName}
                         </span>
                         <span className="text-[10px] text-slate-400 font-mono">
                           • {item.sku}
@@ -149,26 +181,26 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
 
                 {/* Category */}
                 <td className="py-3 px-3 font-sans text-slate-700 font-medium">
-                  {item.category}
+                  {getCleanCategory(item.category)}
                 </td>
 
                 {/* Packaging */}
                 <td className="py-3 px-3 text-slate-600 font-sans">
                   <span className="font-bold text-slate-800 block text-[11px]">
-                    {item.packagingStandard}
+                    {getCleanPackaging(item.packagingStandard)}
                   </span>
                   <span className="text-[10px] text-slate-500">
-                    Tare: -{item.tareDeductionKg} kg/bag
+                    {isUr ? `کاٹ: -${item.tareDeductionKg} کلو` : `Tare: -${item.tareDeductionKg} kg/bag`}
                   </span>
                 </td>
 
                 {/* Stock in KG and Bags */}
                 <td className="py-3 px-3 text-right">
                   <span className="text-sm font-black text-slate-900 block">
-                    {item.physicalStockKg.toLocaleString()} kg
+                    {item.physicalStockKg.toLocaleString()} {isUr ? 'کلو' : 'kg'}
                   </span>
                   <span className="text-[10px] text-slate-500 font-bold">
-                    {item.bagsCount} {item.bagTypeLabel}
+                    {item.bagsCount} {getCleanBagLabel(item.bagTypeLabel)}
                   </span>
                 </td>
 
@@ -205,7 +237,9 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                     PKR {item.counterRatePerKg.toFixed(2)}
                   </span>
                   <span className="text-[10px] text-emerald-700 font-semibold block">
-                    Margin: +PKR {item.marginPerKg.toFixed(2)}/kg
+                    {isUr
+                      ? `منافع: +${item.marginPerKg.toFixed(2)} فی کلو`
+                      : `Margin: +PKR ${item.marginPerKg.toFixed(2)}/kg`}
                   </span>
                   {item.marginPercentage && (
                     <span className="text-[9px] text-slate-500 font-mono">
@@ -219,19 +253,19 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                   <div className="flex items-center justify-center space-x-1.5">
                     <button
                       onClick={() => onOpenInward(item)}
-                      title="Add Stock Inward (آمد گودام و لاگت)"
+                      title={isUr ? 'گودام میں مال آمد' : 'Add Stock Inward'}
                       className="inline-flex items-center space-x-1 px-2 py-1 rounded bg-emerald-50 hover:bg-emerald-800 hover:text-white border border-emerald-300 text-emerald-800 font-bold text-[10px] transition-colors cursor-pointer"
                     >
                       <PlusCircle className="w-3 h-3" />
-                      <span>+ Inward</span>
+                      <span>{isUr ? '+ مال آمد' : '+ Inward'}</span>
                     </button>
                     <button
                       onClick={() => onOpenRateEdit(item)}
-                      title="Edit Variety & Adjust Rates (ریٹ و تفصیل)"
+                      title={isUr ? 'ریٹ و تفصیل تبدیل کریں' : 'Edit Variety & Adjust Rates'}
                       className="inline-flex items-center space-x-1 px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold text-[10px] transition-colors cursor-pointer"
                     >
                       <Edit3 className="w-3 h-3 text-slate-500" />
-                      <span>Edit & Rate</span>
+                      <span>{isUr ? 'ریٹ تبدیل' : 'Edit & Rate'}</span>
                     </button>
                     {onDeleteItem && (
                       <button
@@ -240,7 +274,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                             onDeleteItem(item.id);
                           }
                         }}
-                        title="Delete Product (چاول حذف کریں)"
+                        title={isUr ? 'حذف کریں' : 'Delete Product'}
                         className="inline-flex items-center p-1 rounded bg-slate-50 hover:bg-red-50 hover:text-red-600 border border-slate-200 text-slate-400 font-bold text-[10px] transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-3 h-3" />
