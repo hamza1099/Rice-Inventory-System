@@ -235,14 +235,13 @@ const NAME_DICTIONARY: Record<string, string> = {
   store: 'اسٹور',
   stores: 'اسٹورز',
   general: 'جنرل',
-  super: 'سوپر',
   traders: 'ٹریڈرز',
   trader: 'ٹریڈر',
   trading: 'ٹریڈنگ',
   rice: 'چاول',
   dealer: 'ڈیلر',
   dealers: 'ڈیلرز',
-  grain: 'غلہ',
+  'grain market': 'غلہ منڈی',
   mandi: 'منڈی',
   mills: 'ملز',
   mill: 'مل',
@@ -270,7 +269,6 @@ const NAME_DICTIONARY: Record<string, string> = {
   ghousia: 'غوثیہ',
   data: 'داتا',
   subhan: 'سبحان',
-  new: 'نیو',
   pak: 'پاک',
   pakistan: 'پاکستان',
   punjab: 'پنجاب',
@@ -286,38 +284,272 @@ const NAME_DICTIONARY: Record<string, string> = {
   multan: 'ملتان',
   faisalabad: 'فیصل آباد',
 
-  // Rice & Grocery Variety Terms
+  // Rice & Grain Varieties
+  fajar: 'فجر',
+  fajr: 'فجر',
+  short: 'شارٹ',
+  grain: 'گرین',
+  grains: 'گرینز',
+  long: 'لانگ',
+  medium: 'میڈیم',
   kainat: 'کائنات',
+  kinat: 'کائنات',
+  kaynat: 'کائنات',
+  kanat: 'کائنات',
   steam: 'سٹیم',
   sella: 'سیلا',
   sela: 'سیلا',
   kernel: 'کرنل',
   basmati: 'باسمتی',
+  super: 'سپر',
+  supri: 'سپری',
+  sopri: 'سپری',
   tota: 'ٹوٹا',
+  totay: 'ٹوٹے',
   broken: 'ٹوٹا',
+  biri: 'بیڑی',
+  dagi: 'داغی',
+  daagi: 'داغی',
+  irri: 'اری',
+  iri: 'اری',
+  irri6: 'اری 6',
+  irri9: 'اری 9',
+  'irri-6': 'اری 6',
+  'irri-9': 'اری 9',
+  pk: 'پی کے',
+  pk386: 'پی کے 386',
+  'pk-386': 'پی کے 386',
+  '386': '386',
+  ks: 'کے ایس',
+  ks282: 'کے ایس 282',
+  'ks-282': 'کے ایس 282',
+  '282': '282',
+  c9: 'سی 9',
+  'c-9': 'سی 9',
+  '1121': '1121',
+  '1509': '1509',
+  golden: 'گولڈن',
+  brown: 'براؤن',
+  falak: 'فلک',
+  guard: 'گارڈ',
+  matla: 'مطلع',
+  chenab: 'چناب',
+  kashmiri: 'کشمیری',
+  shahi: 'شاہی',
+  shandar: 'شاندار',
+  dilpasand: 'دلپسند',
+  chawal: 'چاول',
+  parboiled: 'سیلا',
+  paddy: 'دھان',
+  dhan: 'دھان',
+
+  // Multi-word Varieties
+  'short grain': 'شارٹ گرین',
+  'long grain': 'لانگ گرین',
+  'fajar rice': 'فجر چاول',
+  'fajr rice': 'فجر چاول',
+  'super kainat': 'سپر کائنات',
+  'super basmati': 'سپر باسمتی',
+  'super kernel': 'سپر کرنل',
+  'golden sella': 'گولڈن سیلا',
+  'kinat dagi': 'کائنات داغی',
+  'kainat dagi': 'کائنات داغی',
+  'irri 6': 'اری 6',
+  'irri 9': 'اری 9',
+  'pk 386': 'پی کے 386',
+  'ks 282': 'کے ایس 282',
+
+  // Pulses & Daal
   daal: 'دال',
   dal: 'دال',
   chana: 'چنا',
   moong: 'مونگ',
   masoor: 'مسور',
   mash: 'ماش',
+  urad: 'اڑد',
+  arhar: 'ارہڑ',
+  lobia: 'لوبیا',
+  kala: 'کالا',
+  safaid: 'سفید',
+  safed: 'سفید',
+  kabuli: 'کابلی',
   dhooli: 'دھلی',
   dhauli: 'دھلی',
-  zeera: 'زیرہ',
-  haldi: 'ہلدی',
-  mirch: 'مرچ',
+  dhuli: 'دھلی',
+  chilka: 'چھلکا',
+  chhilka: 'چھلکا',
+  sabut: 'ثابت',
+  sabit: 'ثابت',
+  besan: 'بیسن',
+  'daal chana': 'دال چنا',
+  'chana daal': 'چنا دال',
+  'daal moong': 'دال مونگ',
+  'moong daal': 'مونگ دال',
+  'daal masoor': 'دال مسور',
+  'masoor daal': 'مسور دال',
+  'daal mash': 'دال ماش',
+  'mash daal': 'ماش دال',
+  'kala chana': 'کالا چنا',
+  'safaid chana': 'سفید چنا',
+  'kabuli chana': 'کابلی چنا',
+  'chana safaid': 'چنا سفید',
+  'chana kala': 'چنا کالا',
+
+  // Flour, Sugar & Atta
+  atta: 'آٹا',
+  chakki: 'چکی',
+  'chakki atta': 'چکی آٹا',
+  maida: 'میدہ',
+  suji: 'سوجی',
+  sooji: 'سوجی',
+  sugar: 'چینی',
+  cheeni: 'چینی',
+  chini: 'چینی',
+  shakkar: 'شکر',
+  shakar: 'شکر',
+  gur: 'گڑ',
+  khand: 'کھانڈ',
+
+  // Spices & Masalay
   masala: 'مصالحہ',
+  masalah: 'مصالحہ',
+  spices: 'مصالحہ جات',
+  zeera: 'زیرہ',
+  jeera: 'زیرہ',
+  'safaid zeera': 'سفید زیرہ',
+  'kala zeera': 'کالا زیرہ',
+  haldi: 'ہلدی',
+  turmeric: 'ہلدی',
+  mirch: 'مرچ',
+  chilli: 'مرچ',
+  chili: 'مرچ',
+  'lal mirch': 'لال مرچ',
+  'surkh mirch': 'سرخ مرچ',
+  'kali mirch': 'کالی مرچ',
+  'kuti mirch': 'کٹی مرچ',
+  'pisi mirch': 'پسی مرچ',
+  powder: 'پاؤڈر',
+  dhaniya: 'دھنیا',
+  coriander: 'دھنیا',
+  'sabut dhaniya': 'ثابت دھنیا',
+  'pisa dhaniya': 'پسا دھنیا',
+  namak: 'نمک',
+  salt: 'نمک',
+  'kala namak': 'کالا نمک',
+  'lahori namak': 'لاہوری نمک',
+  laung: 'لونگ',
+  clove: 'لونگ',
+  darchini: 'دارچینی',
+  dalchini: 'دارچینی',
+  cinnamon: 'دارچینی',
+  ilaichi: 'الائچی',
+  elaichi: 'الائچی',
+  cardamom: 'الائچی',
+  'choti ilaichi': 'چھوٹی الائچی',
+  'bari ilaichi': 'بڑی الائچی',
+  badiyan: 'بادیان',
+  tezpat: 'تیز پات',
+  tezpaat: 'تیز پات',
+  methi: 'میتھی',
+  'kasuri methi': 'قصوری میتھی',
+  ajwain: 'اجوائن',
+  kalonji: 'کلونجی',
+  saunf: 'سونف',
+  rai: 'رائی',
+  anardana: 'انار دانہ',
+  imli: 'املی',
+  'chaat masala': 'چاٹ مصالحہ',
+  'garam masala': 'گرم مصالحہ',
+  'biryani masala': 'بریانی مصالحہ',
+  'korma masala': 'قورمہ مصالحہ',
+  'karahi masala': 'کڑاہی مصالحہ',
+
+  // Oils & Ghee
   ghee: 'گھی',
   oil: 'آئل',
-  atta: 'آٹا',
-  sugar: 'چینی',
+  tel: 'تیل',
+  cooking: 'کوکنگ',
+  'cooking oil': 'کوکنگ آئل',
+  'desi ghee': 'دیسی گھی',
+  sarson: 'سرسوں',
+  canola: 'کینولا',
+  sunflower: 'سورج مکھی',
+  zaitoon: 'زیتون',
+  olive: 'زیتون',
+  banaspati: 'بناسپتی',
+  vanaspati: 'بناسپتی',
+
+  // Brands
+  shan: 'شان',
+  national: 'نیشنل',
+  dalda: 'ڈالڈا',
+  sufi: 'صوفی',
+  kisan: 'کسان',
+  meezan: 'میزان',
+  tullo: 'ٹلو',
+  tapal: 'ٹپال',
+  lipton: 'لپٹن',
+  vital: 'وائٹل',
+  danedar: 'دانے دار',
+  supreme: 'سپریم',
+  nestle: 'نسلے',
+  everyday: 'ایوری ڈے',
+  nido: 'نیڈو',
+  olpers: 'اولپرز',
+  milkpak: 'ملک پیک',
+  nurpur: 'نورپور',
+  tarang: 'ترنگ',
+  knorr: 'کنور',
+  maggi: 'میگی',
+  tang: 'ٹینگز',
+  roohafza: 'روح افزاء',
+  'rooh afza': 'روح افزاء',
+  ketchup: 'کیچپ',
+  sauce: 'سوس',
+  mayo: 'مائیو',
+  mayonnaise: 'مایونیز',
+  vinegar: 'سرکہ',
+  soya: 'سویا',
+
+  // Units, Packaging & Descriptors
   bori: 'بوری',
+  bag: 'بوری',
+  bags: 'بوریاں',
+  dabba: 'ڈبہ',
+  packet: 'پیکٹ',
+  pack: 'پیک',
+  carton: 'کارٹن',
+  peti: 'پیٹی',
+  tin: 'ٹن',
+  can: 'کین',
+  bottle: 'بوتل',
+  jar: 'جار',
+  kg: 'کلو',
+  kilo: 'کلو',
+  mann: 'من',
+  maan: 'من',
+  gram: 'گرام',
+  gm: 'گرام',
+  liter: 'لیٹر',
+  litre: 'لیٹر',
   white: 'سفید',
   red: 'سرخ',
   old: 'پرانا',
+  purana: 'پرانا',
+  new: 'نیا',
+  naya: 'نیا',
+  fresh: 'تازہ',
+  khula: 'کھلا',
+  fine: 'فائن',
   special: 'سپیشل',
   extra: 'ایکسٹرا',
-  long: 'لمبا',
+  premium: 'پریمیم',
+  classic: 'کلاسک',
+  desi: 'دیسی',
+  farm: 'فارم',
+  grade: 'گریڈ',
+  number: 'نمبر',
+  no: 'نمبر',
 };
 
 // Fallback phonetic transliteration for single words not in dictionary
@@ -331,6 +563,10 @@ function transliterateWordPhonetic(word: string): string {
   // Multi-character phonetic replacements
   let str = clean;
   const multiMap: [RegExp, string][] = [
+    [/^short/g, 'شارٹ'],
+    [/^long/g, 'لانگ'],
+    [/^grain/g, 'گرین'],
+    [/^faj/g, 'فجر'],
     [/^aa/g, 'آ'],
     [/^a/g, 'ا'],
     [/^ee/g, 'ای'],
@@ -359,15 +595,15 @@ function transliterateWordPhonetic(word: string): string {
     str = str.replace(pattern, repl);
   }
 
-  // Single characters
+  // Single characters (retroflex t -> ٹ and d -> ڈ for English/Roman loanwords)
   const charMap: Record<string, string> = {
     a: 'ا',
     b: 'ب',
     p: 'پ',
-    t: 'ت',
+    t: 'ٹ',
     j: 'ج',
     c: 'ک',
-    d: 'د',
+    d: 'ڈ',
     r: 'ر',
     z: 'ز',
     s: 'س',
@@ -399,26 +635,44 @@ function transliterateWordPhonetic(word: string): string {
 }
 
 /**
- * Transliterates an English/Roman Urdu full name to Urdu
+ * Transliterates an English/Roman Urdu full name or variety name to Urdu
+ * e.g., "fajar" -> "فجر"
+ * e.g., "short" -> "شارٹ"
+ * e.g., "short grain" -> "شارٹ گرین"
+ * e.g., "super kainat" -> "سپر کائنات"
+ * e.g., "daal chana" -> "دال چنا"
  * e.g., "hamza" -> "حمزہ"
  * e.g., "Muhammad Hamza" -> "محمد حمزہ"
- * e.g., "Syed S. Bukhari" -> "سید بخاری"
  */
 export function transliterateEnglishToUrduName(fullName: string): string {
   if (!fullName || !fullName.trim()) return '';
 
-  const normalized = fullName.replace(/[-_/&,]/g, ' ');
-  const words = normalized.trim().split(/\s+/);
-  const urduWords = words.map((word) => {
-    const cleanWord = word.toLowerCase().replace(/[^a-z0-9.]/g, '');
-    if (!cleanWord) return '';
+  const cleanFull = fullName.toLowerCase().trim().replace(/[-_/&,]/g, ' ');
+  if (NAME_DICTIONARY[cleanFull]) {
+    return NAME_DICTIONARY[cleanFull];
+  }
 
-    if (NAME_DICTIONARY[cleanWord]) {
-      return NAME_DICTIONARY[cleanWord];
+  const words = cleanFull.split(/\s+/).filter(Boolean);
+  const urduWords: string[] = [];
+
+  for (let i = 0; i < words.length; i++) {
+    // Check 2-word phrase first
+    if (i + 1 < words.length) {
+      const twoWords = `${words[i]} ${words[i + 1]}`;
+      if (NAME_DICTIONARY[twoWords]) {
+        urduWords.push(NAME_DICTIONARY[twoWords]);
+        i++; // skip next word
+        continue;
+      }
     }
 
-    return transliterateWordPhonetic(cleanWord);
-  });
+    const single = words[i];
+    if (NAME_DICTIONARY[single]) {
+      urduWords.push(NAME_DICTIONARY[single]);
+    } else {
+      urduWords.push(transliterateWordPhonetic(single));
+    }
+  }
 
   return urduWords.filter(Boolean).join(' ');
 }
