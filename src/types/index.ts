@@ -75,6 +75,12 @@ export interface InventoryItem {
   qualityNotes?: string;
   imageUrl?: string;
   isRateFixed?: boolean;
+  unitType?: 'kg' | 'piece' | 'liter';
+  unitLabel?: string;
+  unitsPerPack?: number;
+  costPerBag?: number;
+  counterRatePerBag?: number;
+  packTypeLabel?: string;
 }
 
 export interface DenominationRow {

@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { X, UserPlus, Mail, Lock, Eye, EyeOff, Shield, Sparkles } from 'lucide-react';
 import { transliterateEnglishToUrduName } from '../../utils/urduTransliterator';
 import { notifySuccess, notifyWarning } from '../../utils/toast';
+import { formatPakistaniPhone, isValidPakistaniPhone } from '../../utils/phone';
+import { PakistaniPhoneInput } from '../common/PakistaniPhoneInput';
+import {
+  DEFAULT_TERMINAL_OPTIONS,
+  getCustomTerminals,
+  saveCustomTerminal
+} from '../../utils/terminals';
 import { usePos } from '../../context/PosContext';
 
 export interface TerminalUser {
@@ -39,7 +46,22 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [terminal, setTerminal] = useState<string>('Terminal #01 (Counter 01)');
+  const [customTerminals, setCustomTerminals] = useState<string[]>(() => getCustomTerminals());
+  const [isAddingNewTerminal, setIsAddingNewTerminal] = useState<boolean>(false);
+  const [newTerminalInput, setNewTerminalInput] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
+
+  const handleAddNewTerminal = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = newTerminalInput.trim();
+    if (!trimmed) return;
+    const updated = saveCustomTerminal(trimmed);
+    setCustomTerminals(updated);
+    setTerminal(trimmed);
+    setNewTerminalInput('');
+    setIsAddingNewTerminal(false);
+    notifySuccess(isUr ? `نیا کاؤنٹر "${trimmed}" شامل ہو گیا!` : `New counter "${trimmed}" added!`);
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -85,6 +107,14 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
     }
     if (!password || password.length < 4) {
       notifyWarning(isUr ? 'پاس ورڈ کم از کم 4 ہندسے ہونا چاہیے' : 'Please enter a password (at least 4 characters)');
+      return;
+    }
+    if (phone.trim() && !isValidPakistaniPhone(phone, false)) {
+      notifyWarning(
+        isUr
+          ? 'درست ۱۱ ہندسی موبائل نمبر درج کریں (مثلاً 0300-1234567)'
+          : 'Please enter a valid 11-digit mobile number (e.g. 0300-1234567)'
+      );
       return;
     }
 
@@ -174,9 +204,9 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                 type="text"
                 value={urduName}
                 onChange={(e) => handleUrduNameChange(e.target.value)}
-                placeholder={isUr ? 'انگریزی نام سے خودکار اردو بنے گی...' : 'Auto-generated from Full Name...'}
+                placeholder="خودکار اردو نام..."
                 dir="rtl"
-                className="w-full px-2.5 py-1.5 border border-emerald-300/80 bg-emerald-50/30 rounded focus:border-emerald-600 focus:bg-white focus:outline-hidden urdu-text text-sm font-semibold text-emerald-950 transition-colors"
+                className="w-full px-2.5 py-1.5 border border-emerald-300/80 bg-emerald-50/30 rounded focus:border-emerald-600 focus:bg-white focus:outline-hidden urdu-text text-sm font-semibold text-emerald-950 placeholder:text-emerald-800/40 transition-colors"
               />
             </div>
           </div>
@@ -192,7 +222,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="cashier@bukharirice.com"
+              placeholder={isUr ? 'cashier@example.com' : 'e.g. cashier@example.com'}
               className="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-emerald-600 focus:outline-hidden font-mono"
             />
           </div>
@@ -243,30 +273,87 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                {isUr ? 'متعلقہ ٹرمینل:' : 'Assigned Terminal:'}
+                {isUr ? 'متعلقہ ٹرمینل / کاؤنٹر:' : 'Assigned Terminal / Counter:'}
               </label>
-              <select
-                value={terminal}
-                onChange={(e) => setTerminal(e.target.value)}
-                className="w-full px-2.5 py-1.5 border border-slate-300 rounded bg-white text-[11px]"
-              >
-                <option value="Terminal #01 (Counter 01)">{isUr ? 'ٹرمینل #01 (کاؤنٹر 01)' : 'Terminal #01 (Counter 01)'}</option>
-                <option value="Terminal #02 (Wholesale Counter)">{isUr ? 'ٹرمینل #02 (تھوک کاؤنٹر)' : 'Terminal #02 (Wholesale Counter)'}</option>
-                <option value="Godown Scale Platform #01">{isUr ? 'گودام کانٹا پلیٹ فارم #01' : 'Godown Scale Platform #01'}</option>
-                <option value="All Workstations (Admin Pass)">{isUr ? 'تمام ورک سٹیشنز' : 'All Workstations'}</option>
-              </select>
+              {!isAddingNewTerminal ? (
+                <select
+                  value={terminal}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '__NEW__') {
+                      setIsAddingNewTerminal(true);
+                      setNewTerminalInput('');
+                    } else {
+                      setTerminal(val);
+                    }
+                  }}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded bg-white text-[11px] font-semibold text-slate-800 focus:border-emerald-600 focus:outline-hidden"
+                >
+                  {DEFAULT_TERMINAL_OPTIONS.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {isUr ? opt.ur : opt.en}
+                    </option>
+                  ))}
+                  {customTerminals.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                  <option value="__NEW__" className="text-emerald-700 font-bold bg-emerald-50">
+                    {isUr ? '+ نیا کاؤنٹر / ٹرمینل شامل کریں...' : '+ Add New Counter / Terminal...'}
+                  </option>
+                </select>
+              ) : (
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    value={newTerminalInput}
+                    onChange={(e) => setNewTerminalInput(e.target.value)}
+                    placeholder={isUr ? 'کاؤنٹر کا نام لکھیں...' : 'e.g. Counter 03 / POS 03...'}
+                    className="w-full pl-2.5 pr-14 py-1.5 border-2 border-emerald-600 rounded bg-white text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-hidden"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddNewTerminal();
+                      } else if (e.key === 'Escape') {
+                        setIsAddingNewTerminal(false);
+                        setNewTerminalInput('');
+                      }
+                    }}
+                  />
+                  <div className="absolute right-1 flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleAddNewTerminal()}
+                      className="px-2 py-0.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded text-[10px] font-bold cursor-pointer"
+                    >
+                      {isUr ? 'شامل' : 'Add'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingNewTerminal(false);
+                        setNewTerminalInput('');
+                      }}
+                      className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
+                      title={isUr ? 'منسوخ' : 'Cancel'}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
               <label className="block text-[11px] font-bold text-slate-700 mb-1">
                 {isUr ? 'موبائل نمبر:' : 'Contact Phone:'}
               </label>
-              <input
-                type="text"
+              <PakistaniPhoneInput
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={setPhone}
                 placeholder="0300-1234567"
-                className="w-full px-2.5 py-1.5 border border-slate-300 rounded font-mono"
               />
             </div>
           </div>

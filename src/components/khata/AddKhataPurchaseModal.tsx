@@ -3,6 +3,7 @@ import { X, ShoppingCart, Plus, Trash2, Calendar, FileText } from 'lucide-react'
 import type { KhataCustomer, KhataItemEntry } from '../../types';
 import { usePos } from '../../context/PosContext';
 import { notifySuccess, notifyWarning } from '../../utils/toast';
+import { NumberInput } from '../common/NumberInput';
 
 interface AddKhataPurchaseModalProps {
   isOpen: boolean;
@@ -206,28 +207,24 @@ export const AddKhataPurchaseModal: React.FC<AddKhataPurchaseModalProps> = ({
                       </td>
                       <td className="py-2 px-2 text-right">
                         <div className="flex items-center justify-end space-x-1">
-                          <input
-                            type="number"
-                            min="0.1"
+                          <NumberInput
+                            min="0"
                             step="0.5"
                             value={row.quantity}
-                            onChange={(e) =>
-                              handleQtyChange(index, parseFloat(e.target.value) || 0)
-                            }
+                            onChange={(val) => handleQtyChange(index, val)}
                             className="w-16 px-1.5 py-1 border border-slate-300 rounded text-right font-bold"
+                            placeholder="0"
                           />
                           <span className="text-[10px] text-slate-500 font-sans">{isUr && row.unit === 'kg' ? 'کلو' : row.unit}</span>
                         </div>
                       </td>
                       <td className="py-2 px-2 text-right">
-                        <input
-                          type="number"
-                          min="1"
+                        <NumberInput
+                          min="0"
                           value={row.rate}
-                          onChange={(e) =>
-                            handleRateChange(index, parseFloat(e.target.value) || 0)
-                          }
+                          onChange={(val) => handleRateChange(index, val)}
                           className="w-20 px-1.5 py-1 border border-slate-300 rounded text-right font-bold"
+                          placeholder="0"
                         />
                       </td>
                       <td className="py-2 px-3 text-right font-black text-slate-900">

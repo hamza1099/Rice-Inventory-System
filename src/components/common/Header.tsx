@@ -7,7 +7,8 @@ import { notifyInfo } from '../../utils/toast';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
-  const { setIsTerminalLocked, language, setLanguage } = usePos();
+  const { currentUser, userProfile, logout, language, setLanguage } = usePos();
+  const isUr = language === 'ur';
   const [timeStr, setTimeStr] = useState<string>('14:32:00 PKT');
 
   useEffect(() => {
@@ -23,10 +24,10 @@ export const Header: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleLogout = () => {
-    setIsTerminalLocked(true);
+  const handleLogout = async () => {
+    await logout();
     navigate(RouteName.LOGIN);
-    notifyInfo('Terminal locked. Sign in with email to resume access.');
+    notifyInfo(isUr ? 'ٹرمینل بند ہو گیا۔ کامیابی سے لاگ آؤٹ ہو گیا۔' : 'Terminal locked. Signed out successfully.');
   };
 
   return (
@@ -93,17 +94,21 @@ export const Header: React.FC = () => {
           <span>{timeStr}</span>
         </div>
 
-        {/* Cashier Badge */}
+        {/* Cashier / User Badge */}
         <div className="flex items-center space-x-2 bg-[#032419] px-2.5 py-1 rounded border border-emerald-800/80 text-emerald-100">
           <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-[10px]">
             <User className="w-3 h-3" />
           </div>
           <div>
             <span className="font-bold text-white block leading-tight">
-              {language === 'ur' ? 'کیشیئر: سید بخاری' : 'Cashier: S. Bukhari'}
+              {userProfile
+                ? (isUr ? userProfile.urduName || userProfile.name : userProfile.name)
+                : currentUser?.displayName || currentUser?.email?.split('@')[0] || (isUr ? 'کیشیئر' : 'Cashier')}
             </span>
             <span className="text-[10px] text-emerald-300/80 leading-none">
-              {language === 'ur' ? 'شفٹ الف • ٹرمینل #01' : 'Shift A • Terminal #01'}
+              {userProfile
+                ? `${userProfile.role} • ${userProfile.terminal}`
+                : currentUser?.email || (isUr ? 'ٹرمینل #01' : 'Terminal #01')}
             </span>
           </div>
         </div>

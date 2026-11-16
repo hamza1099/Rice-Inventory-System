@@ -11,7 +11,15 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { setSelectedProductForModal, openImagePreview, language } = usePos();
 
-  const isPackaged = product.unitLabel === '/ pkt' || product.unitLabel === '/ tin' || product.unitLabel === '/ bag';
+  const isPackaged =
+    product.unitLabel === '/ pkt' ||
+    product.unitLabel === '/ tin' ||
+    product.unitLabel === '/ bag' ||
+    product.unitLabel === '/ pc' ||
+    product.unitLabel === '/ piece' ||
+    product.unitLabel === '/ liter' ||
+    product.unitLabel === '/ can' ||
+    product.unitLabel === '/ carton';
 
   const handleImageClick = () => {
     openImagePreview({
@@ -102,7 +110,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               <span className="font-bold text-slate-900 font-mono-num text-right">
                 PKR {product.ratePerKg.toLocaleString()}{' '}
                 <span className="text-[9px] text-slate-500 font-normal">
-                  {language === 'ur' ? (product.unitLabel === '/ kg' ? '/ کلو' : product.unitLabel) : (product.unitLabel || '/ kg')}
+                  {language === 'ur'
+                    ? product.unitLabel === '/ kg'
+                      ? '/ کلو'
+                      : product.unitLabel === '/ pc' || product.unitLabel === '/ piece'
+                      ? '/ دانہ'
+                      : product.unitLabel === '/ liter'
+                      ? '/ لیٹر'
+                      : product.unitLabel === '/ pkt'
+                      ? '/ پیکٹ'
+                      : product.unitLabel === '/ tin'
+                      ? '/ ٹن'
+                      : product.unitLabel === '/ can'
+                      ? '/ کین'
+                      : (product.unitLabel || '/ کلو')
+                    : (product.unitLabel || '/ kg')}
                 </span>
                 {product.isWholesalePack && (
                   <span className="text-[9px] text-slate-400 font-normal block leading-none">

@@ -5,7 +5,7 @@ import { usePos } from '../../context/PosContext';
 export const LockScreenModal: React.FC = () => {
   const { isTerminalLocked, setIsTerminalLocked, language } = usePos();
   const isUr = language === 'ur';
-  const [email, setEmail] = useState<string>('s.bukhari@bukharirice.com');
+  const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
@@ -68,7 +68,7 @@ export const LockScreenModal: React.FC = () => {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="s.bukhari@bukharirice.com"
+              placeholder={isUr ? 'ای میل ایڈریس درج کریں' : 'Enter your email address'}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-emerald-600 focus:outline-hidden font-mono"
             />
           </div>

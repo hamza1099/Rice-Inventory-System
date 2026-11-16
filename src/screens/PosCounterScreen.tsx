@@ -1,19 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePos } from '../context/PosContext';
 import { ProductCard } from '../components/pos/ProductCard';
 import { CashMemoBill } from '../components/pos/CashMemoBill';
 import { WeightEntryModal } from '../components/pos/WeightEntryModal';
 import { ReceiptPrintModal } from '../components/pos/ReceiptPrintModal';
 import { CashDrawerOpeningModal } from '../components/pos/CashDrawerOpeningModal';
-import { Search, Filter, Banknote, AlertTriangle, PlayCircle } from 'lucide-react';
+import { Search, Filter, Banknote, AlertTriangle, PlayCircle, Plus, PackagePlus } from 'lucide-react';
+import { RouteName } from '../routes/RouteName';
+import { getCustomCategories } from '../utils/categories';
 
 export const PosCounterScreen: React.FC = () => {
+  const navigate = useNavigate();
   const {
     products,
     language,
     isDrawerOpen,
     isDayClosed,
     openingFloat,
+    isPreviousSessionUnclosed,
+    setIsUnclosedModalOpen,
     setIsOpeningModalOpen,
     startNewDay
   } = usePos();
@@ -21,12 +27,23 @@ export const PosCounterScreen: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Automatically prompt for opening cash if drawer is not active for the day
+  // Automatically prompt:
+  // 1. Alert to close previous day session if left unclosed
+  // 2. Otherwise prompt for opening cash float to start today's fresh day
   useEffect(() => {
-    if (!isDrawerOpen && !isDayClosed) {
+    if (isPreviousSessionUnclosed) {
+      setIsUnclosedModalOpen(true);
+      setIsOpeningModalOpen(false);
+    } else if (isDayClosed) {
+      // If previous shift was finalized on Day-End Closing and cashier returned to POS Counter,
+      // seamlessly prepare for the fresh day and immediately open the cash float entry modal
+      startNewDay();
+    } else if (!isDrawerOpen) {
       setIsOpeningModalOpen(true);
     }
-  }, [isDrawerOpen, isDayClosed, setIsOpeningModalOpen]);
+  }, [isPreviousSessionUnclosed, isDayClosed, isDrawerOpen]);
+
+  const customCategories = getCustomCategories();
 
   const categories = [
     { id: 'All', en: 'All Items', ur: 'سب اشیاء' },
@@ -35,7 +52,9 @@ export const PosCounterScreen: React.FC = () => {
     { id: 'Spices', en: 'Spices', ur: 'کھلا مصالحہ' },
     { id: 'Shan & National', en: 'Shan & National', ur: 'ڈبہ مصالحہ' },
     { id: 'Oil & Ghee', en: 'Oil & Ghee', ur: 'تیل و گھی' },
-    { id: 'Atta & Sugar', en: 'Atta & Sugar', ur: 'آٹا و چینی' }
+    { id: 'Atta & Sugar', en: 'Atta & Sugar', ur: 'آٹا و چینی' },
+    ...customCategories.map((c) => ({ id: c, en: c, ur: c })),
+    { id: 'Other', en: 'Other', ur: 'دیگر' }
   ];
 
   const filteredProducts = products.filter((p) => {
@@ -55,8 +74,24 @@ export const PosCounterScreen: React.FC = () => {
         matchesCat = catLower.includes('oil') || catLower.includes('ghee') || catLower.includes('تیل');
       } else if (selectedCategory === 'Atta & Sugar') {
         matchesCat = catLower.includes('atta') || catLower.includes('sugar') || catLower.includes('آٹا') || catLower.includes('چینی');
+      } else if (selectedCategory === 'Other') {
+        matchesCat =
+          catLower.includes('other') ||
+          catLower.includes('دیگر') ||
+          (!catLower.includes('rice') &&
+            !catLower.includes('چاول') &&
+            !catLower.includes('pulse') &&
+            !catLower.includes('daal') &&
+            !catLower.includes('دال') &&
+            !catLower.includes('spice') &&
+            !catLower.includes('shan') &&
+            !catLower.includes('national') &&
+            !catLower.includes('oil') &&
+            !catLower.includes('ghee') &&
+            !catLower.includes('atta') &&
+            !catLower.includes('sugar'));
       } else {
-        matchesCat = catLower.includes(selLower);
+        matchesCat = catLower.includes(selLower) || selLower.includes(catLower);
       }
     }
 
@@ -145,36 +180,8 @@ export const PosCounterScreen: React.FC = () => {
             </div>
           </div>
 
-          {/* Day Closed Alert Banner */}
-          {isDayClosed && (
-            <div className="shrink-0 bg-amber-500/15 border border-amber-500/40 rounded-xl p-2.5 flex items-center justify-between text-amber-950">
-              <div className="flex items-center space-x-2">
-                <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
-                <div>
-                  <p className="font-bold text-xs">
-                    {language === 'ur'
-                      ? 'سابقہ دن کا اختتام مکمل ہو چکا ہے اور رجسٹر بند ہے۔'
-                      : 'Previous session Day-End Closing is sealed.'}
-                  </p>
-                  <p className="text-[10px] text-amber-800">
-                    {language === 'ur'
-                      ? 'نئی سیلز اور گلہ اوپن کرنے کے لیے "نیا دن شروع کریں" پر کلک کریں۔'
-                      : 'Click to start a fresh business day & enter starting cash.'}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={startNewDay}
-                className="px-3.5 py-1.5 bg-emerald-800 hover:bg-emerald-900 active:scale-98 text-white font-extrabold text-xs rounded-lg shadow-xs flex items-center space-x-1.5 cursor-pointer shrink-0"
-              >
-                <PlayCircle className="w-3.5 h-3.5" />
-                <span>{language === 'ur' ? 'نیا دن شروع کریں' : 'Start New Day'}</span>
-              </button>
-            </div>
-          )}
-
           {/* Drawer Closed Banner */}
-          {!isDrawerOpen && !isDayClosed && (
+          {!isDrawerOpen && (
             <div
               onClick={() => setIsOpeningModalOpen(true)}
               className="shrink-0 bg-amber-50 border border-amber-300 hover:bg-amber-100/80 rounded-xl px-3 py-2 flex items-center justify-between text-amber-900 cursor-pointer transition-colors"
@@ -187,9 +194,16 @@ export const PosCounterScreen: React.FC = () => {
                     : 'Cash Drawer is not opened yet • Click here to enter starting morning cash'}
                 </span>
               </div>
-              <span className="px-2.5 py-1 bg-amber-700 text-white font-bold text-[10px] rounded-lg">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsOpeningModalOpen(true);
+                }}
+                className="px-2.5 py-1 bg-amber-700 hover:bg-amber-800 text-white font-bold text-[10px] rounded-lg cursor-pointer"
+              >
                 {language === 'ur' ? 'اوپن کریں' : 'Open Drawer'}
-              </span>
+              </button>
             </div>
           )}
 

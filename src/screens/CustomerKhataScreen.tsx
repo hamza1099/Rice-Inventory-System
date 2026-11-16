@@ -7,6 +7,7 @@ import { AddKhataPurchaseModal } from '../components/khata/AddKhataPurchaseModal
 import { ReceivePaymentModal } from '../components/khata/ReceivePaymentModal';
 import { KhataStatementPrintModal } from '../components/khata/KhataStatementPrintModal';
 import { CustomerLedgerDetailModal } from '../components/khata/CustomerLedgerDetailModal';
+import { ConfirmDeleteModal } from '../components/common/ConfirmDeleteModal';
 import { notifySuccess, notifyInfo, notifyWarning } from '../utils/toast';
 import type { KhataCustomer } from '../types';
 import {
@@ -18,7 +19,8 @@ import {
   Wallet,
   Building2,
   Coins,
-  ShieldCheck
+  ShieldCheck,
+  Trash2
 } from 'lucide-react';
 
 export const CustomerKhataScreen: React.FC = () => {
@@ -27,6 +29,7 @@ export const CustomerKhataScreen: React.FC = () => {
     khataTransactions,
     selectedKhataCustomerId,
     setSelectedKhataCustomerId,
+    deleteKhataCustomer,
     deleteKhataTransaction,
     language,
   } = usePos();
@@ -44,6 +47,8 @@ export const CustomerKhataScreen: React.FC = () => {
   const [isAddPurchaseOpen, setIsAddPurchaseOpen] = useState<boolean>(false);
   const [isReceivePaymentOpen, setIsReceivePaymentOpen] = useState<boolean>(false);
   const [isStatementPrintOpen, setIsStatementPrintOpen] = useState<boolean>(false);
+  const [txToDelete, setTxToDelete] = useState<{ id: string; desc: string } | null>(null);
+  const [customerToDelete, setCustomerToDelete] = useState<KhataCustomer | null>(null);
 
   // Active selected customer
   const selectedCustomer = useMemo(() => {
@@ -72,7 +77,9 @@ export const CustomerKhataScreen: React.FC = () => {
         const matchName = c.customerName.toLowerCase().includes(q);
         const matchShop = c.shopName.toLowerCase().includes(q);
         const matchUrdu = c.urduName ? c.urduName.toLowerCase().includes(q) : false;
-        const matchPhone = c.phone.includes(q);
+        const cleanQ = q.replace(/\D/g, '');
+        const cleanCustPhone = c.phone.replace(/\D/g, '');
+        const matchPhone = c.phone.includes(q) || (cleanQ.length >= 3 && cleanCustPhone.includes(cleanQ));
         const matchAddress = c.address.toLowerCase().includes(q);
         return matchName || matchShop || matchUrdu || matchPhone || matchAddress;
       }
@@ -115,8 +122,8 @@ export const CustomerKhataScreen: React.FC = () => {
     }
 
     const message = isUr
-      ? `محترم ${customer.customerName} صاحب (${customer.shopName})،\n\nبخاری رائس ٹریڈرز غلہ منڈی اوکاڑہ کے ریکارڈ کے مطابق آپ کے کھاتے کا بقیہ واجب الادا بیلنس PKR ${customer.currentBalance.toLocaleString()} ہے۔\n\nبرائے مہربانی اپنا کھاتہ جلد از جلد بیباق فرما کر رسید حاصل کریں۔ شکریہ!\n\nبخاری رائس ٹریڈرز - فون: 0300-7589211`
-      : `Dear ${customer.customerName} (${customer.shopName}),\n\nAccording to records of Bukhari Rice Traders Okara, your outstanding balance due is PKR ${customer.currentBalance.toLocaleString()}.\n\nPlease settle your account at your earliest convenience.\n\nBukhari Rice Traders - Ph: 0300-7589211`;
+      ? `محترم ${customer.customerName} صاحب (${customer.shopName})،\n\nبخاری رائس ٹریڈرز کے ریکارڈ کے مطابق آپ کے کھاتے کا بقیہ واجب الادا بیلنس PKR ${customer.currentBalance.toLocaleString()} ہے۔\n\nبرائے مہربانی اپنا کھاتہ جلد از جلد بیباق فرما کر رسید حاصل کریں۔ شکریہ!\n\nبخاری رائس ٹریڈرز - چکری روڈ، لیاقت کالونی، گلی نمبر 9، راولپنڈی - فون: 0310-5612914`
+      : `Dear ${customer.customerName} (${customer.shopName}),\n\nAccording to records of Bukhari Rice Traders, your outstanding balance due is PKR ${customer.currentBalance.toLocaleString()}.\n\nPlease settle your account at your earliest convenience.\n\nBukhari Rice Traders - Chakri Road, Liaquat Colony, Lane #9, Rawalpindi - Ph: 0310-5612914`;
 
     const encodedMsg = encodeURIComponent(message);
     const waUrl = `https://wa.me/${cleanPhone}?text=${encodedMsg}`;
@@ -124,15 +131,24 @@ export const CustomerKhataScreen: React.FC = () => {
     notifySuccess(isUr ? 'WhatsApp Reminder ونڈو اوپن ہو گئی ہے۔' : 'WhatsApp window opened.');
   };
 
-  // Delete transaction with confirmation
+  // Delete transaction with confirmation modal
   const handleDeleteTx = (txId: string, desc: string) => {
-    const confirmPrompt = isUr
-      ? `کیا آپ واقعی اس ٹرانزیکشن کو ڈیلیٹ کرنا چاہتے ہیں؟\n"${desc}"\nاس سے بقایا بیلنس دوبارہ درست ہو جائے گا۔`
-      : `Are you sure you want to delete this transaction?\n"${desc}"\nBalance will be adjusted automatically.`;
+    setTxToDelete({ id: txId, desc });
+  };
 
-    if (window.confirm(confirmPrompt)) {
-      deleteKhataTransaction(txId);
-      notifyInfo(isUr ? 'ٹرانزیکشن ڈیلیٹ ہو گئی اور بیلنس ایڈجسٹ ہو گیا۔' : 'Transaction deleted and balance updated.');
+  // Delete customer with confirmation modal
+  const handleConfirmDeleteCustomer = () => {
+    if (!customerToDelete) return;
+    const name = customerToDelete.shopName || customerToDelete.customerName;
+    deleteKhataCustomer(customerToDelete.id);
+    notifySuccess(
+      isUr
+        ? `"${name}" کا کھاتہ کامیابی سے ڈیلیٹ کر دیا گیا`
+        : `Customer "${name}" deleted successfully`
+    );
+    setCustomerToDelete(null);
+    if (selectedCustomer?.id === customerToDelete.id) {
+      setIsLedgerModalOpen(false);
     }
   };
 
@@ -402,12 +418,22 @@ export const CustomerKhataScreen: React.FC = () => {
                         )}
                       </div>
 
-                      {/* Card Bottom: Click CTA */}
-                      <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 group-hover:text-emerald-800 transition-colors">
-                        <span className="font-medium">
-                          {isUr ? 'کھاتہ تفصیل اور رجسٹر' : 'Ledger & Transaction History'}
-                        </span>
-                        <span className="font-bold flex items-center gap-0.5 text-emerald-700 group-hover:translate-x-0.5 transition-transform">
+                      {/* Card Bottom: Click CTA & Direct Delete */}
+                      <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCustomerToDelete(cust);
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg text-[11px] font-bold transition-all cursor-pointer border border-transparent hover:border-rose-200"
+                          title={isUr ? 'گاہک کھاتہ ڈیلیٹ کریں' : 'Delete Khata Account'}
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                          <span>{isUr ? 'ڈیلیٹ' : 'Delete'}</span>
+                        </button>
+
+                        <span className="font-bold flex items-center gap-0.5 text-emerald-700 group-hover:text-emerald-900 group-hover:translate-x-0.5 transition-all text-xs">
                           {isUr ? 'کھاتہ کھولیں ←' : 'View Ledger →'}
                         </span>
                       </div>
@@ -430,6 +456,11 @@ export const CustomerKhataScreen: React.FC = () => {
         onOpenReceivePayment={() => setIsReceivePaymentOpen(true)}
         onOpenStatementPrint={() => setIsStatementPrintOpen(true)}
         onOpenEditCustomer={() => setIsEditCustomerOpen(true)}
+        onDeleteCustomer={() => {
+          if (selectedCustomer) {
+            setCustomerToDelete(selectedCustomer);
+          }
+        }}
         onDeleteTransaction={handleDeleteTx}
         onSendWhatsApp={handleSendWhatsAppReminder}
       />
@@ -466,6 +497,49 @@ export const CustomerKhataScreen: React.FC = () => {
           onClose={() => setIsStatementPrintOpen(false)}
         />
       )}
+
+      {/* Confirmation Modal for Customer Account Deletion */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(customerToDelete)}
+        onClose={() => setCustomerToDelete(null)}
+        onConfirm={handleConfirmDeleteCustomer}
+        title={isUr ? 'کھاتہ مکمل ڈیلیٹ کریں؟' : 'Delete Khata Account?'}
+        itemName={customerToDelete?.shopName || customerToDelete?.customerName || ''}
+        itemType={isUr ? 'گاہک ادھار کھاتہ' : 'Customer Khata'}
+        description={
+          isUr
+            ? `کیا آپ واقعی "${customerToDelete?.shopName || customerToDelete?.customerName}" کا کھاتہ ڈیلیٹ کرنا چاہتے ہیں؟ اس گاہک کا تمام سابقہ ادھار، خریداریاں اور پیمنٹس ہمیشہ کے لیے حذف ہو جائیں گی۔`
+            : `Are you sure you want to permanently delete "${customerToDelete?.shopName || customerToDelete?.customerName}"? All transaction records and balance will be removed.`
+        }
+        confirmText={isUr ? 'ہاں، کھاتہ ڈیلیٹ کریں' : 'Delete Account'}
+        cancelText={isUr ? 'منسوخ' : 'Cancel'}
+      />
+
+      {/* Confirmation Modal for Ledger Transaction Deletion */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(txToDelete)}
+        onClose={() => setTxToDelete(null)}
+        onConfirm={() => {
+          if (txToDelete) {
+            deleteKhataTransaction(txToDelete.id);
+            notifyInfo(
+              isUr
+                ? 'ٹرانزیکشن ڈیلیٹ ہو گئی اور کھاتہ بیلنس خودکار ایڈجسٹ ہو گیا۔'
+                : 'Transaction deleted and customer balance adjusted.'
+            );
+          }
+          setTxToDelete(null);
+        }}
+        title={isUr ? 'کھاتہ اندراج حذف کرنے کی تصدیق' : 'Confirm Transaction Deletion'}
+        description={
+          isUr
+            ? 'کیا آپ واقعی اس ٹرانزیکشن کو حذف کرنا چاہتے ہیں؟ اس کسٹمر کا کھاتہ بیلنس خودکار طور پر ریورس ہو جائے گا۔'
+            : 'Are you sure you want to delete this transaction entry? The customer balance will be automatically reversed.'
+        }
+        itemName={txToDelete?.desc || ''}
+        itemType={isUr ? 'اندراج / تفصیل:' : 'Transaction Details:'}
+        confirmText={isUr ? 'ہاں، ٹرانزیکشن حذف کریں' : 'Yes, Delete Transaction'}
+      />
     </div>
   );
 };

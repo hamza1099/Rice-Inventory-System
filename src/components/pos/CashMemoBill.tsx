@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Trash2, Printer, CreditCard, Banknote, User } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 import { notifyWarning, notifySuccess } from '../../utils/toast';
+import { NumberInput } from '../common/NumberInput';
 
 export const CashMemoBill: React.FC = () => {
   const {
     cart,
     removeFromCart,
+    updateCartItemRate,
     clearCart,
     spotDiscount,
     setSpotDiscount,
@@ -15,10 +17,33 @@ export const CashMemoBill: React.FC = () => {
     cashReceived,
     setCashReceived,
     completeSale,
+    memos,
+    isDrawerOpen,
+    setIsOpeningModalOpen,
     language
   } = usePos();
 
   const [customerType, setCustomerType] = useState<string>('Spot Customer');
+  const [editingRateId, setEditingRateId] = useState<string | null>(null);
+  const [tempRate, setTempRate] = useState<string>('');
+
+  const handleStartEditRate = (id: string, currentRate: number) => {
+    setEditingRateId(id);
+    setTempRate(currentRate.toString());
+  };
+
+  const handleSaveRate = (id: string) => {
+    const val = parseFloat(tempRate);
+    if (!isNaN(val) && val > 0) {
+      updateCartItemRate(id, val);
+    }
+    setEditingRateId(null);
+  };
+
+  const now = new Date();
+  const todayDateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const currentMemoNo = `#${String(memos.length + 1).padStart(4, '0')}`;
 
   const grossSubtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
   const totalNetKg = cart.reduce((sum, item) => sum + item.netWeight, 0);
@@ -26,6 +51,15 @@ export const CashMemoBill: React.FC = () => {
   const changeDue = Math.max(0, cashReceived - totalPayable);
 
   const handleCheckout = () => {
+    if (!isDrawerOpen) {
+      notifyWarning(
+        language === 'ur'
+          ? 'پہلے گلہ اوپن کریں! صبح کا کیش درج کریں۔'
+          : 'Please open cash drawer first! Enter starting float.'
+      );
+      setIsOpeningModalOpen(true);
+      return;
+    }
     if (cart.length === 0) {
       notifyWarning(language === 'ur' ? 'بل خالی ہے! پہلے پروڈکٹس شامل کریں۔' : 'Cart is empty! Add products first.');
       return;
@@ -46,7 +80,7 @@ export const CashMemoBill: React.FC = () => {
       <div className="shrink-0 p-2.5 border-b border-slate-200 bg-slate-50/70 space-y-1.5">
         <div className="flex items-center justify-between">
           <span className="text-sm font-black text-slate-900 tracking-tight font-mono-num whitespace-nowrap">
-            {language === 'ur' ? 'کیش میمو #1085' : 'Cash Memo #1085'}
+            {language === 'ur' ? `کیش میمو ${currentMemoNo}` : `Cash Memo ${currentMemoNo}`}
           </span>
           <button
             onClick={clearCart}
@@ -62,7 +96,7 @@ export const CashMemoBill: React.FC = () => {
             <User className="w-2.5 h-2.5 shrink-0" />
             <span>{language === 'ur' ? 'عام گاہک (نقد)' : customerType}</span>
           </span>
-          <span className="text-[10.5px] text-slate-500 whitespace-nowrap">24 Oct 2024 • 14:32</span>
+          <span className="text-[10.5px] text-slate-500 whitespace-nowrap">{todayDateStr} • {currentTimeStr}</span>
         </div>
       </div>
 
@@ -112,7 +146,46 @@ export const CashMemoBill: React.FC = () => {
                     )}
                   </td>
                   <td className="py-2 px-1 text-right text-slate-700 font-medium text-[11px]">
-                    {item.ratePerKg}
+                    {editingRateId === item.id ? (
+                      <div className="flex items-center justify-end">
+                        <input
+                          type="number"
+                          value={tempRate}
+                          autoFocus
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) => setTempRate(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveRate(item.id);
+                            if (e.key === 'Escape') setEditingRateId(null);
+                          }}
+                          onBlur={() => handleSaveRate(item.id)}
+                          className="w-16 text-right bg-white border-2 border-emerald-600 rounded px-1 py-0.5 text-xs font-bold font-mono-num text-slate-900 focus:outline-hidden shadow-xs"
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleStartEditRate(item.id, item.ratePerKg)}
+                        className="group/rate text-right cursor-pointer hover:bg-slate-100 rounded px-1 py-0.5 transition-colors block w-full"
+                        title={language === 'ur' ? 'ریٹ تبدیل کرنے کے لیے کلک کریں' : 'Click to change rate'}
+                      >
+                        {item.ratePerKg !== item.product.ratePerKg ? (
+                          <div title={language === 'ur' ? `مقررہ ریٹ: PKR ${item.product.ratePerKg}` : `Base Rate: PKR ${item.product.ratePerKg}`}>
+                            <span className="font-bold text-amber-800 bg-amber-100/80 px-1 py-0.5 rounded border border-amber-300 inline-block font-mono-num">
+                              {item.ratePerKg}
+                            </span>
+                            <span className="text-[9px] text-slate-400 line-through block font-sans">
+                              {item.product.ratePerKg}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="group-hover/rate:text-emerald-700 font-medium flex items-center justify-end gap-0.5">
+                            {item.ratePerKg}
+                            <span className="opacity-0 group-hover/rate:opacity-100 text-[9px] text-slate-400 font-sans">✎</span>
+                          </span>
+                        )}
+                      </button>
+                    )}
                   </td>
                   <td className="py-2 px-1.5 text-right font-bold text-slate-900 text-[11px]">
                     {item.mode === 'packet'
@@ -157,11 +230,11 @@ export const CashMemoBill: React.FC = () => {
             </span>
             <div className="flex items-center space-x-1">
               <span>- PKR</span>
-              <input
-                type="number"
+              <NumberInput
                 value={spotDiscount}
-                onChange={(e) => setSpotDiscount(parseFloat(e.target.value) || 0)}
+                onChange={setSpotDiscount}
                 className="w-16 bg-white border border-amber-300 rounded px-1.5 py-0.5 text-right font-bold text-amber-900 focus:outline-hidden text-xs"
+                placeholder="0"
               />
             </div>
           </div>
@@ -213,11 +286,11 @@ export const CashMemoBill: React.FC = () => {
             <span className="text-[10px] text-slate-500 block font-sans">
               {language === 'ur' ? 'نقد وصولی:' : 'Cash Received:'}
             </span>
-            <input
-              type="number"
+            <NumberInput
               value={cashReceived}
-              onChange={(e) => setCashReceived(parseFloat(e.target.value) || 0)}
+              onChange={setCashReceived}
               className="w-full text-base font-black px-2 py-1 bg-slate-50 border border-slate-300 rounded text-slate-900 focus:outline-hidden focus:border-emerald-600 mt-0.5"
+              placeholder="0"
             />
           </div>
           <div>

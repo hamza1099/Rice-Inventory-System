@@ -161,14 +161,14 @@ export const CalendarRangeModal: React.FC<CalendarRangeModalProps> = ({
               onClick={() => setPreset('today')}
               className="px-2.5 py-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 rounded font-semibold text-[11px] border border-slate-200"
             >
-              {isUr ? 'آج (24 Oct)' : 'Today (24 Oct)'}
+              {isUr ? 'آج' : 'Today'}
             </button>
             <button
               type="button"
               onClick={() => setPreset('yesterday')}
               className="px-2.5 py-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 rounded font-semibold text-[11px] border border-slate-200"
             >
-              {isUr ? 'کل (23 Oct)' : 'Yesterday (23 Oct)'}
+              {isUr ? 'گزشتہ کل' : 'Yesterday'}
             </button>
             <button
               type="button"

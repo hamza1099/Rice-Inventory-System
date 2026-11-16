@@ -9,21 +9,28 @@ export const CashDrawerOpeningModal: React.FC = () => {
     openingFloat,
     openDrawer,
     isDrawerOpen,
+    currentUser,
+    userProfile,
     language
   } = usePos();
 
-  const [amount, setAmount] = useState<string>('15000');
-  const [cashierName, setCashierName] = useState<string>('S. Bukhari');
-  const [notes, setNotes] = useState<string>('صبح کا ریزگاری فلوٹ (Morning Change Float)');
-
   const isUr = language === 'ur';
 
-  // Initialize with current openingFloat when opening
+  const defaultCashier = userProfile
+    ? (isUr ? userProfile.urduName || userProfile.name : userProfile.name)
+    : (currentUser?.displayName || currentUser?.email?.split('@')[0] || (isUr ? 'کیشیئر' : 'Cashier'));
+
+  const [amount, setAmount] = useState<string>('0');
+  const [cashierName, setCashierName] = useState<string>(defaultCashier);
+  const [notes, setNotes] = useState<string>(isUr ? 'صبح کا اوپننگ کیش فلوٹ' : 'Morning change float');
+
+  // Initialize with clean 0 default when opening a new session
   useEffect(() => {
     if (isOpeningModalOpen) {
-      setAmount(openingFloat > 0 ? openingFloat.toString() : '15000');
+      setAmount(isDrawerOpen && openingFloat > 0 ? openingFloat.toString() : '0');
+      setCashierName(defaultCashier);
     }
-  }, [isOpeningModalOpen, openingFloat]);
+  }, [isOpeningModalOpen, isDrawerOpen, openingFloat, defaultCashier]);
 
   // Handle ESC and ENTER keys
   useEffect(() => {
@@ -47,7 +54,7 @@ export const CashDrawerOpeningModal: React.FC = () => {
     openDrawer(parsed, cashierName, notes);
   };
 
-  const quickPresets = ['5000', '10000', '15000', '25000', '45200', '50000', '0'];
+  const quickPresets = ['0', '5000', '10000', '15000', '25000', '50000'];
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
@@ -97,7 +104,7 @@ export const CashDrawerOpeningModal: React.FC = () => {
                   {isUr ? 'کیشیئر / کاؤنٹر:' : 'Cashier / Counter:'}
                 </span>
                 <span className="font-bold text-slate-800 text-[11px]">
-                  {cashierName} • Counter #01
+                  {cashierName} • {userProfile?.terminal || 'Counter #01'}
                 </span>
               </div>
             </div>

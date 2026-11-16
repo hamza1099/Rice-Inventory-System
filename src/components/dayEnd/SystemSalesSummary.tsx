@@ -3,11 +3,17 @@ import { DollarSign, ShieldCheck, CheckCircle2, QrCode } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 
 export const SystemSalesSummary: React.FC = () => {
-  const { openingFloat, language } = usePos();
+  const { openingFloat, memos, language } = usePos();
   const isUr = language === 'ur';
 
-  const spotCashCollected = 112000;
-  const onlineRaastTransfers = 36250;
+  const spotMemos = memos.filter((m) => m.paymentMode === 'SPOT CASH');
+  const spotCashCollected = spotMemos.reduce((sum, m) => sum + m.netAmount, 0);
+  const spotMemosCount = spotMemos.length;
+
+  const raastMemos = memos.filter((m) => m.paymentMode === 'RAAST ONLINE');
+  const onlineRaastTransfers = raastMemos.reduce((sum, m) => sum + m.netAmount, 0);
+  const raastTransCount = raastMemos.length;
+
   const expectedDrawerCash = openingFloat + spotCashCollected;
   const totalGrossBusiness = spotCashCollected + onlineRaastTransfers;
 
@@ -49,7 +55,9 @@ export const SystemSalesSummary: React.FC = () => {
               PKR {spotCashCollected.toLocaleString()}
             </span>
             <span className="text-[10px] text-slate-500 font-sans block">
-              {isUr ? 'گلے میں نقد • 68 رسیدیں' : 'In Drawer • 68 Memos'}
+              {isUr
+                ? `گلے میں نقد • ${spotMemosCount} رسیدیں`
+                : `In Drawer • ${spotMemosCount} Memos`}
             </span>
           </div>
         </div>
@@ -65,7 +73,9 @@ export const SystemSalesSummary: React.FC = () => {
               PKR {onlineRaastTransfers.toLocaleString()}
             </span>
             <span className="text-[10px] text-blue-600 font-sans block">
-              {isUr ? '16 ٹرانسفر • تصدیق شدہ' : '16 Trans • Verified Instant'}
+              {isUr
+                ? `${raastTransCount} ٹرانسفر • تصدیق شدہ`
+                : `${raastTransCount} Trans • Verified Instant`}
             </span>
           </div>
         </div>
@@ -119,12 +129,16 @@ export const SystemSalesSummary: React.FC = () => {
             <span className="font-bold text-slate-800 block">
               {isUr ? 'ڈیجیٹل راست آڈٹ' : 'Digital Settlement Audit'}
             </span>
-            <span className="text-[10px] text-slate-500 font-mono">Raast QR Ref: #LHR-RAAST-0821-X</span>
+            <span className="text-[10px] text-slate-500 font-mono">
+              Raast QR Ref: #{new Date().toISOString().slice(0, 10).replace(/-/g, '')}-RAAST
+            </span>
           </div>
         </div>
         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
           <CheckCircle2 className="w-2.5 h-2.5 mr-1 text-emerald-600" />
-          {isUr ? '16/16 کلیئرڈ' : '16/16 Cleared'}
+          {isUr
+            ? `${raastTransCount}/${raastTransCount} کلیئرڈ`
+            : `${raastTransCount}/${raastTransCount} Cleared`}
         </span>
       </div>
     </div>

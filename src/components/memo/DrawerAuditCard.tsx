@@ -10,8 +10,21 @@ interface DrawerAuditCardProps {
 
 export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({ activePeriod = 'today' }) => {
   const navigate = useNavigate();
-  const { isDayClosed, openingFloat, language } = usePos();
+  const { isDayClosed, openingFloat, memos, language } = usePos();
   const isUr = language === 'ur';
+
+  const spotMemos = memos.filter((m) => m.paymentMode === 'SPOT CASH');
+  const spotCashCollected = spotMemos.reduce((sum, m) => sum + m.netAmount, 0);
+  const spotMemosCount = spotMemos.length;
+
+  const raastMemos = memos.filter((m) => m.paymentMode === 'RAAST ONLINE');
+  const onlineRaastTransfers = raastMemos.reduce((sum, m) => sum + m.netAmount, 0);
+  const raastTransCount = raastMemos.length;
+
+  const totalHandoverCash = openingFloat + spotCashCollected;
+  const totalBusiness = spotCashCollected + onlineRaastTransfers;
+  const cashRatio = totalBusiness > 0 ? Math.round((spotCashCollected / totalBusiness) * 1000) / 10 : 100;
+  const raastRatio = totalBusiness > 0 ? Math.round((onlineRaastTransfers / totalBusiness) * 1000) / 10 : 0;
 
   // Show active handover ONLY for today's unclosed shift
   const isCurrentUnclosedDay = activePeriod === 'today' && !isDayClosed;
@@ -53,9 +66,11 @@ export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({ activePeriod =
             <span className="text-[10px] text-slate-500 font-sans block">
               {isUr ? 'کاؤنٹر نقد وصولی:' : 'DAY SPOT CASH:'}
             </span>
-            <span className="text-base font-black text-emerald-800">PKR 112,000</span>
+            <span className="text-base font-black text-emerald-800">
+              PKR {spotCashCollected.toLocaleString()}
+            </span>
             <span className="text-[10px] text-slate-400 block font-sans">
-              {isUr ? '68 نقد واؤچرز' : '68 Cash Vouchers'}
+              {isUr ? `${spotMemosCount} نقد واؤچرز` : `${spotMemosCount} Cash Vouchers`}
             </span>
           </div>
 
@@ -63,9 +78,11 @@ export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({ activePeriod =
             <span className="text-[10px] text-slate-500 font-sans block">
               {isUr ? 'آن لائن و راست وصولی:' : 'ONLINE RAAST SETTLEMENT:'}
             </span>
-            <span className="text-base font-black text-blue-800">PKR 36,250</span>
+            <span className="text-base font-black text-blue-800">
+              PKR {onlineRaastTransfers.toLocaleString()}
+            </span>
             <span className="text-[10px] text-slate-400 block font-sans">
-              {isUr ? '16 تصدیق شدہ راست' : '16 Verified IBFT'}
+              {isUr ? `${raastTransCount} تصدیق شدہ راست` : `${raastTransCount} Verified IBFT`}
             </span>
           </div>
         </div>
@@ -77,9 +94,9 @@ export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({ activePeriod =
               {isUr ? 'کل کیش برائے ہینڈ اوور:' : 'TOTAL PHYSICAL CASH FOR HANDOVER:'}
             </span>
             <div className="text-xl font-black text-slate-900">
-              PKR {(openingFloat + 112000).toLocaleString()}{' '}
+              PKR {totalHandoverCash.toLocaleString()}{' '}
               <span className="text-[11px] font-medium text-slate-500">
-                (Float {openingFloat.toLocaleString()} + Drawer 112,000)
+                (Float {openingFloat.toLocaleString()} + Drawer {spotCashCollected.toLocaleString()})
               </span>
             </div>
           </div>
@@ -88,11 +105,11 @@ export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({ activePeriod =
           <div className="w-56 text-right">
             <div className="flex justify-between text-[10px] text-slate-500 font-sans mb-1">
               <span>Settlement Ratio:</span>
-              <span className="font-bold text-slate-700">75.5% Cash / 24.5% Raast</span>
+              <span className="font-bold text-slate-700">{cashRatio}% Cash / {raastRatio}% Raast</span>
             </div>
             <div className="w-full h-2 bg-blue-100 rounded-full overflow-hidden flex">
-              <div className="bg-emerald-600 h-full w-[75.5%]"></div>
-              <div className="bg-blue-600 h-full w-[24.5%]"></div>
+              <div className="bg-emerald-600 h-full transition-all" style={{ width: `${cashRatio}%` }}></div>
+              <div className="bg-blue-600 h-full transition-all" style={{ width: `${raastRatio}%` }}></div>
             </div>
           </div>
         </div>

@@ -11,40 +11,89 @@ export const WeightEntryModal: React.FC = () => {
   const isPackaged =
     product?.unitLabel === '/ pkt' ||
     product?.unitLabel === '/ tin' ||
-    product?.unitLabel === '/ bag';
+    product?.unitLabel === '/ bag' ||
+    product?.unitLabel === '/ pc' ||
+    product?.unitLabel === '/ piece' ||
+    product?.unitLabel === '/ liter' ||
+    product?.unitLabel === '/ can' ||
+    product?.unitLabel === '/ carton';
 
   const [mode, setMode] = useState<EntryMode>('kg');
   const [inputValue, setInputValue] = useState<string>('1');
+  const [rateValue, setRateValue] = useState<string>('');
   const [amountValue, setAmountValue] = useState<string>('');
 
   useEffect(() => {
     if (product) {
+      const baseRate = product.ratePerKg;
+      setRateValue(baseRate.toString());
       if (isPackaged) {
         setMode('packet');
         setInputValue('1');
-        setAmountValue(product.ratePerKg.toString());
+        setAmountValue(baseRate.toString());
       } else {
         setMode('kg');
         setInputValue('1');
-        setAmountValue(product.ratePerKg.toString());
+        setAmountValue(baseRate.toString());
       }
     }
   }, [product, isPackaged]);
+
+  const currentRateNum = parseFloat(rateValue);
+  const activeRate = !isNaN(currentRateNum) && currentRateNum > 0 ? currentRateNum : (product?.ratePerKg || 0);
+  const isRateModified = product ? activeRate !== product.ratePerKg : false;
+  const rateDifference = product ? activeRate - product.ratePerKg : 0;
+
+  // Reset rate to original base product rate
+  const handleResetRate = () => {
+    if (!product) return;
+    const baseRate = product.ratePerKg;
+    setRateValue(baseRate.toString());
+    const num = parseFloat(inputValue);
+    if (!isNaN(num) && num > 0) {
+      let kg = num;
+      if (mode === 'bags') {
+        kg = num * (product.boriWeightKg || 25);
+      } else if (mode === 'mund') {
+        kg = num * 40;
+      }
+      setAmountValue(Math.round(kg * baseRate).toString());
+    }
+  };
+
+  // Handle custom selling rate change
+  const handleRateChange = (newRateStr: string) => {
+    setRateValue(newRateStr);
+    const newRate = parseFloat(newRateStr);
+    const num = parseFloat(inputValue);
+    if (!isNaN(newRate) && newRate > 0 && !isNaN(num) && num > 0 && product) {
+      let kg = num;
+      if (mode === 'bags') {
+        kg = num * (product.boriWeightKg || 25);
+      } else if (mode === 'mund') {
+        kg = num * 40;
+      }
+      setAmountValue(Math.round(kg * newRate).toString());
+    } else if (isNaN(newRate) || newRate <= 0) {
+      setAmountValue('');
+    }
+  };
 
   // Handle mode switch presets
   const handleModeChange = (newMode: EntryMode) => {
     setMode(newMode);
     if (!product) return;
     setInputValue('1');
+    const rate = activeRate;
     if (newMode === 'kg') {
-      setAmountValue(product.ratePerKg.toString());
+      setAmountValue(rate.toString());
     } else if (newMode === 'bags') {
       const boriKg = product.boriWeightKg || 25;
-      setAmountValue((boriKg * product.ratePerKg).toString());
+      setAmountValue(Math.round(boriKg * rate).toString());
     } else if (newMode === 'mund') {
-      setAmountValue((40 * product.ratePerKg).toString());
+      setAmountValue(Math.round(40 * rate).toString());
     } else if (newMode === 'packet') {
-      setAmountValue(product.ratePerKg.toString());
+      setAmountValue(rate.toString());
     }
   };
 
@@ -52,14 +101,15 @@ export const WeightEntryModal: React.FC = () => {
   const handleWeightChange = (val: string) => {
     setInputValue(val);
     const num = parseFloat(val);
-    if (!isNaN(num) && product && product.ratePerKg > 0) {
+    const rate = activeRate;
+    if (!isNaN(num) && product && rate > 0) {
       let kg = num;
       if (mode === 'bags') {
         kg = num * (product.boriWeightKg || 25);
       } else if (mode === 'mund') {
         kg = num * 40;
       }
-      setAmountValue(Math.round(kg * product.ratePerKg).toString());
+      setAmountValue(Math.round(kg * rate).toString());
     } else {
       setAmountValue('');
     }
@@ -69,21 +119,22 @@ export const WeightEntryModal: React.FC = () => {
   const handleAmountChange = (val: string) => {
     setAmountValue(val);
     const pkr = parseFloat(val);
-    if (!isNaN(pkr) && product && product.ratePerKg > 0) {
+    const rate = activeRate;
+    if (!isNaN(pkr) && product && rate > 0) {
       if (mode === 'bags') {
-        const bagRate = (product.boriWeightKg || 25) * product.ratePerKg;
+        const bagRate = (product.boriWeightKg || 25) * rate;
         setInputValue(parseFloat((pkr / bagRate).toFixed(2)).toString());
       } else if (mode === 'mund') {
-        const mundRate = 40 * product.ratePerKg;
+        const mundRate = 40 * rate;
         setInputValue(parseFloat((pkr / mundRate).toFixed(2)).toString());
       } else if (mode === 'packet') {
-        const units = Math.max(1, Math.round(pkr / product.ratePerKg));
+        const units = Math.max(1, Math.round(pkr / rate));
         setInputValue(units.toString());
       } else {
         // kg mode: calculates exact weight
-        const calc = pkr / product.ratePerKg;
+        const calc = pkr / rate;
         const kg2 = parseFloat(calc.toFixed(2));
-        if (Math.round(kg2 * product.ratePerKg) === Math.round(pkr)) {
+        if (Math.round(kg2 * rate) === Math.round(pkr)) {
           setInputValue(kg2.toString());
         } else {
           const kg3 = parseFloat(calc.toFixed(3));
@@ -111,7 +162,7 @@ export const WeightEntryModal: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedProductForModal, inputValue, amountValue, mode]);
+  }, [selectedProductForModal, inputValue, amountValue, rateValue, mode]);
 
   if (!product) return null;
 
@@ -127,11 +178,11 @@ export const WeightEntryModal: React.FC = () => {
     netWeightKg = rawNum;
   }
 
-  // Calculate Subtotal
-  const subtotal = Math.round(netWeightKg * product.ratePerKg);
+  // Calculate Subtotal with custom active rate
+  const subtotal = Math.round(netWeightKg * activeRate);
 
   const handleSave = () => {
-    if (netWeightKg <= 0) return;
+    if (netWeightKg <= 0 || activeRate <= 0) return;
 
     addToCart({
       id: `cart-${Date.now()}`,
@@ -141,7 +192,7 @@ export const WeightEntryModal: React.FC = () => {
       tareWeight: 0,
       tareName: 'کاٹ نہیں',
       netWeight: netWeightKg,
-      ratePerKg: product.ratePerKg,
+      ratePerKg: activeRate,
       subtotal
     });
 
@@ -262,12 +313,19 @@ export const WeightEntryModal: React.FC = () => {
                 <span className="text-[10px] text-slate-500 block font-sans">
                   {isUr ? 'مقررہ ریٹ:' : 'Base Rate:'}
                 </span>
-                <span className="text-sm font-bold text-slate-900">
-                  PKR {product.ratePerKg.toLocaleString()}{' '}
-                  <span className="text-[10px] text-slate-500 font-normal font-sans">
-                    {isUr ? (product.unitLabel === '/ kg' ? '/ کلو' : product.unitLabel) : (product.unitLabel || '/ kg')}
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-bold text-slate-900">
+                    PKR {product.ratePerKg.toLocaleString()}{' '}
+                    <span className="text-[10px] text-slate-500 font-normal font-sans">
+                      {isUr ? (product.unitLabel === '/ kg' ? '/ کلو' : product.unitLabel) : (product.unitLabel || '/ kg')}
+                    </span>
                   </span>
-                </span>
+                  {isRateModified && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 font-mono-num animate-in fade-in">
+                      {isUr ? `سیل: PKR ${activeRate}` : `Sale: PKR ${activeRate}`}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <div className="text-right">
@@ -348,28 +406,26 @@ export const WeightEntryModal: React.FC = () => {
             )}
           </div>
 
-          {/* Dual Input fields: Weight & PKR Amount */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* 3-Column Input Fields: Weight/Quantity, Selling Rate, and Subtotal Amount */}
+          <div className="grid grid-cols-3 gap-2.5">
             {/* Field 1: Weight / Quantity */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
-                <span>
-                  {isUr
-                    ? (mode === 'packet'
-                      ? `تعداد (${unitSuffix === 'kg' ? 'کلو' : unitSuffix}):`
-                      : mode === 'bags'
-                      ? `تعداد بوری (${product.boriWeightKg || 25} کلو):`
-                      : mode === 'mund'
-                      ? 'تعداد من (40 کلو):'
-                      : 'وزن (کلو):')
-                    : (mode === 'packet'
-                      ? `Quantity (${unitSuffix.toUpperCase()}):`
-                      : mode === 'bags'
-                      ? `Number of Bags (${product.boriWeightKg || 25}kg):`
-                      : mode === 'mund'
-                      ? 'Number of Maan (40kg):'
-                      : 'Weight (KG):')}
-                </span>
+              <label className="block text-[11px] font-bold text-slate-700 mb-1 truncate">
+                {isUr
+                  ? (mode === 'packet'
+                    ? `تعداد (${unitSuffix === 'kg' ? 'کلو' : unitSuffix}):`
+                    : mode === 'bags'
+                    ? `تعداد بوری:`
+                    : mode === 'mund'
+                    ? 'تعداد من:'
+                    : 'وزن (کلو):')
+                  : (mode === 'packet'
+                    ? `Qty (${unitSuffix.toUpperCase()}):`
+                    : mode === 'bags'
+                    ? `Bags (${product.boriWeightKg || 25}kg):`
+                    : mode === 'mund'
+                    ? 'Maan (40kg):'
+                    : 'Weight (KG):')}
               </label>
               <div className="relative">
                 <input
@@ -381,9 +437,9 @@ export const WeightEntryModal: React.FC = () => {
                   onFocus={(e) => e.target.select()}
                   onChange={(e) => handleWeightChange(e.target.value)}
                   placeholder="1"
-                  className="w-full text-lg font-bold font-mono-num pl-3 pr-11 py-2 bg-white border-2 border-emerald-600 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
+                  className="w-full text-base font-bold font-mono-num pl-2.5 pr-8 py-2 bg-white border-2 border-emerald-600 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
                 />
-                <span className="absolute right-2.5 top-2.5 font-bold text-xs text-slate-500 uppercase pointer-events-none">
+                <span className="absolute right-2 top-2.5 font-bold text-[10px] text-slate-500 uppercase pointer-events-none">
                   {isUr
                     ? (mode === 'packet'
                       ? (unitSuffix === 'kg' ? 'کلو' : unitSuffix)
@@ -403,14 +459,56 @@ export const WeightEntryModal: React.FC = () => {
               </div>
             </div>
 
-            {/* Field 2: Amount in Rupees / PKR (Auto-calculates Weight) */}
+            {/* Field 2: Custom Selling Rate */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
-                <span>{isUr ? 'رقم / پیسے (روپے):' : 'Amount (PKR):'}</span>
-                <span className="text-[10px] text-emerald-700 font-medium">
-                  {isUr ? 'خود وزن نکالے' : 'Auto-calc weight'}
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] font-bold text-slate-700 truncate">
+                  {isUr ? 'سیل ریٹ:' : 'Sale Rate:'}
+                </label>
+                {isRateModified && (
+                  <button
+                    type="button"
+                    onClick={handleResetRate}
+                    className="text-[9px] font-bold text-amber-700 hover:text-amber-900 underline cursor-pointer"
+                    title={isUr ? 'اصل ریٹ پر واپس لائیں' : 'Reset to Base Rate'}
+                  >
+                    {isUr ? 'ری سیٹ' : 'Reset'}
+                  </button>
+                )}
+              </div>
+              <div className="relative">
+                <input
+                  type="number"
+                  step="any"
+                  min="0"
+                  value={rateValue}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => handleRateChange(e.target.value)}
+                  placeholder={product.ratePerKg.toString()}
+                  className={`w-full text-base font-bold font-mono-num pl-2.5 pr-10 py-2 bg-white border-2 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 text-slate-900 transition-colors ${
+                    isRateModified
+                      ? 'border-amber-500 bg-amber-50/60 text-amber-950 focus:border-amber-600'
+                      : 'border-slate-300 focus:border-emerald-600'
+                  }`}
+                />
+                <span className={`absolute right-2 top-2.5 font-bold text-[10px] uppercase pointer-events-none ${
+                  isRateModified ? 'text-amber-700' : 'text-slate-500'
+                }`}>
+                  PKR
                 </span>
-              </label>
+              </div>
+            </div>
+
+            {/* Field 3: Amount in Rupees / PKR (Auto-calculates Weight) */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] font-bold text-slate-700 truncate">
+                  {isUr ? 'رقم (روپے):' : 'Amount (PKR):'}
+                </label>
+                <span className="text-[9px] text-emerald-700 font-medium">
+                  {isUr ? 'خود وزن' : 'Auto'}
+                </span>
+              </div>
               <div className="relative">
                 <input
                   type="number"
@@ -420,13 +518,63 @@ export const WeightEntryModal: React.FC = () => {
                   onFocus={(e) => e.target.select()}
                   onChange={(e) => handleAmountChange(e.target.value)}
                   placeholder="0"
-                  className="w-full text-lg font-bold font-mono-num pl-3 pr-12 py-2 bg-white border-2 border-slate-300 focus:border-emerald-600 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
+                  className="w-full text-base font-bold font-mono-num pl-2.5 pr-8 py-2 bg-white border-2 border-slate-300 focus:border-emerald-600 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
                 />
-                <span className="absolute right-2.5 top-2.5 font-bold text-xs text-slate-500 uppercase pointer-events-none">
+                <span className="absolute right-2 top-2.5 font-bold text-[10px] text-slate-500 uppercase pointer-events-none">
                   PKR
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Quick Rate & Discount presets */}
+          <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs flex-wrap gap-1.5">
+            <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
+              <span className="text-[10px] font-bold text-slate-500 uppercase">
+                {isUr ? 'فوری ریٹ / رعایت:' : 'Quick Rate:'}
+              </span>
+              <button
+                type="button"
+                onClick={handleResetRate}
+                className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-colors cursor-pointer ${
+                  !isRateModified
+                    ? 'bg-emerald-800 text-white border-emerald-900 shadow-xs'
+                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                }`}
+              >
+                {isUr ? `اصل ریٹ (${product.ratePerKg})` : `Base (${product.ratePerKg})`}
+              </button>
+              {[-5, -10, -15, -20].map((diff) => {
+                const discounted = product.ratePerKg + diff;
+                if (discounted <= 0) return null;
+                const isSelected = activeRate === discounted;
+                return (
+                  <button
+                    key={diff}
+                    type="button"
+                    onClick={() => handleRateChange(discounted.toString())}
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold border font-mono-num transition-colors cursor-pointer ${
+                      isSelected
+                        ? 'bg-amber-600 text-white border-amber-700 shadow-xs'
+                        : 'bg-white text-amber-900 border-amber-200 hover:bg-amber-50'
+                    }`}
+                  >
+                    {diff} (Rs {discounted})
+                  </button>
+                );
+              })}
+            </div>
+            {isRateModified && (
+              <span className="text-[10px] font-bold text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded font-mono-num border border-amber-300">
+                {rateDifference < 0
+                  ? (isUr
+                    ? `رعایت: PKR ${Math.abs(rateDifference)} فی کلو`
+                    : `Discount: -PKR ${Math.abs(rateDifference)}/kg`)
+                  : (isUr
+                    ? `اضافی: +PKR ${rateDifference} فی کلو`
+                    : `Premium: +PKR ${rateDifference}/kg`)}
+              </span>
+            )}
           </div>
 
           {/* Quick Weight & Cash presets */}
@@ -505,6 +653,13 @@ export const WeightEntryModal: React.FC = () => {
               <span className="text-xl font-extrabold text-emerald-300">
                 PKR {Math.round(subtotal).toLocaleString()}
               </span>
+              {isRateModified && (
+                <span className="block text-[10px] text-amber-300 font-sans font-medium mt-0.5">
+                  {isUr
+                    ? `مخصوص ریٹ: PKR ${activeRate} (اصل: ${product.ratePerKg})`
+                    : `Special Rate: PKR ${activeRate}/kg (Base: ${product.ratePerKg})`}
+                </span>
+              )}
             </div>
           </div>
         </div>

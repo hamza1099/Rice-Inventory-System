@@ -14,6 +14,7 @@ import {
 import { usePos } from '../../context/PosContext';
 import { notifySuccess, notifyWarning } from '../../utils/toast';
 import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/productImages';
+import { NumberInput } from '../common/NumberInput';
 
 interface StockInwardModalProps {
   isOpen: boolean;
@@ -30,21 +31,21 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
   const isUr = language === 'ur';
   const [selectedItemId, setSelectedItemId] = useState<string>('');
 
-  const [bags, setBags] = useState<number>(20);
-  const [weightPerBag, setWeightPerBag] = useState<number>(50);
+  const [bags, setBags] = useState<number>(0);
+  const [weightPerBag, setWeightPerBag] = useState<number>(25);
 
   // Inward Purchase Cost state
   const [costMode, setCostMode] = useState<'bag' | 'kg'>('bag');
-  const [inwardCostPerBag, setInwardCostPerBag] = useState<number>(1000);
-  const [inwardCostPerKg, setInwardCostPerKg] = useState<number>(20);
+  const [inwardCostPerBag, setInwardCostPerBag] = useState<number>(0);
+  const [inwardCostPerKg, setInwardCostPerKg] = useState<number>(0);
 
   // Selling rate adjustment
-  const [sellingRatePerBag, setSellingRatePerBag] = useState<number>(2000);
-  const [sellingRatePerKg, setSellingRatePerKg] = useState<number>(40);
+  const [sellingRatePerBag, setSellingRatePerBag] = useState<number>(0);
+  const [sellingRatePerKg, setSellingRatePerKg] = useState<number>(0);
   const [isSellingRateModified, setIsSellingRateModified] = useState<boolean>(false);
 
-  const [sourceMandi, setSourceMandi] = useState<string>('Sheikhupura Rice Mandi');
-  const [lotNote, setLotNote] = useState<string>('Lot #2024-B4 Fresh Inward Arrival');
+  const [sourceMandi, setSourceMandi] = useState<string>('');
+  const [lotNote, setLotNote] = useState<string>('');
 
   // Initialize or reset selectedItemId when modal opens or initialItem changes
   useEffect(() => {
@@ -62,11 +63,13 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
   // Whenever active item or weight per bag changes, re-sync values
   useEffect(() => {
     if (activeItem) {
-      const bagWeight = activeItem.packagingStandard.includes('25 kg')
-        ? 25
-        : activeItem.packagingStandard.includes('40 kg')
-        ? 40
-        : 50;
+      const bagWeight =
+        activeItem.unitsPerPack ||
+        (activeItem.packagingStandard.includes('25 kg')
+          ? 25
+          : activeItem.packagingStandard.includes('40 kg')
+          ? 40
+          : 50);
       setWeightPerBag(bagWeight);
 
       const bagCost = Math.round(activeItem.costPerKg * bagWeight);
@@ -307,12 +310,13 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                   <label className="block text-[11px] font-bold text-slate-700 mb-1">
                     {isUr ? 'تعداد بوری:' : 'Number of Bags:'}
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
                     min="1"
                     value={bags}
-                    onChange={(e) => setBags(Math.max(1, parseInt(e.target.value) || 0))}
+                    onChange={(val) => setBags(Math.max(1, val))}
                     className="w-full text-base font-bold font-mono-num px-3 py-1.5 border border-slate-300 rounded focus:border-emerald-600 focus:outline-hidden"
+                    placeholder="1"
+                    allowDecimals={false}
                   />
                 </div>
 
@@ -325,8 +329,8 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                     onChange={(e) => setWeightPerBag(parseInt(e.target.value))}
                     className="w-full text-xs font-bold px-2 py-2 border border-slate-300 rounded bg-white"
                   >
-                    <option value={50}>{isUr ? '50 کلو (معیاری جوٹ بوری)' : '50 KG (Standard Jute Bori)'}</option>
                     <option value={25}>{isUr ? '25 کلو (پی پی بیگ)' : '25 KG (Poly Woven Bag)'}</option>
+                    <option value={50}>{isUr ? '50 کلو (معیاری جوٹ بوری)' : '50 KG (Standard Jute Bori)'}</option>
                     <option value={40}>{isUr ? '40 کلو (1 من پکا)' : '40 KG (1 Maan Pakka)'}</option>
                     <option value={100}>{isUr ? '100 کلو (کٹا)' : '100 KG (Katta)'}</option>
                   </select>
@@ -375,14 +379,13 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                       <span className="absolute left-2.5 top-1.5 text-slate-400 font-bold font-mono">
                         PKR
                       </span>
-                      <input
-                        type="number"
-                        min="1"
+                      <NumberInput
+                        min="0"
                         step="1"
                         value={inwardCostPerBag}
-                        onChange={(e) => handleCostPerBagChange(parseFloat(e.target.value) || 0)}
+                        onChange={(val) => handleCostPerBagChange(val)}
                         className="w-full text-sm font-black font-mono-num pl-12 pr-3 py-1.5 border-2 border-amber-500 rounded bg-white text-slate-900 focus:outline-hidden"
-                        placeholder="e.g. 1600"
+                        placeholder="0"
                       />
                     </div>
                   </div>
@@ -395,14 +398,13 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                       <span className="absolute left-2.5 top-1.5 text-slate-400 font-bold font-mono">
                         PKR
                       </span>
-                      <input
-                        type="number"
-                        min="0.1"
+                      <NumberInput
+                        min="0"
                         step="0.5"
                         value={inwardCostPerKg}
-                        onChange={(e) => handleCostPerKgChange(parseFloat(e.target.value) || 0)}
+                        onChange={(val) => handleCostPerKgChange(val)}
                         className="w-full text-sm font-black font-mono-num pl-12 pr-3 py-1.5 border border-slate-300 rounded bg-white text-slate-900 focus:outline-hidden"
-                        placeholder="e.g. 32.00"
+                        placeholder="0"
                       />
                     </div>
                   </div>
@@ -595,11 +597,11 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                     <label className="block text-[10px] text-slate-600 mb-0.5 font-bold">
                       {isUr ? 'فروخت ریٹ فی بوری:' : 'Selling Rate per Bag:'}
                     </label>
-                    <input
-                      type="number"
+                    <NumberInput
                       value={sellingRatePerBag}
-                      onChange={(e) => handleSellingRatePerBagChange(parseFloat(e.target.value) || 0)}
+                      onChange={(val) => handleSellingRatePerBagChange(val)}
                       className="w-full text-sm font-black font-mono-num px-3 py-1.5 border border-slate-300 rounded bg-white text-slate-900 focus:border-emerald-600 focus:outline-hidden"
+                      placeholder="0"
                     />
                   </div>
 
@@ -607,12 +609,12 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                     <label className="block text-[10px] text-slate-600 mb-0.5 font-bold">
                       {isUr ? 'فروخت ریٹ فی کلو:' : 'Selling Rate per KG:'}
                     </label>
-                    <input
-                      type="number"
+                    <NumberInput
                       step="0.5"
                       value={sellingRatePerKg}
-                      onChange={(e) => handleSellingRatePerKgChange(parseFloat(e.target.value) || 0)}
+                      onChange={(val) => handleSellingRatePerKgChange(val)}
                       className="w-full text-sm font-black font-mono-num px-3 py-1.5 border border-slate-300 rounded bg-white text-slate-900 focus:border-emerald-600 focus:outline-hidden"
+                      placeholder="0"
                     />
                   </div>
                 </div>

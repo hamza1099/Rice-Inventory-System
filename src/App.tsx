@@ -8,13 +8,31 @@ import { Sidebar } from './components/common/Sidebar';
 import { StatusBar } from './components/common/StatusBar';
 import { MandiChitModal } from './components/inventory/MandiChitModal';
 import { ImagePreviewModal } from './components/common/ImagePreviewModal';
+import { UnclosedSessionAlertModal } from './components/pos/UnclosedSessionAlertModal';
 import InitRoute from './routes/InitRoute';
 import { LoginScreen } from './screens/LoginScreen';
 import { RouteName } from './routes/RouteName';
 
 const MainLayout: React.FC = () => {
-  const { isTerminalLocked } = usePos();
+  const { isTerminalLocked, isAuthLoading } = usePos();
   const location = useLocation();
+
+  // If cold session is checking Firebase auth in the background, prevent flashing LoginScreen
+  if (isAuthLoading && isTerminalLocked) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#111f17] text-white select-none">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-800/40 border border-emerald-500/40 flex items-center justify-center shadow-2xl animate-pulse">
+            <span className="text-xl font-black text-emerald-400 font-serif tracking-wider">BR</span>
+          </div>
+          <div className="flex items-center space-x-2 text-emerald-300 font-mono text-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span>Verifying session security...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const isLoginPage = location.pathname === RouteName.LOGIN || isTerminalLocked;
 
@@ -44,6 +62,7 @@ const MainLayout: React.FC = () => {
       {/* Global Modals */}
       <MandiChitModal />
       <ImagePreviewModal />
+      <UnclosedSessionAlertModal />
     </div>
   );
 };

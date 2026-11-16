@@ -3,6 +3,9 @@ import { X, UserPlus, Store, Phone, MapPin, DollarSign, FileText, Sparkles } fro
 import { usePos } from '../../context/PosContext';
 import { notifySuccess, notifyWarning } from '../../utils/toast';
 import { transliterateEnglishToUrduName } from '../../utils/urduTransliterator';
+import { formatPakistaniPhone, isValidPakistaniPhone } from '../../utils/phone';
+import { NumberInput } from '../common/NumberInput';
+import { PakistaniPhoneInput } from '../common/PakistaniPhoneInput';
 
 interface AddCustomerModalProps {
   isOpen: boolean;
@@ -66,6 +69,14 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
     e.preventDefault();
     if (!customerName.trim() && !shopName.trim()) {
       notifyWarning(isUr ? 'کسٹمر یا دکان کا نام درج کریں' : 'Please enter customer or shop name');
+      return;
+    }
+    if (phone.trim() && !isValidPakistaniPhone(phone, false)) {
+      notifyWarning(
+        isUr
+          ? 'درست ۱۱ ہندسی موبائل نمبر درج کریں (مثلاً 0300-1234567)'
+          : 'Please enter a valid 11-digit mobile number (e.g. 0300-1234567)'
+      );
       return;
     }
 
@@ -169,10 +180,10 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
               <input
                 type="text"
                 dir="rtl"
-                placeholder={isUr ? 'انگریزی نام سے خودکار اردو بنے گی...' : 'Auto-generated title...'}
+                placeholder="خودکار اردو نام..."
                 value={urduName}
                 onChange={(e) => handleUrduNameChange(e.target.value)}
-                className="w-full px-2.5 py-1.5 border border-emerald-300/80 bg-emerald-50/30 rounded focus:border-emerald-600 focus:bg-white focus:outline-hidden urdu-text text-sm font-semibold text-emerald-950 transition-colors"
+                className="w-full px-2.5 py-1.5 border border-emerald-300/80 bg-emerald-50/30 rounded focus:border-emerald-600 focus:bg-white focus:outline-hidden urdu-text text-sm font-semibold text-emerald-950 placeholder:text-emerald-800/40 transition-colors"
               />
             </div>
           </div>
@@ -183,16 +194,11 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
               <label className="block text-[11px] font-bold text-slate-700 mb-1">
                 {isUr ? 'موبائل نمبر:' : 'Mobile / WhatsApp No:'}
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="0300-1234567"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded focus:border-emerald-600 focus:outline-hidden font-mono text-slate-900"
-                />
-                <Phone className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
-              </div>
+              <PakistaniPhoneInput
+                value={phone}
+                onChange={setPhone}
+                placeholder="0300-1234567"
+              />
             </div>
 
             <div>
@@ -219,13 +225,13 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
                 {isUr ? 'سابقہ پرانا بقایا:' : 'Opening Balance (if any):'}
               </label>
               <div className="relative">
-                <input
-                  type="number"
+                <NumberInput
                   min="0"
                   step="100"
                   value={openingBalance}
-                  onChange={(e) => setOpeningBalance(parseFloat(e.target.value) || 0)}
+                  onChange={(val) => setOpeningBalance(val)}
                   className="w-full pl-7 pr-3 py-1.5 bg-white border border-slate-300 rounded font-bold font-mono-num text-slate-900"
+                  placeholder="0"
                 />
                 <span className="absolute left-2.5 top-2 text-[10px] font-bold text-slate-400">Rs</span>
               </div>
@@ -239,13 +245,13 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
                 {isUr ? 'مقررہ ادھار حد:' : 'Credit Limit:'}
               </label>
               <div className="relative">
-                <input
-                  type="number"
+                <NumberInput
                   min="0"
                   step="5000"
                   value={creditLimit}
-                  onChange={(e) => setCreditLimit(parseFloat(e.target.value) || 0)}
+                  onChange={(val) => setCreditLimit(val)}
                   className="w-full pl-7 pr-3 py-1.5 bg-white border border-slate-300 rounded font-bold font-mono-num text-slate-900"
+                  placeholder="0"
                 />
                 <span className="absolute left-2.5 top-2 text-[10px] font-bold text-slate-400">Rs</span>
               </div>

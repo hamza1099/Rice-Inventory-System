@@ -12,35 +12,55 @@ import { DollarSign, Wallet, CreditCard, TrendingUp, X } from 'lucide-react';
 export const DailyMemoScreen: React.FC = () => {
   const { memos, language } = usePos();
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [activePeriod, setActivePeriod] = useState<string>('7days');
+  const [activePeriod, setActivePeriod] = useState<string>('today');
   const [selectedPayment, setSelectedPayment] = useState<string>('ALL');
 
+  // Dynamic date helpers
+  const getTodayIso = () => new Date().toISOString().slice(0, 10);
+  const getTodayStr = () => new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
   // Custom range dates
-  const [customStart, setCustomStart] = useState<string>('2024-10-18');
-  const [customEnd, setCustomEnd] = useState<string>('2024-10-24');
-  const [dateRangeLabel, setDateRangeLabel] = useState<string>('18 OCT 2024 to 24 OCT 2024 (7 Days)');
+  const [customStart, setCustomStart] = useState<string>(getTodayIso);
+  const [customEnd, setCustomEnd] = useState<string>(getTodayIso);
+  const [dateRangeLabel, setDateRangeLabel] = useState<string>(() => `${getTodayStr()} (Today)`);
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
 
   // Handle Preset Clicks (Today, Yesterday, Last 7 Days, This Month, Custom Range)
   const handlePresetClick = (periodId: string) => {
     setActivePeriod(periodId);
     const isUr = language === 'ur';
+    const now = new Date();
+    const todayIso = now.toISOString().slice(0, 10);
+    const todayStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
     if (periodId === 'today') {
-      setCustomStart('2024-10-24');
-      setCustomEnd('2024-10-24');
-      setDateRangeLabel(isUr ? '24 OCT 2024 (آج)' : '24 OCT 2024 (Today)');
+      setCustomStart(todayIso);
+      setCustomEnd(todayIso);
+      setDateRangeLabel(isUr ? `${todayStr} (آج)` : `${todayStr} (Today)`);
     } else if (periodId === 'yesterday') {
-      setCustomStart('2024-10-23');
-      setCustomEnd('2024-10-23');
-      setDateRangeLabel(isUr ? '23 OCT 2024 (گزشتہ روز)' : '23 OCT 2024 (Yesterday)');
+      const yDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const yIso = yDate.toISOString().slice(0, 10);
+      const yStr = yDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      setCustomStart(yIso);
+      setCustomEnd(yIso);
+      setDateRangeLabel(isUr ? `${yStr} (گزشتہ روز)` : `${yStr} (Yesterday)`);
     } else if (periodId === '7days') {
-      setCustomStart('2024-10-18');
-      setCustomEnd('2024-10-24');
-      setDateRangeLabel(isUr ? '18 تا 24 OCT 2024 (گزشتہ ۷ دن)' : '18 OCT 2024 to 24 OCT 2024 (7 Days)');
+      const past7 = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+      const past7Iso = past7.toISOString().slice(0, 10);
+      const past7Str = past7.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      setCustomStart(past7Iso);
+      setCustomEnd(todayIso);
+      setDateRangeLabel(isUr ? `${past7Str} تا ${todayStr} (گزشتہ ۷ دن)` : `${past7Str} to ${todayStr} (7 Days)`);
     } else if (periodId === 'month') {
-      setCustomStart('2024-10-01');
-      setCustomEnd('2024-10-31');
-      setDateRangeLabel(isUr ? '01 تا 31 OCT 2024 (موجودہ ماہ)' : '01 OCT 2024 to 31 OCT 2024 (This Month)');
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const fIso = firstDay.toISOString().slice(0, 10);
+      const lIso = lastDay.toISOString().slice(0, 10);
+      const fStr = firstDay.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const lStr = lastDay.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      setCustomStart(fIso);
+      setCustomEnd(lIso);
+      setDateRangeLabel(isUr ? `${fStr} تا ${lStr} (موجودہ ماہ)` : `${fStr} to ${lStr} (This Month)`);
     } else if (periodId === 'custom') {
       setIsCalendarOpen(true);
     }

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { InventoryItem } from '../../types';
 import { PlusCircle, Edit3, Trash2, FileText, TrendingUp, TrendingDown, Image as ImageIcon, ZoomIn } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
-import { notifyInfo } from '../../utils/toast';
+import { notifyInfo, notifySuccess } from '../../utils/toast';
 import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/productImages';
+import { ConfirmDeleteModal } from '../common/ConfirmDeleteModal';
 
 interface InventoryTableProps {
   inventory: InventoryItem[];
@@ -20,6 +21,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
 }) => {
   const { openImagePreview, language } = usePos();
   const isUr = language === 'ur';
+  const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
 
   const getCleanCategory = (cat: string) => {
     if (isUr) {
@@ -117,18 +119,37 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
         <table className="w-full text-left border-collapse">
           <thead className="bg-slate-100 text-slate-600 text-[10px] font-bold uppercase border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
             <tr>
-              <th className="py-2.5 px-4">{isUr ? 'اجناس نام و کوڈ' : 'RICE VARIETY & DESCRIPTION'}</th>
-              <th className="py-2.5 px-3">{isUr ? 'کیٹیگری' : 'GRAIN CATEGORY'}</th>
+              <th className="py-2.5 px-4">{isUr ? 'آئٹم نام و کوڈ' : 'ITEM NAME & SKU'}</th>
+              <th className="py-2.5 px-3">{isUr ? 'کیٹیگری' : 'CATEGORY'}</th>
               <th className="py-2.5 px-3">{isUr ? 'پیکنگ معیار' : 'PACKAGING STANDARD'}</th>
               <th className="py-2.5 px-3 text-right">{isUr ? 'موجودہ سٹاک' : 'PHYSICAL STOCK'}</th>
               <th className="py-2.5 px-3 text-center">{isUr ? 'سٹاک اسٹیٹس' : 'LOT STATUS'}</th>
-              <th className="py-2.5 px-3 text-right">{isUr ? 'خریداری لاگت' : 'COST (PKR/KG)'}</th>
-              <th className="py-2.5 px-3 text-right">{isUr ? 'کاؤنٹر ریٹ' : 'COUNTER RATE (PKR/KG)'}</th>
+              <th className="py-2.5 px-3 text-right">{isUr ? 'خریداری لاگت' : 'COST (PKR/UNIT)'}</th>
+              <th className="py-2.5 px-3 text-right">{isUr ? 'کاؤنٹر ریٹ' : 'COUNTER RATE (PKR/UNIT)'}</th>
               <th className="py-2.5 px-3 text-center">{isUr ? 'فوری کارروائی' : 'FAST OPERATIONS'}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-mono-num">
-            {inventory.map((item) => (
+            {inventory.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="py-16 text-center text-slate-500">
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center">
+                      <PlusCircle className="w-5 h-5" />
+                    </div>
+                    <span className="font-bold text-xs text-slate-800">
+                      {isUr ? 'گودام میں ابھی کوئی جنس / چاول موجود نہیں ہے' : 'No inventory items in godown yet'}
+                    </span>
+                    <span className="text-[11px] text-slate-500 max-w-sm">
+                      {isUr
+                        ? 'سٹاک شامل کرنے کے لیے اوپر موجود "+ نئی جنس / آئٹم" یا "+ گودام مال آمد" پر کلک کریں۔'
+                        : 'Click "+ Add New Item / Variety" above to add your first commodity.'}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              inventory.map((item) => (
               <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
                 {/* Rice Variety & Description + Thumbnail */}
                 <td className="py-3 px-4 font-sans">
@@ -189,15 +210,22 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                   <span className="font-bold text-slate-800 block text-[11px]">
                     {getCleanPackaging(item.packagingStandard)}
                   </span>
-                  <span className="text-[10px] text-slate-500">
-                    {isUr ? `کاٹ: -${item.tareDeductionKg} کلو` : `Tare: -${item.tareDeductionKg} kg/bag`}
-                  </span>
+                  {item.unitType === 'kg' && item.tareDeductionKg > 0 ? (
+                    <span className="text-[10px] text-slate-500">
+                      {isUr ? `کاٹ: -${item.tareDeductionKg} کلو` : `Tare: -${item.tareDeductionKg} kg/bag`}
+                    </span>
+                  ) : null}
                 </td>
 
-                {/* Stock in KG and Bags */}
+                {/* Stock in KG/Pieces/Litres and Packs */}
                 <td className="py-3 px-3 text-right">
                   <span className="text-sm font-black text-slate-900 block">
-                    {item.physicalStockKg.toLocaleString()} {isUr ? 'کلو' : 'kg'}
+                    {item.physicalStockKg.toLocaleString()}{' '}
+                    {item.unitType === 'piece'
+                      ? isUr ? 'دانے' : 'pcs'
+                      : item.unitType === 'liter'
+                      ? isUr ? 'لیٹر' : 'L'
+                      : isUr ? 'کلو' : 'kg'}
                   </span>
                   <span className="text-[10px] text-slate-500 font-bold">
                     {item.bagsCount} {getCleanBagLabel(item.bagTypeLabel)}
@@ -219,12 +247,12 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                       {item.costDifferencePerKg && item.costDifferencePerKg > 0 ? (
                         <span className="text-red-600 flex items-center">
                           <TrendingUp className="w-2.5 h-2.5 mr-0.5" />
-                          +{item.costDifferencePerKg.toFixed(1)}/kg
+                          +{item.costDifferencePerKg.toFixed(1)}/unit
                         </span>
                       ) : (
                         <span className="text-emerald-600 flex items-center">
                           <TrendingDown className="w-2.5 h-2.5 mr-0.5" />
-                          {item.costDifferencePerKg?.toFixed(1)}/kg
+                          {item.costDifferencePerKg?.toFixed(1)}/unit
                         </span>
                       )}
                     </div>
@@ -238,8 +266,12 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                   </span>
                   <span className="text-[10px] text-emerald-700 font-semibold block">
                     {isUr
-                      ? `منافع: +${item.marginPerKg.toFixed(2)} فی کلو`
-                      : `Margin: +PKR ${item.marginPerKg.toFixed(2)}/kg`}
+                      ? `منافع: +${item.marginPerKg.toFixed(2)} فی ${
+                          item.unitType === 'piece' ? 'دانہ' : item.unitType === 'liter' ? 'لیٹر' : 'کلو'
+                        }`
+                      : `Margin: +PKR ${item.marginPerKg.toFixed(2)}/${
+                          item.unitType === 'piece' ? 'pc' : item.unitType === 'liter' ? 'L' : 'kg'
+                        }`}
                   </span>
                   {item.marginPercentage && (
                     <span className="text-[9px] text-slate-500 font-mono">
@@ -269,13 +301,9 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                     </button>
                     {onDeleteItem && (
                       <button
-                        onClick={() => {
-                          if (window.confirm(`Delete ${item.varietyName} from inventory?`)) {
-                            onDeleteItem(item.id);
-                          }
-                        }}
-                        title={isUr ? 'حذف کریں' : 'Delete Product'}
-                        className="inline-flex items-center p-1 rounded bg-slate-50 hover:bg-red-50 hover:text-red-600 border border-slate-200 text-slate-400 font-bold text-[10px] transition-colors cursor-pointer"
+                        onClick={() => setItemToDelete(item)}
+                        title={isUr ? 'حذف کریں' : 'Delete Item'}
+                        className="inline-flex items-center p-1 rounded bg-slate-50 hover:bg-rose-50 hover:text-rose-600 border border-slate-200 text-slate-400 font-bold text-[10px] transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
@@ -283,26 +311,52 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                   </div>
                 </td>
               </tr>
-            ))}
+            )))}
           </tbody>
         </table>
       </div>
 
-      {/* Pagination Footer */}
+      {/* Pagination & Inventory Summary Footer */}
       <div className="bg-slate-50 px-4 py-2 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
         <div>
-          <span>Showing </span>
+          <span>{isUr ? 'موجودہ لسٹ: ' : 'Showing '}</span>
           <strong className="text-slate-800 font-mono-num">{inventory.length}</strong>
-          <span> of </span>
-          <strong className="text-slate-800 font-mono-num">32</strong>
-          <span> Recorded Varieties | Current Page Total: </span>
-          <strong className="text-slate-800 font-mono-num">13,925 kg (~279 Bori)</strong>
+          <span>{isUr ? ' اجناس | کل موجودہ سٹاک: ' : ' Recorded Varieties | Current Total: '}</span>
+          <strong className="text-slate-800 font-mono-num">
+            {inventory.reduce((sum, item) => sum + item.physicalStockKg, 0).toLocaleString()} kg (~{inventory.reduce((sum, item) => sum + item.bagsCount, 0)} {isUr ? 'بوریاں' : 'Bags'})
+          </strong>
         </div>
 
         <div className="flex items-center space-x-1 font-mono-num">
-          <span>Page 1 of 4</span>
+          <span>{inventory.length > 0 ? (isUr ? 'صفحہ 1 از 1' : 'Page 1 of 1') : (isUr ? 'خالی' : 'Empty')}</span>
         </div>
       </div>
+
+      {/* Custom Confirmation Modal for Deleting Inventory Item */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(itemToDelete)}
+        onClose={() => setItemToDelete(null)}
+        onConfirm={() => {
+          if (itemToDelete && onDeleteItem) {
+            onDeleteItem(itemToDelete.id);
+            notifySuccess(
+              isUr
+                ? `${itemToDelete.urduName || itemToDelete.varietyName} گودام سے حذف کر دیا گیا`
+                : `${itemToDelete.varietyName} removed from inventory`
+            );
+          }
+          setItemToDelete(null);
+        }}
+        title={isUr ? 'جنس / آئٹم حذف کرنے کی تصدیق' : 'Confirm Inventory Deletion'}
+        description={
+          isUr
+            ? `کیا آپ واقعی اس جنس کو گودام انوینٹری اور کاؤنٹر لسٹ سے مستقل حذف کرنا چاہتے ہیں؟ اس کا تمام موجودہ سٹاک ریکارڈ ختم ہو جائے گا۔`
+            : `Are you sure you want to permanently delete this item from godown inventory and the POS counter? All stock history for this item will be removed.`
+        }
+        itemName={itemToDelete ? `${itemToDelete.varietyName} (${itemToDelete.sku})` : ''}
+        itemType={isUr ? 'آئٹم / جنس:' : 'Inventory Item:'}
+        confirmText={isUr ? 'ہاں، حذف کریں' : 'Yes, Delete Item'}
+      />
     </div>
   );
 };

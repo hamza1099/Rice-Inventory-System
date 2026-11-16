@@ -44,19 +44,36 @@ export const ReceiptPrintModal: React.FC = () => {
         <div className="p-4 bg-slate-50 flex justify-center">
           <div 
             id="thermal-receipt"
-            className="w-[280px] bg-white p-4 shadow-sm border border-slate-200 text-slate-900 font-mono text-[11px] leading-tight select-text"
+            className="w-[285px] sm:w-[295px] bg-white px-3.5 py-4 shadow-sm border border-slate-200 text-slate-900 font-mono text-[11px] leading-tight select-text"
           >
             {/* Header */}
             <div className="text-center border-b border-dashed border-slate-400 pb-3 mb-2.5">
-              <h2 className="text-sm font-bold tracking-wide">BUKHARI RICE TRADERS</h2>
-              <div className="py-1.5">
-                <p className="urdu-text text-sm text-slate-800 font-bold !leading-tight" dir="rtl">
+              <h2 className="text-[13px] font-black tracking-wide text-slate-900 mb-1.5">
+                BUKHARI RICE TRADERS
+              </h2>
+
+              <div className="text-center flex flex-col items-center justify-center w-full my-2.5">
+                <p 
+                  className="urdu-text text-[17px] text-slate-900 font-bold text-center w-full block pb-1.5 leading-none" 
+                  dir="rtl"
+                >
                   بخاری رائس ٹریڈرز
                 </p>
+                <p 
+                  className="urdu-text text-[11px] text-slate-700 font-semibold text-center w-full block pt-1.5 leading-normal" 
+                  dir="rtl"
+                >
+                  چکری روڈ، لیاقت کالونی، گلی نمبر 9، راولپنڈی
+                </p>
               </div>
-              <div className="pt-0.5 space-y-0.5">
-                <p className="text-[9px] text-slate-600">G.T. Road, New Grain Market, Lahore</p>
-                <p className="text-[9px] text-slate-600">Phone: 0300-8452199 • NTN: 489210-4</p>
+
+              <div className="mt-2.5 pt-2 border-t border-dotted border-slate-300 space-y-1 text-center">
+                <p className="text-[9.5px] text-slate-600 font-medium text-center">
+                  Chakri Road, Liaquat Colony, Lane #9, Rawalpindi
+                </p>
+                <p className="text-[10px] text-slate-800 font-bold font-mono text-center">
+                  Phone: 0310-5612914
+                </p>
               </div>
             </div>
 

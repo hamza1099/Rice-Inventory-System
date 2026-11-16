@@ -24,6 +24,7 @@ interface CustomerLedgerDetailModalProps {
   onOpenReceivePayment: () => void;
   onOpenStatementPrint: () => void;
   onOpenEditCustomer: () => void;
+  onDeleteCustomer?: () => void;
   onDeleteTransaction: (txId: string, desc: string) => void;
   onSendWhatsApp: (customer: KhataCustomer) => void;
 }
@@ -37,11 +38,36 @@ export const CustomerLedgerDetailModal: React.FC<CustomerLedgerDetailModalProps>
   onOpenReceivePayment,
   onOpenStatementPrint,
   onOpenEditCustomer,
+  onDeleteCustomer,
   onDeleteTransaction,
   onSendWhatsApp,
 }) => {
   const { language } = usePos();
   const isUr = language === 'ur';
+
+  // Ensure that if a customer has an opening balance, it always shows in the ledger table
+  const ledgerTransactions = React.useMemo(() => {
+    const hasOpening = transactions.some((t) => t.type === 'OPENING_BALANCE');
+    if (!hasOpening && customer && customer.totalDebit > 0 && transactions.length === 0) {
+      const syntheticOpenTx: KhataTransaction = {
+        id: `tx-opening-${customer.id}`,
+        customerId: customer.id,
+        dateStr: customer.createdAt || 'Account Opening',
+        timeStr: '00:00 PKT',
+        timestamp: 0,
+        type: 'OPENING_BALANCE',
+        description: isUr
+          ? 'سابقہ پرانا کھاتہ (Opening Balance Brought Forward)'
+          : 'Opening Balance (سابقہ پرانا کھاتہ)',
+        debit: customer.totalDebit,
+        credit: 0,
+        balanceAfter: customer.totalDebit,
+        notes: customer.notes || 'Initial balance recorded at account opening'
+      };
+      return [syntheticOpenTx];
+    }
+    return transactions;
+  }, [transactions, customer, isUr]);
 
   if (!isOpen || !customer) return null;
 
@@ -169,6 +195,17 @@ export const CustomerLedgerDetailModal: React.FC<CustomerLedgerDetailModalProps>
               >
                 <Edit className="w-4 h-4" />
               </button>
+
+              {/* Delete Customer Button */}
+              {onDeleteCustomer && (
+                <button
+                  onClick={onDeleteCustomer}
+                  className="p-2 bg-rose-500/20 hover:bg-rose-600 text-rose-200 hover:text-white rounded-xl text-xs border border-rose-500/30 transition-all cursor-pointer"
+                  title={isUr ? 'گاہک کھاتہ ڈیلیٹ کریں' : 'Delete Customer Khata'}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -188,7 +225,7 @@ export const CustomerLedgerDetailModal: React.FC<CustomerLedgerDetailModalProps>
             </div>
             <div className="text-xs font-semibold text-slate-500">
               {isUr ? 'کل ٹرانزیکشنز:' : 'Total Transactions:'}{' '}
-              <span className="text-slate-800 font-bold">{transactions.length}</span>
+              <span className="text-slate-800 font-bold">{ledgerTransactions.length}</span>
             </div>
           </div>
 
@@ -207,7 +244,7 @@ export const CustomerLedgerDetailModal: React.FC<CustomerLedgerDetailModalProps>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-mono-num">
-                {transactions.length === 0 ? (
+                {ledgerTransactions.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-slate-400 font-sans">
                       <Clock className="w-8 h-8 mx-auto mb-2 text-slate-300" />
@@ -222,7 +259,7 @@ export const CustomerLedgerDetailModal: React.FC<CustomerLedgerDetailModalProps>
                     </td>
                   </tr>
                 ) : (
-                  transactions.map((tx) => {
+                  ledgerTransactions.map((tx) => {
                     const isPurchase = tx.type === 'PURCHASE';
                     const isPayment = tx.type === 'PAYMENT';
                     const isOpening = tx.type === 'OPENING_BALANCE';

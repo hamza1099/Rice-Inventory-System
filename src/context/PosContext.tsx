@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import type {
   Product,
   CartItem,
@@ -10,15 +10,50 @@ import type {
   KhataTransaction,
   KhataItemEntry
 } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_MEMOS, INITIAL_INVENTORY, INITIAL_DENOMINATIONS } from '../data/mockData';
-import { INITIAL_KHATA_CUSTOMERS, INITIAL_KHATA_TRANSACTIONS } from '../data/mockKhataData';
+import type { TerminalUser } from '../components/users/AddUserModal';
+import { INITIAL_DENOMINATIONS } from '../data/mockData';
+import {
+  auth,
+  onAuthStateChanged,
+  logoutFirebase,
+  type FirebaseUser
+} from '../service/firebaseClient';
+import {
+  subscribeToInventory,
+  subscribeToProducts,
+  subscribeToMemos,
+  subscribeToKhataCustomers,
+  subscribeToKhataTransactions,
+  subscribeToCashDrawer,
+  addInventoryItemDoc,
+  updateInventoryItemDoc,
+  deleteInventoryItemDoc,
+  addStockInwardDoc,
+  createMemoDoc,
+  addKhataCustomerDoc,
+  updateKhataCustomerDoc,
+  deleteKhataCustomerDoc,
+  addKhataTransactionDoc,
+  deleteKhataTransactionDoc,
+  saveCashDrawerOpeningDoc,
+  closeCashDrawerDoc,
+  saveDayClosingDoc,
+  getOrCreateUserDoc,
+  clearMockDataIfPresent
+} from '../service/firestoreService';
 
 interface PosContextType {
+  // Authentication & Logged In User
+  currentUser: FirebaseUser | null;
+  userProfile: TerminalUser | null;
+  isAuthLoading: boolean;
+  logout: () => Promise<void>;
   // Products & Cart
   products: Product[];
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
+  updateCartItemRate: (id: string, newRate: number) => void;
   clearCart: () => void;
   selectedProductForModal: Product | null;
   setSelectedProductForModal: (p: Product | null) => void;
@@ -66,6 +101,9 @@ interface PosContextType {
   drawerOpenedAt: string | null;
   isOpeningModalOpen: boolean;
   setIsOpeningModalOpen: (open: boolean) => void;
+  isPreviousSessionUnclosed: boolean;
+  isUnclosedModalOpen: boolean;
+  setIsUnclosedModalOpen: (open: boolean) => void;
   openDrawer: (amount: number, cashierName?: string, notes?: string) => void;
   closeDrawer: () => void;
   startNewDay: () => void;
@@ -129,75 +167,96 @@ interface PosContextType {
 const PosContext = createContext<PosContextType | undefined>(undefined);
 
 export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
-  
-  // Preload cart with items matching Image 3 (Cash Memo #1085)
-  const [cart, setCart] = useState<CartItem[]>([
-    {
-      id: 'cart-1',
-      product: INITIAL_PRODUCTS[0], // Super Basmati
-      mode: 'kg',
-      grossWeight: 10.10,
-      tareWeight: 0.10,
-      tareName: 'پلاسٹک تھیلی',
-      netWeight: 10.00,
-      ratePerKg: 380,
-      subtotal: 3800
-    },
-    {
-      id: 'cart-2',
-      product: INITIAL_PRODUCTS[1], // Kainat 1121 Steam
-      mode: 'kg',
-      grossWeight: 5.10,
-      tareWeight: 0.10,
-      tareName: 'پلاسٹک تھیلی',
-      netWeight: 5.00,
-      ratePerKg: 340,
-      subtotal: 1700
-    },
-    {
-      id: 'cart-3',
-      product: INITIAL_PRODUCTS[4], // White Broken / Tota
-      mode: 'kg',
-      grossWeight: 4.10,
-      tareWeight: 0.10,
-      tareName: 'پلاسٹک تھیلی',
-      netWeight: 4.00,
-      ratePerKg: 210,
-      subtotal: 840
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  const [userProfile, setUserProfile] = useState<TerminalUser | null>(() => {
+    const saved = localStorage.getItem('ricecms_user_profile');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return null;
+      }
     }
-  ]);
+    return null;
+  });
+  const [isTerminalLocked, setIsTerminalLocked] = useState<boolean>(() => {
+    return localStorage.getItem('ricecms_auth_active') !== 'true';
+  });
+  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(() => {
+    return localStorage.getItem('ricecms_auth_active') !== 'true';
+  });
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
 
   const [selectedProductForModal, setSelectedProductForModal] = useState<Product | null>(null);
 
   // Live scale
-  const [liveScaleWeight, setLiveScaleWeight] = useState<number>(4.50);
+  const [liveScaleWeight, setLiveScaleWeight] = useState<number>(0.00);
   const [isScaleLocked, setIsScaleLocked] = useState<boolean>(true);
   const [scaleTare, setScaleTare] = useState<number>(0.00);
 
   // Checkout
-  const [spotDiscount, setSpotDiscount] = useState<number>(10);
+  const [spotDiscount, setSpotDiscount] = useState<number>(0);
   const [paymentMode, setPaymentMode] = useState<'SPOT CASH' | 'RAAST ONLINE'>('SPOT CASH');
-  const [cashReceived, setCashReceived] = useState<number>(7000);
-  const [memos, setMemos] = useState<MemoRecord[]>(INITIAL_MEMOS);
+  const [cashReceived, setCashReceived] = useState<number>(0);
+  const [memos, setMemos] = useState<MemoRecord[]>([]);
+  const memosRef = useRef<MemoRecord[]>([]);
   const [activeReceipt, setActiveReceipt] = useState<MemoRecord | null>(null);
 
   // Inventory
-  const [inventory, setInventory] = useState<InventoryItem[]>(INITIAL_INVENTORY);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+
+  // Helper to verify if an ISO date string matches today
+  const isDateToday = (isoStr: string | null): boolean => {
+    if (!isoStr) return false;
+    try {
+      const d = new Date(isoStr);
+      const now = new Date();
+      return (
+        d.getFullYear() === now.getFullYear() &&
+        d.getMonth() === now.getMonth() &&
+        d.getDate() === now.getDate()
+      );
+    } catch (e) {
+      return false;
+    }
+  };
 
   // Day-End & Cash Drawer Opening
   const [denominations, setDenominations] = useState<DenominationRow[]>(INITIAL_DENOMINATIONS);
+
+  useEffect(() => {
+    // Ensure all 8 denominations (including PKR 20, PKR 10) are present
+    setDenominations((prev) => {
+      if (prev.length < INITIAL_DENOMINATIONS.length) {
+        return INITIAL_DENOMINATIONS.map((initDeno) => {
+          const existing = prev.find((p) => p.denomination === initDeno.denomination);
+          return existing ? existing : initDeno;
+        });
+      }
+      return prev;
+    });
+  }, []);
   const [openingFloat, setOpeningFloatState] = useState<number>(() => {
+    const savedActive = localStorage.getItem('ricecms_drawer_active');
+    if (savedActive !== 'true') return 0;
     const saved = localStorage.getItem('ricecms_opening_float');
-    return saved ? parseFloat(saved) : 15000;
+    return saved ? parseFloat(saved) : 0;
   });
-  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(() => {
-    const saved = localStorage.getItem('ricecms_drawer_active');
-    return saved !== null ? saved === 'true' : true;
-  });
+
   const [drawerOpenedAt, setDrawerOpenedAt] = useState<string | null>(() => {
     return localStorage.getItem('ricecms_drawer_opened_at');
   });
+
+  const [isPreviousSessionUnclosed, setIsPreviousSessionUnclosed] = useState<boolean>(false);
+  const [isUnclosedModalOpen, setIsUnclosedModalOpen] = useState<boolean>(false);
+
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(() => {
+    const saved = localStorage.getItem('ricecms_drawer_active');
+    return saved !== null ? saved === 'true' : false;
+  });
+
   const [isOpeningModalOpen, setIsOpeningModalOpen] = useState<boolean>(false);
 
   const setOpeningFloat = (val: number) => {
@@ -205,38 +264,46 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('ricecms_opening_float', val.toString());
   };
 
-  const openDrawer = (amount: number, _cashierName?: string, _notes?: string) => {
+  const openDrawer = (amount: number, cashierName?: string, notes?: string) => {
     setOpeningFloatState(amount);
     setIsDrawerOpen(true);
     setIsDayClosed(false);
+    setIsPreviousSessionUnclosed(false);
+    setIsUnclosedModalOpen(false);
     const now = new Date().toISOString();
     setDrawerOpenedAt(now);
     setIsOpeningModalOpen(false);
     localStorage.setItem('ricecms_opening_float', amount.toString());
     localStorage.setItem('ricecms_drawer_active', 'true');
     localStorage.setItem('ricecms_drawer_opened_at', now);
+    saveCashDrawerOpeningDoc(amount, now, cashierName, notes).catch(console.error);
   };
 
   const closeDrawer = () => {
     setIsDrawerOpen(false);
+    setIsPreviousSessionUnclosed(false);
+    setIsUnclosedModalOpen(false);
     localStorage.setItem('ricecms_drawer_active', 'false');
+    closeCashDrawerDoc().catch(console.error);
   };
 
   const startNewDay = () => {
     setIsDayClosed(false);
     setIsDrawerOpen(false);
+    setIsPreviousSessionUnclosed(false);
+    setIsUnclosedModalOpen(false);
     localStorage.setItem('ricecms_drawer_active', 'false');
+    setOpeningFloatState(0);
     setDenominations(INITIAL_DENOMINATIONS);
     setCart([]);
+    setSupervisorPin('');
+    setHandoverNotes('');
     setIsOpeningModalOpen(true);
   };
 
-  const [supervisorPin, setSupervisorPin] = useState<string>('9921');
-  const [handoverNotes, setHandoverNotes] = useState<string>(
-    'All spot memos cleared, zero credit given. Cash ready for godown safe handover.'
-  );
+  const [supervisorPin, setSupervisorPin] = useState<string>('');
+  const [handoverNotes, setHandoverNotes] = useState<string>('');
   const [isDayClosed, setIsDayClosed] = useState<boolean>(false);
-  const [isTerminalLocked, setIsTerminalLocked] = useState<boolean>(true);
   const [isMandiChitOpen, setIsMandiChitOpen] = useState<boolean>(false);
 
   // Global Image Preview Lightbox
@@ -261,11 +328,138 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // ==================== KHATA / UDHAR CUSTOMER BOOK ====================
-  const [khataCustomers, setKhataCustomers] = useState<KhataCustomer[]>(INITIAL_KHATA_CUSTOMERS);
-  const [khataTransactions, setKhataTransactions] = useState<KhataTransaction[]>(INITIAL_KHATA_TRANSACTIONS);
-  const [selectedKhataCustomerId, setSelectedKhataCustomerId] = useState<string | null>(
-    INITIAL_KHATA_CUSTOMERS[0]?.id || null
-  );
+  const [khataCustomers, setKhataCustomers] = useState<KhataCustomer[]>([]);
+  const [khataTransactions, setKhataTransactions] = useState<KhataTransaction[]>([]);
+  const [selectedKhataCustomerId, setSelectedKhataCustomerId] = useState<string | null>(null);
+
+  const logout = async () => {
+    try {
+      localStorage.removeItem('ricecms_auth_active');
+      localStorage.removeItem('ricecms_user_profile');
+      await logoutFirebase();
+    } catch (e) {
+      console.error('Logout error:', e);
+    }
+    setCurrentUser(null);
+    setUserProfile(null);
+    setIsTerminalLocked(true);
+  };
+
+  // Synchronize Firebase Auth & Firestore in real time
+  useEffect(() => {
+    // Clean any legacy mock data from Firestore
+    clearMockDataIfPresent().catch((err) => {
+      console.warn('Mock cleanup notice:', err);
+    });
+
+    // Listen to Firebase Authentication State
+    const unsubAuth = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        localStorage.setItem('ricecms_auth_active', 'true');
+        setCurrentUser(fbUser);
+        setIsTerminalLocked(false);
+        try {
+          const profile = await getOrCreateUserDoc(fbUser);
+          setUserProfile(profile);
+          if (profile) {
+            localStorage.setItem('ricecms_user_profile', JSON.stringify(profile));
+          }
+        } catch (err) {
+          console.error('Failed to sync user profile:', err);
+        }
+      } else {
+        localStorage.removeItem('ricecms_auth_active');
+        localStorage.removeItem('ricecms_user_profile');
+        setCurrentUser(null);
+        setUserProfile(null);
+        setIsTerminalLocked(true);
+      }
+      setIsAuthLoading(false);
+    });
+
+    // Live Firestore Subscriptions (Clean direct sync, no mock fallback)
+    const unsubInv = subscribeToInventory((items) => {
+      setInventory(items || []);
+    });
+
+    const unsubProds = subscribeToProducts((prods) => {
+      setProducts(prods || []);
+    });
+
+    const unsubMemos = subscribeToMemos((memosList) => {
+      memosRef.current = memosList || [];
+      setMemos(memosList || []);
+    });
+
+    const unsubCusts = subscribeToKhataCustomers((custs) => {
+      // Auto-correct any customer whose opening balance was doubled due to previous firestore update
+      const sanitized = (custs || []).map((c) => {
+        if (c.shopName.toLowerCase().includes('ali clinic') && c.currentBalance === 400 && c.totalCredit === 0) {
+          updateKhataCustomerDoc(c.id, { totalDebit: 200, currentBalance: 200 }).catch(console.error);
+          return { ...c, totalDebit: 200, currentBalance: 200 };
+        }
+        return c;
+      });
+      setKhataCustomers(sanitized);
+      if (sanitized && sanitized.length > 0) {
+        setSelectedKhataCustomerId((prev) => prev || sanitized[0].id);
+      }
+    });
+
+    const unsubTxs = subscribeToKhataTransactions((txs) => {
+      setKhataTransactions(txs || []);
+    });
+
+    const unsubDrawer = subscribeToCashDrawer((d) => {
+      if (d) {
+        if (!d.isDrawerOpen) {
+          setOpeningFloatState(0);
+          setDrawerOpenedAt(null);
+          setIsDrawerOpen(false);
+          setIsPreviousSessionUnclosed(false);
+          setIsUnclosedModalOpen(false);
+          localStorage.setItem('ricecms_drawer_active', 'false');
+          localStorage.setItem('ricecms_opening_float', '0');
+          localStorage.removeItem('ricecms_drawer_opened_at');
+          return;
+        }
+
+        setOpeningFloatState(d.openingFloat || 0);
+        setDrawerOpenedAt(d.drawerOpenedAt || null);
+
+        const isFromPast = Boolean(d.drawerOpenedAt && !isDateToday(d.drawerOpenedAt));
+        if (isFromPast) {
+          if (memosRef.current.length > 0) {
+            setIsPreviousSessionUnclosed(true);
+            setIsUnclosedModalOpen(true);
+            setIsDrawerOpen(false);
+          } else {
+            // Clean reset if there are no memos in DB
+            closeCashDrawerDoc().catch(console.error);
+            setIsPreviousSessionUnclosed(false);
+            setIsUnclosedModalOpen(false);
+            setIsDrawerOpen(false);
+            localStorage.setItem('ricecms_drawer_active', 'false');
+            localStorage.removeItem('ricecms_drawer_opened_at');
+          }
+        } else {
+          setIsPreviousSessionUnclosed(false);
+          setIsUnclosedModalOpen(false);
+          setIsDrawerOpen(d.isDrawerOpen);
+        }
+      }
+    });
+
+    return () => {
+      unsubAuth();
+      unsubInv();
+      unsubProds();
+      unsubMemos();
+      unsubCusts();
+      unsubTxs();
+      unsubDrawer();
+    };
+  }, []);
 
   const addKhataCustomer = (data: {
     customerName: string;
@@ -298,6 +492,9 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setKhataCustomers((prev) => [newCust, ...prev]);
     setSelectedKhataCustomerId(newCust.id);
 
+    // Persist to Firestore
+    addKhataCustomerDoc(newCust).catch(console.error);
+
     if (openingBal > 0) {
       const now = new Date();
       const openTx: KhataTransaction = {
@@ -314,6 +511,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         notes: 'Initial balance recorded at account opening'
       };
       setKhataTransactions((prev) => [openTx, ...prev]);
+      addKhataTransactionDoc(openTx).catch(console.error);
     }
 
     return newCust;
@@ -323,6 +521,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setKhataCustomers((prev) =>
       prev.map((c) => (c.id === id ? { ...c, ...updated } : c))
     );
+    updateKhataCustomerDoc(id, updated).catch(console.error);
   };
 
   const deleteKhataCustomer = (id: string) => {
@@ -332,6 +531,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const remaining = khataCustomers.filter((c) => c.id !== id);
       setSelectedKhataCustomerId(remaining[0]?.id || null);
     }
+    deleteKhataCustomerDoc(id).catch(console.error);
   };
 
   const addKhataPurchase = (
@@ -381,6 +581,8 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return c;
       })
     );
+
+    addKhataTransactionDoc(newTx).catch(console.error);
   };
 
   const addKhataPayment = (
@@ -433,6 +635,8 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return c;
       })
     );
+
+    addKhataTransactionDoc(newTx).catch(console.error);
   };
 
   const deleteKhataTransaction = (txId: string) => {
@@ -444,7 +648,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setKhataCustomers((prev) =>
       prev.map((c) => {
         if (c.id === tx.customerId) {
-          const newDebit = tx.type === 'PURCHASE' ? c.totalDebit - tx.debit : c.totalDebit;
+          const newDebit = (tx.type === 'PURCHASE' || tx.type === 'OPENING_BALANCE') ? c.totalDebit - tx.debit : c.totalDebit;
           const newCredit = tx.type === 'PAYMENT' ? c.totalCredit - tx.credit : c.totalCredit;
           const newBalance = Math.max(0, newDebit - newCredit);
           return {
@@ -458,6 +662,8 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return c;
       })
     );
+
+    deleteKhataTransactionDoc(tx.id, tx.customerId, tx.debit || 0, tx.credit || 0, tx.type).catch(console.error);
   };
 
   const addToCart = (newItem: CartItem) => {
@@ -468,9 +674,25 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
+  const updateCartItemRate = (id: string, newRate: number) => {
+    setCart((prev) =>
+      prev.map((item) => {
+        if (item.id === id) {
+          const validRate = Math.max(0, newRate);
+          return {
+            ...item,
+            ratePerKg: validRate,
+            subtotal: Math.round(item.netWeight * validRate)
+          };
+        }
+        return item;
+      })
+    );
+  };
+
   const clearCart = () => {
     setCart([]);
-    setSpotDiscount(10);
+    setSpotDiscount(0);
   };
 
   const completeSale = (): MemoRecord | null => {
@@ -481,13 +703,18 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const totalWeight = cart.reduce((sum, item) => sum + item.netWeight, 0);
 
     const now = new Date();
-    const memoId = (1085 + memos.length - 5).toString();
+    const memoSeq = String(memos.length + 1).padStart(4, '0');
+    const memoId = `memo-${memoSeq}`;
+
+    const cashierLabel = userProfile
+      ? (language === 'ur' ? userProfile.urduName || userProfile.name : userProfile.name)
+      : currentUser?.displayName || currentUser?.email?.split('@')[0] || (language === 'ur' ? 'کیشیئر' : 'Cashier');
 
     const newRecord: MemoRecord = {
-      id: `memo-${memoId}`,
-      memoNo: `#${memoId}`,
+      id: memoId,
+      memoNo: `#${memoSeq}`,
       dateStr: now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      timeStr: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')} PKT`,
+      timeStr: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')} PKT`,
       customerName: 'Counter Retail Buyer',
       customerMeta: 'Spot Cash • Counter 01',
       itemsSummary: cart.map((c) => c.product.name).join(' + '),
@@ -497,13 +724,17 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       discount: spotDiscount,
       netAmount: net,
       items: [...cart],
-      cashier: 'S. Bukhari',
+      cashier: cashierLabel,
       counterId: 'Counter 01'
     };
 
     setMemos([newRecord, ...memos]);
     setActiveReceipt(newRecord);
     clearCart();
+
+    // Persist to Firestore and decrement stock in real time
+    createMemoDoc(newRecord).catch(console.error);
+
     return newRecord;
   };
 
@@ -527,6 +758,9 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       tareWeightDefault: newItem.tareDeductionKg || 0.10
     };
     setProducts((prev) => [...prev, newProd]);
+
+    // Persist to Firestore
+    addInventoryItemDoc(newItem).catch(console.error);
   };
 
   const updateInventoryItem = (id: string, updated: Partial<InventoryItem>) => {
@@ -568,14 +802,19 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return p;
       })
     );
+
+    // Persist to Firestore
+    updateInventoryItemDoc(id, updated).catch(console.error);
   };
 
   const deleteInventoryItem = (id: string) => {
     setInventory((prev) => prev.filter((item) => item.id !== id));
     setProducts((prev) => prev.filter((p) => p.id !== id));
+    deleteInventoryItemDoc(id).catch(console.error);
   };
 
   const updateInventoryRate = (id: string, newRate: number, newCost?: number) => {
+    let updatedItemProps: Partial<InventoryItem> = {};
     setInventory((prev) =>
       prev.map((item) => {
         if (item.id === id) {
@@ -584,14 +823,17 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const costDiff = newCost !== undefined && newCost > 0 ? newCost - item.costPerKg : item.costDifferencePerKg;
           const newMargin = newRate - cost;
           const marginPct = cost > 0 ? (newMargin / cost) * 100 : 0;
-          return {
-            ...item,
+          updatedItemProps = {
             costPerKg: cost,
             previousCostPerKg: prevCost,
             costDifferencePerKg: costDiff,
             counterRatePerKg: newRate,
             marginPerKg: Math.round(newMargin * 100) / 100,
             marginPercentage: Math.round(marginPct * 10) / 10
+          };
+          return {
+            ...item,
+            ...updatedItemProps
           };
         }
         return item;
@@ -601,6 +843,8 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, ratePerKg: newRate } : p))
     );
+
+    updateInventoryItemDoc(id, updatedItemProps).catch(console.error);
   };
 
   const addStockInward = (
@@ -674,27 +918,51 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         })
       );
     }
+
+    addStockInwardDoc(id, additionalKg, additionalBags, inwardCostPerKg, updatedSellingRate).catch(console.error);
   };
 
   const updateDenominationCount = (index: number, count: number) => {
     setDenominations((prev) => {
       const copy = [...prev];
       const target = copy[index];
+      if (!target) return prev;
       const newCount = Math.max(0, count);
       copy[index] = {
         ...target,
         count: newCount,
-        subtotal: target.denomination * newCount
+        subtotal: target.denomination === 0 ? newCount : target.denomination * newCount
       };
       return copy;
     });
   };
 
   const finalizeDayEnd = (): boolean => {
-    if (supervisorPin.length >= 4) {
+    if (supervisorPin.trim().length > 0) {
       setIsDayClosed(true);
       setIsDrawerOpen(false);
+      setIsPreviousSessionUnclosed(false);
+      setIsUnclosedModalOpen(false);
       localStorage.setItem('ricecms_drawer_active', 'false');
+      localStorage.removeItem('ricecms_drawer_opened_at');
+      localStorage.setItem('ricecms_opening_float', '0');
+      setOpeningFloatState(0);
+      setDrawerOpenedAt(null);
+      setCart([]);
+
+      // Persist day closing record to Firestore
+      saveDayClosingDoc({
+        closedAt: new Date().toISOString(),
+        openingFloat,
+        denominations,
+        handoverNotes,
+        supervisorPin,
+        memosCount: memos.length
+      }).catch(console.error);
+
+      // Close drawer in Firestore so next session starts fresh with clean 0 float
+      closeCashDrawerDoc().catch(console.error);
+
       return true;
     }
     return false;
@@ -703,10 +971,15 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <PosContext.Provider
       value={{
+        currentUser,
+        userProfile,
+        isAuthLoading,
+        logout,
         products,
         cart,
         addToCart,
         removeFromCart,
+        updateCartItemRate,
         clearCart,
         selectedProductForModal,
         setSelectedProductForModal,
@@ -740,6 +1013,9 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         drawerOpenedAt,
         isOpeningModalOpen,
         setIsOpeningModalOpen,
+        isPreviousSessionUnclosed,
+        isUnclosedModalOpen,
+        setIsUnclosedModalOpen,
         openDrawer,
         closeDrawer,
         startNewDay,

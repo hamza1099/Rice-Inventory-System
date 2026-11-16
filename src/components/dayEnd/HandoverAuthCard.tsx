@@ -1,23 +1,29 @@
 import React from 'react';
-import { Lock, Printer, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Lock, Printer, CheckCircle2, ShieldAlert, PlayCircle } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 import { notifySuccess, notifyWarning, notifyInfo } from '../../utils/toast';
+import { RouteName } from '../../routes/RouteName';
 
 export const HandoverAuthCard: React.FC = () => {
+  const navigate = useNavigate();
   const {
     supervisorPin,
     setSupervisorPin,
     handoverNotes,
     setHandoverNotes,
     finalizeDayEnd,
+    startNewDay,
     isDayClosed,
+    currentUser,
+    userProfile,
     language
   } = usePos();
   const isUr = language === 'ur';
 
   const handleFinalize = () => {
-    if (supervisorPin.length < 4) {
-      notifyWarning(isUr ? 'برائے مہربانی 4 ہندسوں کا درست ایڈمن پاس ورڈ درج کریں' : 'Please enter valid 4-digit admin password/code.');
+    if (!supervisorPin.trim()) {
+      notifyWarning(isUr ? 'برائے مہربانی ایڈمن پاس ورڈ یا پن درج کریں' : 'Please enter admin password or PIN.');
       return;
     }
     const success = finalizeDayEnd();
@@ -45,23 +51,25 @@ export const HandoverAuthCard: React.FC = () => {
         {/* Admin Password */}
         <div className="col-span-4">
           <label className="block text-[11px] font-bold text-slate-700 mb-1">
-            {isUr ? 'ایڈمن پاس ورڈ:' : 'Admin Password:'}
+            {isUr ? 'ایڈمن پاس ورڈ / پن:' : 'Admin Password / PIN:'}
           </label>
           <div className="relative">
             <input
               type="password"
               value={supervisorPin}
               onChange={(e) => setSupervisorPin(e.target.value)}
-              placeholder="Enter password"
+              placeholder={isUr ? 'پاس ورڈ یا پن درج کریں' : 'Enter password or PIN'}
               disabled={isDayClosed}
               className="w-full text-xs font-bold font-mono px-3 py-2 border border-slate-300 rounded-lg focus:border-emerald-600 focus:outline-hidden bg-slate-50"
             />
-            <span className="absolute right-2.5 top-2 text-[10px] font-bold text-emerald-700">
-              [OK]
-            </span>
+            {supervisorPin ? (
+              <span className="absolute right-2.5 top-2 text-[10px] font-bold text-emerald-700">
+                [OK]
+              </span>
+            ) : null}
           </div>
           <p className="text-[10px] text-slate-500 mt-1">
-            {isUr ? 'ایڈمن:' : 'Admin:'} <strong>bilal.bukhari@bukharirice.com</strong>
+            {isUr ? 'ایڈمن:' : 'Admin:'} <strong>{userProfile?.email || currentUser?.email || (isUr ? 'ایڈمن' : 'Admin')}</strong>
           </p>
         </div>
 
@@ -74,11 +82,12 @@ export const HandoverAuthCard: React.FC = () => {
             type="text"
             value={handoverNotes}
             onChange={(e) => setHandoverNotes(e.target.value)}
+            placeholder={isUr ? 'کیش ہینڈ اوور ریمارکس درج کریں...' : 'Enter handover notes or remarks...'}
             disabled={isDayClosed}
             className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:border-emerald-600 focus:outline-hidden bg-slate-50"
           />
           <p className="text-[10px] text-slate-500 mt-1 font-mono">
-            Digital signature auto-attached with terminal token: <strong>#01-SBUKHARI-OCT24</strong>
+            Digital signature auto-attached with terminal token: <strong>#{userProfile?.terminal ? userProfile.terminal.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : 'TERMINAL01'}</strong>
           </p>
         </div>
       </div>
@@ -101,18 +110,26 @@ export const HandoverAuthCard: React.FC = () => {
           </button>
         </div>
 
-        <button
-          onClick={handleFinalize}
-          disabled={isDayClosed}
-          className={`px-6 py-2.5 rounded-lg text-white font-extrabold text-xs flex items-center space-x-2 shadow-xs transition-all uppercase tracking-wider ${
-            isDayClosed
-              ? 'bg-slate-400 cursor-not-allowed'
-              : 'bg-emerald-800 hover:bg-emerald-900 active:scale-98 cursor-pointer'
-          }`}
-        >
-          <CheckCircle2 className="w-4 h-4" />
-          <span>{isDayClosed ? (isUr ? 'شفٹ بند و رجسٹر مقفل' : 'Shift Sealed & Register Locked') : (isUr ? 'دن کا اختتام فائنل کریں [ENTER]' : 'Finalize Day-End & Lock Register [ENTER]')}</span>
-        </button>
+        {isDayClosed ? (
+          <button
+            onClick={() => {
+              startNewDay();
+              navigate(RouteName.POS_COUNTER);
+            }}
+            className="px-6 py-2.5 rounded-lg bg-emerald-800 hover:bg-emerald-900 active:scale-98 text-white font-extrabold text-xs flex items-center space-x-2 shadow-xs transition-all uppercase tracking-wider cursor-pointer"
+          >
+            <PlayCircle className="w-4 h-4 text-emerald-200" />
+            <span>{isUr ? 'نیا دن شروع کریں اور کاؤنٹر پر جائیں' : 'Start Fresh Day & Go to POS Counter'}</span>
+          </button>
+        ) : (
+          <button
+            onClick={handleFinalize}
+            className="px-6 py-2.5 rounded-lg text-white font-extrabold text-xs flex items-center space-x-2 shadow-xs transition-all uppercase tracking-wider bg-emerald-800 hover:bg-emerald-900 active:scale-98 cursor-pointer"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            <span>{isUr ? 'دن کا اختتام فائنل کریں [ENTER]' : 'Finalize Day-End & Lock Register [ENTER]'}</span>
+          </button>
+        )}
       </div>
     </div>
   );

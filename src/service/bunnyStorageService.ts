@@ -1,14 +1,26 @@
-const ACCESS_KEY = import.meta.env.VITE_BUNNY_STORAGE_ACCESS_KEY;
-const STORAGE_ZONE = import.meta.env.VITE_BUNNY_STORAGE_ZONE;
-const CDN_URL = import.meta.env.VITE_BUNNY_CDN_URL;
-const REGION = import.meta.env.VITE_BUNNY_REGION || ""; // e.g., "ny." or "sg."
+const ACCESS_KEY = import.meta.env.VITE_BUNNY_STORAGE_ACCESS_KEY || '';
+const STORAGE_ZONE = import.meta.env.VITE_BUNNY_STORAGE_ZONE || 'bukharirice';
+const rawCdn = import.meta.env.VITE_BUNNY_CDN_URL || 'https://bukharirice.b-cdn.net/';
+export const CDN_URL = rawCdn.endsWith('/') ? rawCdn : `${rawCdn}/`;
 
-// Using standard Fetch API for browser compatibility instead of Node.js SDK
-const REGION_URL = `https://${REGION}storage.bunnycdn.com`;
+const rawRegion = (import.meta.env.VITE_BUNNY_REGION || '').trim().toLowerCase();
+const regionPrefix = (!rawRegion || rawRegion === 'de' || rawRegion === 'main')
+  ? ''
+  : rawRegion.endsWith('.') ? rawRegion : `${rawRegion}.`;
 
-export const uploadToBunny = async (file: File, folder: string = "uploads"): Promise<string> => {
-  const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-  const filePath = `/${folder}/${fileName}`;
+// BunnyCDN Storage endpoint
+const REGION_URL = `https://${regionPrefix}storage.bunnycdn.com`;
+
+export const uploadToBunny = async (file: File, folder: string = "products"): Promise<string> => {
+  if (!ACCESS_KEY || !STORAGE_ZONE) {
+    throw new Error("Bunny Storage configuration is missing. Please check .env settings.");
+  }
+
+  const cleanFolder = folder.replace(/^\/+|\/+$/g, '');
+  const timestamp = Date.now();
+  const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]/g, '_');
+  const fileName = `${timestamp}_${safeName}`;
+  const filePath = cleanFolder ? `/${cleanFolder}/${fileName}` : `/${fileName}`;
   const url = `${REGION_URL}/${STORAGE_ZONE}${filePath}`;
 
   try {
@@ -22,10 +34,10 @@ export const uploadToBunny = async (file: File, folder: string = "uploads"): Pro
     });
     
     if (!response.ok) {
-      throw new Error(`Bunny storage upload failed: ${response.statusText}`);
+      throw new Error(`Bunny storage upload failed (${response.status}): ${response.statusText}`);
     }
     
-    return `${CDN_URL}${folder}/${fileName}`;
+    return cleanFolder ? `${CDN_URL}${cleanFolder}/${fileName}` : `${CDN_URL}${fileName}`;
   } catch (error) {
     console.error("Bunny upload error:", error);
     throw error;
@@ -33,9 +45,10 @@ export const uploadToBunny = async (file: File, folder: string = "uploads"): Pro
 };
 
 export const deleteFromBunny = async (fileUrl: string): Promise<void> => {
-  if (!fileUrl.startsWith(CDN_URL)) return; // Only delete if it's from our CDN
+  if (!fileUrl || !fileUrl.startsWith(CDN_URL)) return; // Only delete if it's from our CDN
 
-  const filePath = fileUrl.replace(CDN_URL, "/");
+  const relativePath = fileUrl.replace(CDN_URL, "");
+  const filePath = `/${relativePath.replace(/^\/+/, '')}`;
   const url = `${REGION_URL}/${STORAGE_ZONE}${filePath}`;
 
   try {
@@ -51,6 +64,5 @@ export const deleteFromBunny = async (fileUrl: string): Promise<void> => {
     }
   } catch (error) {
     console.error("Bunny delete error:", error);
-    throw error;
   }
 };

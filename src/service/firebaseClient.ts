@@ -1,5 +1,13 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  createUserWithEmailAndPassword,
+  type User as FirebaseUser
+} from "firebase/auth";
 import {
   initializeFirestore,
   collection,
@@ -12,20 +20,46 @@ import {
 import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBIpRs20fov6-BF3urlkVVxsPNDomfF2qQ",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "crochetcomso.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "crochetcomso",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "crochetcomso.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "370920891701",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:370920891701:web:ba88f1bfa58ada325f587c"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDsc17d2IOn9jYAdO4qSIcIb-bp-Tuhqmg",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "ricecms.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "ricecms",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "ricecms.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "153080688822",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:153080688822:web:ba260dfb7e0a8b8cb67617"
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const db = initializeFirestore(app, {
-  experimentalAutoDetectLongPolling: true
+  experimentalAutoDetectLongPolling: true,
+  ignoreUndefinedProperties: true
 });
+
+// Secondary app instance for Admin to create cashier/admin accounts without disturbing the active session
+const secondaryApp = getApps().find(a => a.name === "SecondaryAuthApp")
+  || initializeApp(firebaseConfig, "SecondaryAuthApp");
+export const secondaryAuth = getAuth(secondaryApp);
+
+export const loginWithFirebase = (email: string, pass: string) => {
+  return signInWithEmailAndPassword(auth, email, pass);
+};
+
+export const logoutFirebase = () => {
+  return signOut(auth);
+};
+
+export const resetFirebasePassword = (email: string) => {
+  return sendPasswordResetEmail(auth, email);
+};
+
+export const registerFirebaseUser = async (email: string, pass: string): Promise<string> => {
+  const cred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
+  await signOut(secondaryAuth);
+  return cred.user.uid;
+};
+
+export { onAuthStateChanged, type FirebaseUser };
 
 export const uploadScreenshotToStorage = async (base64Data: string, orderId: string): Promise<string> => {
   if (!base64Data || !base64Data.startsWith("data:")) return base64Data || "";

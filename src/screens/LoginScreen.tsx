@@ -7,11 +7,13 @@ import {
   Lock,
   Eye,
   EyeOff,
-  LogIn
+  LogIn,
+  Loader2
 } from 'lucide-react';
 import { usePos } from '../context/PosContext';
 import { RouteName } from '../routes/RouteName';
 import { notifySuccess, notifyError, notifyInfo } from '../utils/toast';
+import { loginWithFirebase, resetFirebasePassword } from '../service/firebaseClient';
 
 // User assets
 import logoImg from '../assets/logo.jpg';
@@ -22,50 +24,77 @@ export const LoginScreen: React.FC = () => {
   const { setIsTerminalLocked, language } = usePos();
   const isUr = language === 'ur';
 
-  const [email, setEmail] = useState<string>('trade.partner@gulfcommodities.ae');
-  const [password, setPassword] = useState<string>('••••••••••••••');
-  const [actualPassword, setActualPassword] = useState<string>('admin123');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [rememberMe, setRememberMe] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setPassword(val);
-    setActualPassword(val);
-  };
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !email.includes('@')) {
       notifyError(isUr ? 'براہ کرم درست ای میل درج کریں۔' : 'Please enter a valid email address.');
       return;
     }
-    if (!actualPassword.trim()) {
+    if (!password.trim()) {
       notifyError(isUr ? 'براہ کرم اپنا پاس ورڈ درج کریں۔' : 'Please enter your password.');
       return;
     }
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const userCredential = await loginWithFirebase(email.trim(), password);
+      localStorage.setItem('ricecms_auth_active', 'true');
       setIsTerminalLocked(false);
       notifySuccess(
         isUr
-          ? 'ٹرمینل میں خوش آمدید! بخاری رائس ٹریڈرز'
-          : 'Terminal access authorized! Welcome to Bukhari Rice Traders.'
+          ? `خوش آمدید! ${userCredential.user.email} لاگ ان ہو گیا`
+          : `Terminal authorized! Welcome ${userCredential.user.email}`
       );
       navigate(RouteName.POS_COUNTER);
-    }, 400);
+    } catch (err: any) {
+      console.error('Firebase Auth Error:', err);
+      let errorMsg = isUr ? 'لاگ ان ناممکن رہا۔ براہ کرم تفصیل چیک کریں۔' : 'Authentication failed. Please verify credentials.';
+      const code = err.code || '';
+
+      if (code === 'auth/invalid-credential' || code === 'auth/wrong-password') {
+        errorMsg = isUr ? 'ای میل یا پاس ورڈ غلط ہے۔' : 'Invalid email or password. Please verify credentials.';
+      } else if (code === 'auth/user-not-found') {
+        errorMsg = isUr ? 'اس ای میل کے ساتھ کوئی اکاؤنٹ نہیں ملا۔' : 'No account found with this email.';
+      } else if (code === 'auth/invalid-email') {
+        errorMsg = isUr ? 'ای میل کا فارمیٹ غلط ہے۔' : 'Invalid email address format.';
+      } else if (code === 'auth/too-many-requests') {
+        errorMsg = isUr ? 'کئی غلط کوششوں کی وجہ سے لاگ ان عارضی بند ہے۔ بعد میں کوشش کریں۔' : 'Access blocked due to multiple failed attempts. Try again later.';
+      } else if (code === 'auth/network-request-failed') {
+        errorMsg = isUr ? 'انٹرنیٹ کنکشن کا مسئلہ ہے۔ نیٹ ورک چیک کریں۔' : 'Network error. Please check your internet connection.';
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      notifyError(errorMsg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleForgotPassword = () => {
-    notifyInfo(
-      isUr
-        ? 'پاس ورڈ ری سیٹ کے لیے سسٹم ایڈمن (0331-7726262) سے رابطہ کریں۔'
-        : 'Please contact System Admin (0331-7726262) or Trade Desk to reset credentials.'
-    );
+  const handleForgotPassword = async () => {
+    if (!email.trim() || !email.includes('@')) {
+      notifyError(isUr ? 'پاس ورڈ ری سیٹ کے لیے پہلے اپنا ای میل درج کریں۔' : 'Please enter your email address first to reset password.');
+      return;
+    }
+
+    try {
+      await resetFirebasePassword(email.trim());
+      notifySuccess(
+        isUr
+          ? `پاس ورڈ ری سیٹ کا لنک ${email} پر بھیج دیا گیا ہے!`
+          : `Password reset email sent to ${email}!`
+      );
+    } catch (err: any) {
+      console.error('Reset password error:', err);
+      notifyError(err.message || 'Failed to send password reset email.');
+    }
   };
 
   return (
@@ -226,11 +255,11 @@ export const LoginScreen: React.FC = () => {
                       <AtSign className="w-4 h-4 text-slate-500" />
                     </div>
                     <input
-                      type="text"
+                      type="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="trade.partner@gulfcommodities.ae"
+                      placeholder={isUr ? 'اپنا ای میل درج کریں...' : 'Enter your email address...'}
                       className="w-full py-3 pr-3 text-xs sm:text-sm font-semibold text-slate-800 bg-transparent focus:outline-hidden placeholder:text-slate-400"
                     />
                   </div>
@@ -254,8 +283,8 @@ export const LoginScreen: React.FC = () => {
                       type={showPassword ? 'text' : 'password'}
                       required
                       value={password}
-                      onChange={handlePasswordChange}
-                      placeholder="••••••••••••••"
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={isUr ? 'اپنا پاس ورڈ درج کریں...' : 'Enter your password...'}
                       className="w-full py-3 pr-10 text-xs sm:text-sm font-semibold text-slate-800 bg-transparent focus:outline-hidden tracking-wider"
                     />
                     <button
@@ -295,8 +324,17 @@ export const LoginScreen: React.FC = () => {
                     disabled={isLoading}
                     className="w-full bg-gradient-to-r from-[#0d3b2b] via-[#0f4432] to-[#1a4a32] hover:from-[#0a2e22] hover:to-[#143d28] active:scale-98 text-white py-3.5 px-5 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center space-x-2.5 shadow-lg border border-emerald-500/50 transition-all cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
                   >
-                    <LogIn className="w-4 h-4 text-emerald-300 shrink-0" />
-                    <span>Sign In • لاگ ان کریں</span>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 text-emerald-300 animate-spin" />
+                        <span>{isUr ? 'تصدیق ہو رہی ہے...' : 'Authenticating...'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <LogIn className="w-4 h-4 text-emerald-300 shrink-0" />
+                        <span>Sign In • لاگ ان کریں</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </form>

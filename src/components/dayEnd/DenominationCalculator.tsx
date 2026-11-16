@@ -1,13 +1,18 @@
 import React from 'react';
 import { Coins, CheckCircle2, AlertCircle } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
+import { NumberInput } from '../common/NumberInput';
 
 export const DenominationCalculator: React.FC = () => {
-  const { denominations, updateDenominationCount, openingFloat, language } = usePos();
+  const { denominations, updateDenominationCount, openingFloat, memos, language } = usePos();
   const isUr = language === 'ur';
 
+  const spotCashCollected = memos
+    .filter((m) => m.paymentMode === 'SPOT CASH')
+    .reduce((sum, m) => sum + m.netAmount, 0);
+
   const totalCounted = denominations.reduce((sum, d) => sum + d.subtotal, 0);
-  const expectedPhysicalCash = openingFloat + 112000; // 127,000
+  const expectedPhysicalCash = openingFloat + spotCashCollected;
   const variance = totalCounted - expectedPhysicalCash;
   const isBalanced = variance === 0;
 
@@ -43,22 +48,25 @@ export const DenominationCalculator: React.FC = () => {
                 <td className="py-2 px-3">
                   <div className="flex items-center space-x-2">
                     <span className="w-3.5 h-2.5 rounded-xs bg-emerald-800/20 border border-emerald-800 inline-block"></span>
-                    <span className="font-bold text-slate-800">{row.label}</span>
+                    <span className="font-bold text-slate-800">
+                      {isUr && row.denomination === 0 ? 'ریزگاری / سکے' : row.label}
+                    </span>
                   </div>
                 </td>
                 <td className="py-2 px-2 text-center text-slate-500 text-[11px] font-sans">
-                  {row.bundle}
+                  {isUr ? (row.denomination === 0 ? 'کوائن ٹرے' : 'کھلے نوٹ') : row.bundle}
                 </td>
                 <td className="py-2 px-1 text-center text-slate-400 font-bold">
                   {row.multiplier}
                 </td>
                 <td className="py-2 px-2 text-center">
-                  <input
-                    type="number"
+                  <NumberInput
                     min="0"
                     value={row.count}
-                    onChange={(e) => updateDenominationCount(index, parseInt(e.target.value) || 0)}
+                    onChange={(val) => updateDenominationCount(index, val)}
                     className="w-20 text-center font-bold text-xs bg-slate-50 border border-slate-300 rounded px-1.5 py-1 focus:bg-white focus:outline-hidden focus:border-emerald-600 font-mono-num"
+                    placeholder="0"
+                    allowDecimals={false}
                   />
                 </td>
                 <td className="py-2 px-3 text-right font-extrabold text-slate-900">

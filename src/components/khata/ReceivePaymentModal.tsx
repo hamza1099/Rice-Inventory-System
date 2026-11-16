@@ -3,6 +3,7 @@ import { X, HandCoins, CheckCircle2, Wallet, Building2, CreditCard, FileCheck } 
 import type { KhataCustomer } from '../../types';
 import { usePos } from '../../context/PosContext';
 import { notifySuccess, notifyWarning } from '../../utils/toast';
+import { NumberInput } from '../common/NumberInput';
 
 interface ReceivePaymentModalProps {
   isOpen: boolean;
@@ -111,14 +112,14 @@ export const ReceivePaymentModal: React.FC<ReceivePaymentModalProps> = ({
               {isUr ? 'وصول شدہ رقم:' : 'Amount Received:'} <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <input
-                type="number"
+              <NumberInput
                 required
-                min="1"
+                min="0"
                 step="10"
                 value={amount}
-                onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+                onChange={(val) => setAmount(val)}
                 className="w-full text-xl font-black font-mono-num pl-9 pr-3 py-2 bg-white border-2 border-emerald-600 rounded-lg text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20"
+                placeholder="0"
               />
               <span className="absolute left-3 top-2.5 font-black text-sm text-slate-400">Rs</span>
             </div>

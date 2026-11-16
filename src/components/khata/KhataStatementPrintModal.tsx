@@ -120,7 +120,7 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
                     {isUr ? 'بخاری رائس ٹریڈرز (کمیشن ایجنٹس و غلہ آڑھت)' : 'Commission Agents & Wholesale Grain Market'}
                   </h2>
                   <p className="text-xs text-slate-600 mt-1">
-                    {isUr ? 'غلہ منڈی، دیپالپور روڈ، اوکاڑہ | فون: 0300-7589211' : 'Main Grain Market, Depalpur Road, Okara | Ph: +92 300 7589211, +92 44 2521190'}
+                    {isUr ? 'چکری روڈ، لیاقت کالونی، گلی نمبر 9، راولپنڈی | فون: 0310-5612914' : 'Chakri Road, Liaquat Colony, Lane #9, Rawalpindi | Ph: 0310-5612914'}
                   </p>
                 </div>
                 <div className="text-right text-xs text-slate-500">
@@ -294,13 +294,13 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
               <p className="font-semibold text-slate-700">{isUr ? 'اہم ہدایات:' : 'Terms of Credit & Important Instructions:'}</p>
               {isUr ? (
                 <ul className="list-disc pl-4 space-y-0.5 mt-1 text-[12px] text-slate-600">
-                  <li>تمام سودے غلہ منڈی اوکاڑہ کے مقررہ قواعد و ضوابط کے تحت طے پاتے ہیں۔</li>
+                  <li>تمام سودے غلہ منڈی راولپنڈی کے مقررہ قواعد و ضوابط کے تحت طے پاتے ہیں۔</li>
                   <li>کسی بھی اندراج میں اختلاف کی صورت میں 3 یوم کے اندر اندر دفتر سے رابطہ فرما کر تصحیح کرائیں۔</li>
                   <li>براہ کرم ادائیگی کے بعد کمپیوٹرائزڈ پرچی وصول فرما کر ریکارڈ اپنے پاس محفوظ رکھیں۔</li>
                 </ul>
               ) : (
                 <ul className="list-disc pl-4 space-y-0.5 mt-1 text-[11px] text-slate-600">
-                  <li>All trades governed by Okara Grain Market standards and regulations.</li>
+                  <li>All trades governed by Rawalpindi Grain Market standards and regulations.</li>
                   <li>In case of any discrepancy, please notify the office within 3 days for rectification.</li>
                   <li>Kindly retain official computerized receipts upon payment for your records.</li>
                 </ul>

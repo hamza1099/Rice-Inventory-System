@@ -1,21 +1,23 @@
 import React, { useRef } from 'react';
-import { UploadCloud, Image as ImageIcon, X, Sparkles, Check, ZoomIn } from 'lucide-react';
+import { UploadCloud, Image as ImageIcon, X, Sparkles, Check, ZoomIn, Loader2 } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 import { ALL_PRODUCT_PRESETS, SVG_RICE_FALLBACK } from '../../utils/productImages';
 import { notifySuccess, notifyWarning } from '../../utils/toast';
 
 interface RiceImageUploadProps {
   imageUrl: string;
-  onChange: (url: string) => void;
+  onChange: (url: string, file?: File | null) => void;
   label?: string;
   urduLabel?: string;
+  isUploading?: boolean;
 }
 
 export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
   imageUrl,
   onChange,
   label,
-  urduLabel
+  urduLabel,
+  isUploading = false
 }) => {
   const { openImagePreview, language } = usePos();
   const isUr = language === 'ur';
@@ -36,28 +38,28 @@ export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      notifyWarning(isUr ? 'تصویر 5 ایم بی سے کم ہونی چاہیے' : 'Image size should be less than 5MB');
+    if (file.size > 10 * 1024 * 1024) {
+      notifyWarning(isUr ? 'تصویر 10 ایم بی سے کم ہونی چاہیے' : 'Image size should be less than 10MB');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      if (base64) {
-        onChange(base64);
-        notifySuccess(isUr ? 'تصویر اپلوڈ ہو گئی!' : 'Image uploaded successfully!');
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleClearImage = () => {
-    onChange('');
+    // Instant local preview for user (CDN upload happens on form save)
+    const localPreviewUrl = URL.createObjectURL(file);
+    onChange(localPreviewUrl, file);
+    notifySuccess(isUr ? 'تصویر منتخب ہو گئی!' : 'Image selected!');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
+
+  const handleClearImage = () => {
+    onChange('', null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const isBunnyUrl = Boolean(imageUrl && (imageUrl.includes('b-cdn.net') || imageUrl.includes('bunny')));
 
   return (
     <div className="space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
@@ -81,8 +83,16 @@ export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
         className="hidden"
       />
 
-      {/* Main Image Upload / Preview Box */}
-      {imageUrl ? (
+      {/* Uploading State */}
+      {isUploading ? (
+        <div className="h-28 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 flex flex-col items-center justify-center p-3 text-center animate-pulse">
+          <Loader2 className="w-8 h-8 text-emerald-700 animate-spin mb-1.5" />
+          <span className="font-bold text-xs text-emerald-950">
+            {isUr ? 'تصویر اپلوڈ ہو رہی ہے...' : 'Uploading image...'}
+          </span>
+        </div>
+      ) : imageUrl ? (
+        /* Main Image Upload / Preview Box */
         <div className="relative group rounded-xl overflow-hidden border-2 border-emerald-500/40 bg-white shadow-xs">
           <div className="h-32 w-full overflow-hidden bg-slate-100 flex items-center justify-center">
             <img
@@ -131,8 +141,8 @@ export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
 
           <div className="p-2 bg-emerald-50/90 border-t border-emerald-200 flex items-center justify-between text-[10px] text-emerald-900 font-semibold">
             <span className="flex items-center space-x-1">
-              <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
-              <span>{isUr ? 'تصویر منسلک ہے' : 'Photo Attached'}</span>
+              <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+              <span className="font-bold">{isUr ? 'تصویر منسلک ہے' : 'Photo Attached'}</span>
             </span>
             <button
               type="button"
@@ -156,7 +166,7 @@ export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
             {isUr ? 'چاول یا آئٹم کی تصویر اپلوڈ کریں' : 'Click to Upload Item / Rice Photo'}
           </span>
           <span className="text-[10px] text-slate-500 mt-0.5">
-            {isUr ? 'سپورٹ: JPG, PNG, WEBP (زیادہ سے زیادہ 5MB)' : 'Supports JPG, PNG, WEBP (Max 5MB) • Crisp product photo'}
+            {isUr ? 'جے پی جی، پی این جی یا ویب پی تصویر • زیادہ سے زیادہ 10MB' : 'JPG, PNG or WebP image • Max 10MB'}
           </span>
         </div>
       )}
@@ -175,21 +185,22 @@ export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
               key={preset.id}
               type="button"
               onClick={() => {
-                onChange(preset.imageUrl);
+                onChange(preset.imageUrl, null);
                 notifySuccess(isUr ? `${preset.name} کی تصویر لگ گئی!` : `Applied ${preset.name} photo!`);
               }}
-              className={`p-1 rounded-lg border text-left flex items-center space-x-1.5 transition-all cursor-pointer ${
-                imageUrl === preset.imageUrl
-                  ? 'border-emerald-600 bg-emerald-100/70 text-emerald-900 font-bold ring-1 ring-emerald-600'
-                  : 'border-slate-200 bg-white hover:bg-slate-100 text-slate-700'
-              }`}
+              className="p-1 rounded-lg border border-slate-200 bg-white hover:border-emerald-600 hover:bg-emerald-50/40 flex items-center space-x-1.5 text-left transition-all cursor-pointer group"
             >
               <img
                 src={preset.imageUrl}
                 alt={preset.name}
-                className="w-6 h-6 rounded object-cover border border-slate-200 shrink-0"
+                className="w-6 h-6 rounded object-cover shrink-0 bg-slate-100"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = SVG_RICE_FALLBACK;
+                }}
               />
-              <span className="text-[9px] truncate block leading-tight">{preset.name.split(' ')[0]}</span>
+              <span className="text-[10px] font-medium text-slate-700 truncate group-hover:text-emerald-900">
+                {preset.name}
+              </span>
             </button>
           ))}
         </div>

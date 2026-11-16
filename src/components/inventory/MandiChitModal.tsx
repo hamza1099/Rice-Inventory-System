@@ -3,9 +3,14 @@ import { X, Printer, FileText } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 
 export const MandiChitModal: React.FC = () => {
-  const { isMandiChitOpen, setIsMandiChitOpen, inventory } = usePos();
+  const { isMandiChitOpen, setIsMandiChitOpen, inventory, userProfile, currentUser } = usePos();
 
   if (!isMandiChitOpen) return null;
+
+  const now = new Date();
+  const todayDateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const yardOfficer = userProfile?.name || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Storekeeper';
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
@@ -35,11 +40,11 @@ export const MandiChitModal: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <span>DATE:</span>
-                <span>24 Oct 2024 • 14:32 PKT</span>
+                <span>{todayDateStr} • {currentTimeStr} PKT</span>
               </div>
               <div className="flex justify-between">
-                <span>YARD MUNSHI:</span>
-                <span>Munshi Bashir Ahmad</span>
+                <span>OFFICER / MUNSHI:</span>
+                <span>{yardOfficer}</span>
               </div>
               <div className="flex justify-between">
                 <span>GODOWN BAY:</span>

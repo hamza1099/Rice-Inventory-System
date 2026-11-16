@@ -9,6 +9,7 @@ interface MemoLedgerTableProps {
 
 export const MemoLedgerTable: React.FC<MemoLedgerTableProps> = ({ memos }) => {
   const { setActiveReceipt } = usePos();
+  const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden text-xs">
@@ -42,7 +43,7 @@ export const MemoLedgerTable: React.FC<MemoLedgerTableProps> = ({ memos }) => {
                       {memo.memoNo}
                     </span>
                     <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200 uppercase">
-                      {memo.dateStr.includes('24 Oct') ? 'TODAY' : memo.dateStr}
+                      {memo.dateStr === todayStr ? 'TODAY' : memo.dateStr}
                     </span>
                   </td>
 

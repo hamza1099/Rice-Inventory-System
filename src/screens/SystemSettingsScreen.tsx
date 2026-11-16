@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
-import { Settings, Save, Scale, Printer, Shield, Database, Check } from 'lucide-react';
+import { Settings, Save, Scale, Printer, Shield, Database, Check, Monitor, Plus, Trash2 } from 'lucide-react';
 import { notifySuccess } from '../utils/toast';
 import { usePos } from '../context/PosContext';
+import {
+  DEFAULT_TERMINAL_OPTIONS,
+  getCustomTerminals,
+  saveCustomTerminal,
+  deleteCustomTerminal
+} from '../utils/terminals';
 
 export const SystemSettingsScreen: React.FC = () => {
   const { language } = usePos();
@@ -14,6 +20,25 @@ export const SystemSettingsScreen: React.FC = () => {
   const [ppTare, setPpTare] = useState<number>(0.12);
   const [isStrictNoCredit, setIsStrictNoCredit] = useState<boolean>(true);
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
+
+  const [customTerminals, setCustomTerminals] = useState<string[]>(() => getCustomTerminals());
+  const [newCounterInput, setNewCounterInput] = useState<string>('');
+
+  const handleAddCounter = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = newCounterInput.trim();
+    if (!trimmed) return;
+    const updated = saveCustomTerminal(trimmed);
+    setCustomTerminals(updated);
+    setNewCounterInput('');
+    notifySuccess(isUr ? `نیا کاؤنٹر "${trimmed}" شامل ہو گیا!` : `New counter "${trimmed}" added!`);
+  };
+
+  const handleDeleteCounter = (name: string) => {
+    const updated = deleteCustomTerminal(name);
+    setCustomTerminals(updated);
+    notifySuccess(isUr ? `کاؤنٹر "${name}" ختم کر دیا گیا۔` : `Counter "${name}" removed.`);
+  };
 
   const handleSave = () => {
     setSavedSuccess(true);
@@ -214,6 +239,93 @@ export const SystemSettingsScreen: React.FC = () => {
             >
               {isUr ? 'لوکل ڈیٹا بیس بیک اپ ڈاؤن لوڈ کریں' : 'Export Local DB Snapshot (Offline Backup)'}
             </button>
+          </div>
+        </div>
+
+        {/* Active Counters & Terminals Management */}
+        <div className="col-span-2 bg-white border border-slate-200 rounded-lg p-4 shadow-xs space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <div className="flex items-center space-x-2">
+              <Monitor className="w-4 h-4 text-emerald-700" />
+              <h3 className="font-extrabold text-xs text-slate-900 uppercase">
+                {isUr ? 'دکان کے کاؤنٹرز اور ٹرمینلز کی فہرست' : 'Shop Counters & Active POS Terminals'}
+              </h3>
+            </div>
+            <span className="text-[11px] text-slate-500 font-bold">
+              {DEFAULT_TERMINAL_OPTIONS.length + customTerminals.length} {isUr ? 'ٹرمینلز فعال' : 'Active Terminals'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Existing Counters List */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold text-slate-500 uppercase block">
+                {isUr ? 'موجودہ کاؤنٹرز:' : 'Active System Counters:'}
+              </span>
+              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                {DEFAULT_TERMINAL_OPTIONS.map((term) => (
+                  <div
+                    key={term.id}
+                    className="p-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between text-xs"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                      <span className="font-bold text-slate-800">{isUr ? term.ur : term.en}</span>
+                    </div>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded">
+                      {isUr ? 'سسٹم ڈیفالٹ' : 'SYSTEM DEFAULT'}
+                    </span>
+                  </div>
+                ))}
+                {customTerminals.map((ct) => (
+                  <div
+                    key={ct}
+                    className="p-2 bg-emerald-50/60 border border-emerald-200 rounded-lg flex items-center justify-between text-xs"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+                      <span className="font-bold text-emerald-950">{ct}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCounter(ct)}
+                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                      title={isUr ? 'کاؤنٹر حذف کریں' : 'Delete Counter'}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Add New Counter Box */}
+            <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-2.5">
+              <span className="text-[11px] font-black text-slate-900 block">
+                {isUr ? '+ نیا کاؤنٹر / ٹرمینل شامل کریں' : '+ Add New Store Counter'}
+              </span>
+              <p className="text-[10px] text-slate-500 leading-relaxed">
+                {isUr
+                  ? 'اگر مستقبل میں دوسرا یا تیسرا کاؤنٹر، ہول سیل کاؤنٹر، یا الگ لیپ ٹاپ شروع کرنا ہو تو یہاں نیا کاؤنٹر بنائیں تاکہ کیش میمو اور رپورٹس الگ بنیں۔'
+                  : 'Add a new counter (e.g. Counter 03 - Wholesale) when deploying additional checkout PCs or tablets.'}
+              </p>
+              <form onSubmit={handleAddCounter} className="flex gap-2">
+                <input
+                  type="text"
+                  value={newCounterInput}
+                  onChange={(e) => setNewCounterInput(e.target.value)}
+                  placeholder={isUr ? 'مثلاً Terminal #03 (Counter 03)...' : 'e.g. Terminal #03 (Counter 03)...'}
+                  className="flex-1 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold focus:border-emerald-600 focus:outline-hidden"
+                />
+                <button
+                  type="submit"
+                  className="px-3.5 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-lg text-xs font-bold shrink-0 flex items-center gap-1 shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{isUr ? 'شامل کریں' : 'Add Counter'}</span>
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>

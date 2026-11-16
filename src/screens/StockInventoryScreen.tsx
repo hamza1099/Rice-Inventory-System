@@ -48,6 +48,7 @@ export const StockInventoryScreen: React.FC = () => {
     { id: 'Packaged', label: isUr ? 'ڈبہ مصالحہ' : 'Shan & National' },
     { id: 'Oil', label: isUr ? 'تیل و گھی' : 'Oil & Ghee' },
     { id: 'AttaSugar', label: isUr ? 'آٹا و چینی' : 'Atta & Sugar' },
+    { id: 'Other', label: isUr ? 'دیگر' : 'Other' },
     { id: 'LowStock', label: isUr ? `کم سٹاک [${lowStockCount}]` : `Low Stock Only [${lowStockCount}]` }
   ];
 
@@ -71,6 +72,21 @@ export const StockInventoryScreen: React.FC = () => {
       matchesFilter = item.category.includes('Oil') || item.category.includes('Ghee');
     } else if (selectedFilter === 'AttaSugar') {
       matchesFilter = item.category.includes('Atta') || item.category.includes('Sugar');
+    } else if (selectedFilter === 'Other') {
+      matchesFilter =
+        item.category.includes('Other') ||
+        item.category.includes('دیگر') ||
+        (!item.category.includes('Rice') &&
+          !item.category.includes('چاول') &&
+          !item.category.includes('Pulses') &&
+          !item.category.includes('Daal') &&
+          !item.category.includes('Spices') &&
+          !item.category.includes('Shan') &&
+          !item.category.includes('National') &&
+          !item.category.includes('Oil') &&
+          !item.category.includes('Ghee') &&
+          !item.category.includes('Atta') &&
+          !item.category.includes('Sugar'));
     } else if (selectedFilter === 'LowStock') {
       matchesFilter = item.lotStatus === 'Low Stock' || item.lotStatus === 'Critical Low';
     }
