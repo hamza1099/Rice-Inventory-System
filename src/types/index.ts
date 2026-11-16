@@ -14,6 +14,7 @@ export interface Product {
   imageUrl?: string;
   brand?: string; // 'Shan', 'National', 'Dalda', 'Habib', 'BRT'
   isLowStock?: boolean;
+  minStockThreshold?: number;
   isWholesalePack?: boolean;
   wholesaleBoriPrice?: number;
   boriWeightKg?: number;
@@ -62,6 +63,7 @@ export interface InventoryItem {
   physicalStockKg: number;
   bagsCount: number;
   bagTypeLabel: string;
+  minStockThreshold?: number;
   lotStatus: 'In Stock' | 'Critical Low' | 'Low Stock' | 'Out of Stock';
   costPerKg: number;
   previousCostPerKg?: number;

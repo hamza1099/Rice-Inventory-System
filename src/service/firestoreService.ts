@@ -103,7 +103,8 @@ export const addInventoryItemDoc = async (item: InventoryItem): Promise<void> =>
     imageUrl: item.imageUrl || '',
     shortcut: `F${Math.floor(100 + Math.random() * 899)}`,
     tareWeightDefault: item.tareDeductionKg ?? 0.0,
-    isLowStock: item.physicalStockKg < (item.unitType === 'piece' ? 24 : 100),
+    minStockThreshold: item.minStockThreshold ?? 20,
+    isLowStock: item.physicalStockKg <= (item.minStockThreshold ?? 20),
     isWholesalePack,
     wholesaleBoriPrice,
     boriWeightKg
@@ -143,7 +144,11 @@ export const updateInventoryItemDoc = async (
         : uType === 'liter'
           ? `${updates.physicalStockKg} L`
           : `${updates.physicalStockKg} KG`;
-      prodUpdates.isLowStock = updates.physicalStockKg < (uType === 'piece' ? 24 : 100);
+      const threshold = updates.minStockThreshold !== undefined 
+        ? updates.minStockThreshold 
+        : (currentProd.minStockThreshold ?? 20);
+      prodUpdates.minStockThreshold = threshold;
+      prodUpdates.isLowStock = updates.physicalStockKg <= threshold;
     }
     if (updates.counterRatePerBag !== undefined) prodUpdates.wholesaleBoriPrice = updates.counterRatePerBag;
     if (updates.unitsPerPack !== undefined) {
@@ -203,7 +208,7 @@ export const addStockInwardDoc = async (
     latestInwardDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
     counterRatePerKg: newSellingRate,
     marginPerKg: Math.round(newMargin * 100) / 100,
-    lotStatus: newStockKg < 350 ? 'Low Stock' : 'In Stock',
+    lotStatus: newStockKg <= 0 ? 'Out of Stock' : newStockKg <= (current.minStockThreshold ?? 20) ? 'Low Stock' : 'In Stock',
     updatedAt: new Date().toISOString()
   });
 
@@ -214,7 +219,7 @@ export const addStockInwardDoc = async (
       availableKg: newStockKg,
       availableStockLabel: `${newStockKg.toLocaleString()} KG`,
       ratePerKg: newSellingRate,
-      isLowStock: newStockKg < 350
+      isLowStock: newStockKg <= (current.minStockThreshold ?? 20)
     });
   } catch (err) {
     console.warn('Product stock sync notice:', err);
@@ -263,10 +268,11 @@ export const createMemoDoc = async (memo: MemoRecord): Promise<void> => {
           const bagsDeducted = Math.floor(item.netWeight / 50);
           const newBags = Math.max(0, invData.bagsCount - bagsDeducted);
 
+          const threshold = invData.minStockThreshold !== undefined ? invData.minStockThreshold : 20;
           await updateDoc(invRef, {
             physicalStockKg: Math.round(newQty * 100) / 100,
             bagsCount: newBags,
-            lotStatus: newQty < 350 ? (newQty <= 50 ? 'Critical Low' : 'Low Stock') : 'In Stock',
+            lotStatus: newQty <= 0 ? 'Out of Stock' : newQty <= (threshold / 2) ? 'Critical Low' : newQty <= threshold ? 'Low Stock' : 'In Stock',
             updatedAt: new Date().toISOString()
           });
         }
@@ -276,10 +282,11 @@ export const createMemoDoc = async (memo: MemoRecord): Promise<void> => {
         if (prodSnap.exists()) {
           const prodData = prodSnap.data() as Product;
           const newAvail = Math.max(0, prodData.availableKg - item.netWeight);
+          const threshold = prodData.minStockThreshold !== undefined ? prodData.minStockThreshold : 20;
           await updateDoc(prodRef, {
             availableKg: Math.round(newAvail * 100) / 100,
             availableStockLabel: `${Math.round(newAvail)} KG`,
-            isLowStock: newAvail < 350
+            isLowStock: newAvail <= threshold
           });
         }
       } catch (err) {

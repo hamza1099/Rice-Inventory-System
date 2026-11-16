@@ -21,6 +21,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     product.unitLabel === '/ can' ||
     product.unitLabel === '/ carton';
 
+  const isActuallyLowStock = product.minStockThreshold !== undefined
+    ? product.availableKg > 0 && product.availableKg <= product.minStockThreshold
+    : (product.isLowStock ?? false);
+
   const handleImageClick = () => {
     openImagePreview({
       imageUrl: product.imageUrl || DEFAULT_RICE_IMAGE,
@@ -141,16 +145,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               <div className="flex items-center space-x-1">
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${
-                    product.isLowStock ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'
+                    isActuallyLowStock ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'
                   }`}
                 />
-                <span className={`font-semibold ${product.isLowStock ? 'text-amber-700' : 'text-slate-700'}`}>
+                <span className={`font-semibold ${isActuallyLowStock ? 'text-amber-700' : 'text-slate-700'}`}>
                   {product.availableStockLabel || `${product.availableKg} KG`}
                 </span>
               </div>
             </div>
 
-            {product.isLowStock && (
+            {isActuallyLowStock && (
               <div className="flex items-center space-x-1 text-[8.5px] text-amber-700 font-bold pt-0.5">
                 <AlertCircle className="w-2.5 h-2.5 shrink-0" />
                 <span>{language === 'ur' ? 'سٹاک کم ہے!' : 'Low Stock!'}</span>

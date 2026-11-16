@@ -743,6 +743,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Also create or sync product in POS Counter
     const categoryMapping: string = newItem.category || 'Rice (چاول)';
+    const threshold = newItem.minStockThreshold !== undefined ? newItem.minStockThreshold : 20;
 
     const newProd: Product = {
       id: newItem.id,
@@ -755,7 +756,9 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       binLocation: 'Godown Stack',
       imageUrl: newItem.imageUrl,
       shortcut: `F${100 + inventory.length + 1}`,
-      tareWeightDefault: newItem.tareDeductionKg || 0.10
+      tareWeightDefault: newItem.tareDeductionKg || 0.10,
+      minStockThreshold: threshold,
+      isLowStock: newItem.physicalStockKg <= threshold
     };
     setProducts((prev) => [...prev, newProd]);
 
@@ -772,6 +775,16 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const margin = rate - cost;
           const marginPct = cost > 0 ? (margin / cost) * 100 : 0;
           const kg = updated.physicalStockKg !== undefined ? updated.physicalStockKg : item.physicalStockKg;
+          const threshold = updated.minStockThreshold !== undefined
+            ? updated.minStockThreshold
+            : (item.minStockThreshold !== undefined ? item.minStockThreshold : 20);
+          const computedLotStatus = updated.lotStatus || (kg <= 0
+            ? 'Out of Stock'
+            : kg <= (threshold / 2)
+              ? 'Critical Low'
+              : kg <= threshold
+                ? 'Low Stock'
+                : 'In Stock');
           return {
             ...item,
             ...updated,
@@ -779,7 +792,8 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             counterRatePerKg: rate,
             marginPerKg: Math.round(margin * 100) / 100,
             marginPercentage: Math.round(marginPct * 10) / 10,
-            lotStatus: kg > 200 ? 'In Stock' : kg > 0 ? 'Low Stock' : 'Out of Stock'
+            minStockThreshold: threshold,
+            lotStatus: computedLotStatus
           };
         }
         return item;
@@ -790,13 +804,19 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setProducts((prev) =>
       prev.map((p) => {
         if (p.id === id) {
+          const newAvail = updated.physicalStockKg !== undefined ? updated.physicalStockKg : p.availableKg;
+          const threshold = updated.minStockThreshold !== undefined
+            ? updated.minStockThreshold
+            : (p.minStockThreshold !== undefined ? p.minStockThreshold : 20);
           return {
             ...p,
             name: updated.varietyName || p.name,
             urduName: updated.urduName || p.urduName,
             ratePerKg: updated.counterRatePerKg !== undefined ? updated.counterRatePerKg : p.ratePerKg,
-            availableKg: updated.physicalStockKg !== undefined ? updated.physicalStockKg : p.availableKg,
-            imageUrl: updated.imageUrl !== undefined ? updated.imageUrl : p.imageUrl
+            availableKg: newAvail,
+            imageUrl: updated.imageUrl !== undefined ? updated.imageUrl : p.imageUrl,
+            minStockThreshold: threshold,
+            isLowStock: newAvail <= threshold
           };
         }
         return p;
@@ -897,7 +917,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             marginPerKg: Math.round(newMargin * 100) / 100,
             marginPercentage: Math.round(marginPct * 10) / 10,
             latestInwardDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-            lotStatus: updatedKg > 200 ? 'In Stock' : updatedKg > 0 ? 'Low Stock' : 'Out of Stock'
+            lotStatus: updatedKg <= 0 ? 'Out of Stock' : updatedKg <= (item.minStockThreshold ?? 20) ? 'Low Stock' : 'In Stock'
           };
         }
         return item;
@@ -908,10 +928,13 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setProducts((prev) =>
         prev.map((p) => {
           if (p.id === id) {
+            const newAvail = p.availableKg + additionalKg;
+            const threshold = p.minStockThreshold !== undefined ? p.minStockThreshold : 20;
             return {
               ...p,
               ratePerKg: updatedSellingRate || p.ratePerKg,
-              availableKg: p.availableKg + additionalKg
+              availableKg: newAvail,
+              isLowStock: newAvail <= threshold
             };
           }
           return p;

@@ -36,9 +36,11 @@ export const StockInventoryScreen: React.FC = () => {
   );
   const totalBulkKg = inventory.reduce((sum, item) => sum + item.physicalStockKg, 0);
   const totalBags = inventory.reduce((sum, item) => sum + item.bagsCount, 0);
-  const lowStockCount = inventory.filter(
-    (i) => i.lotStatus === 'Low Stock' || i.lotStatus === 'Critical Low'
-  ).length;
+  const isItemLowStock = (i: InventoryItem) => {
+    const threshold = i.minStockThreshold !== undefined ? i.minStockThreshold : 20;
+    return i.physicalStockKg > 0 && i.physicalStockKg <= threshold;
+  };
+  const lowStockCount = inventory.filter(isItemLowStock).length;
 
   const filterChips = [
     { id: 'All', label: isUr ? `سب اشیاء [${inventory.length}]` : `All Items [${inventory.length}]` },
@@ -88,7 +90,7 @@ export const StockInventoryScreen: React.FC = () => {
           !item.category.includes('Atta') &&
           !item.category.includes('Sugar'));
     } else if (selectedFilter === 'LowStock') {
-      matchesFilter = item.lotStatus === 'Low Stock' || item.lotStatus === 'Critical Low';
+      matchesFilter = isItemLowStock(item);
     }
 
     return matchesSearch && matchesFilter;

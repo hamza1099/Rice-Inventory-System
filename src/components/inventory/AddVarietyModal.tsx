@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { InventoryItem } from '../../types';
-import { X, PlusCircle, Sparkles, DollarSign, Loader2 } from 'lucide-react';
+import { X, PlusCircle, Sparkles, DollarSign, Loader2, AlertCircle } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 import { transliterateEnglishToUrduName } from '../../utils/urduTransliterator';
 import { notifySuccess, notifyWarning } from '../../utils/toast';
@@ -51,6 +51,7 @@ export const AddVarietyModal: React.FC<AddVarietyModalProps> = ({ isOpen, onClos
   const [tareDeductionKg, setTareDeductionKg] = useState<number>(0.12);
 
   const [packsCount, setPacksCount] = useState<number>(0);
+  const [minStockThreshold, setMinStockThreshold] = useState<number>(20);
   const [costPerPack, setCostPerPack] = useState<number>(0);
   const [costPerUnit, setCostPerUnit] = useState<number>(0);
   const [counterRatePerPack, setCounterRatePerPack] = useState<number>(0);
@@ -216,6 +217,15 @@ export const AddVarietyModal: React.FC<AddVarietyModalProps> = ({ isOpen, onClos
 
       const resolvedUnitLabel = unitType === 'piece' ? '/ pc' : unitType === 'liter' ? '/ liter' : '/ kg';
 
+      const threshold = minStockThreshold !== undefined ? Number(minStockThreshold) : 20;
+      const lotStatus = totalUnits <= 0
+        ? 'Out of Stock'
+        : totalUnits <= (threshold / 2)
+          ? 'Critical Low'
+          : totalUnits <= threshold
+            ? 'Low Stock'
+            : 'In Stock';
+
       const newItem: InventoryItem = {
         id: `inv-${Date.now()}`,
         varietyName: varietyName.trim(),
@@ -227,7 +237,8 @@ export const AddVarietyModal: React.FC<AddVarietyModalProps> = ({ isOpen, onClos
         physicalStockKg: totalUnits,
         bagsCount: packsCount,
         bagTypeLabel: isUr ? packPluralUr : packPluralEn,
-        lotStatus: totalUnits > 100 ? 'In Stock' : totalUnits > 0 ? 'Low Stock' : 'Out of Stock',
+        minStockThreshold: threshold,
+        lotStatus,
         costPerKg: costPerUnit,
         previousCostPerKg: costPerUnit,
         latestInwardCostPerKg: costPerUnit,
@@ -549,6 +560,39 @@ export const AddVarietyModal: React.FC<AddVarietyModalProps> = ({ isOpen, onClos
                 <span>{totalUnits.toLocaleString()}</span>
                 <span className="text-[10px] text-slate-500 font-bold uppercase">{unitNameEn}</span>
               </div>
+            </div>
+          </div>
+
+          {/* Low Stock Alert Threshold Setting */}
+          <div className="bg-amber-50/70 border border-amber-200/90 rounded-lg p-2.5 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-bold text-amber-900 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                <span>{isUr ? 'کم سٹاک الرٹ کی حد (وارننگ پوائنٹ):' : 'Low Stock Alert Limit / Threshold:'}</span>
+              </label>
+              <span className="text-[10px] text-amber-800 font-semibold">
+                {isUr ? 'کس مقدار پر الرٹ دکھائے؟' : 'When should alert trigger?'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="relative w-36">
+                <NumberInput
+                  min="0"
+                  value={minStockThreshold}
+                  onChange={(val) => setMinStockThreshold(val)}
+                  className="w-full pl-2.5 pr-12 py-1.5 border border-amber-300 rounded font-bold font-mono-num text-xs bg-white text-amber-950 focus:border-amber-500 focus:outline-hidden"
+                  placeholder="20"
+                  allowDecimals={true}
+                />
+                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-amber-700 uppercase">
+                  {unitNameEn}
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-600 font-medium">
+                {isUr 
+                  ? `جب سٹاک ${minStockThreshold} ${unitNameUr} یا اس سے کم رہ جائے گا تو پیلا "Low Stock" الرٹ آئے گا۔`
+                  : `Shows yellow "Low Stock" badge only when available drops to ≤ ${minStockThreshold} ${unitNameEn}.`}
+              </span>
             </div>
           </div>
 

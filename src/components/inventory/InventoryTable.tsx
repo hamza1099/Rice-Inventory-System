@@ -61,6 +61,14 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
     return label.replace(/\s*\([^)]*[\u0600-\u06FF]+[^)]*\)/g, '').trim();
   };
 
+  const getDynamicLotStatus = (item: InventoryItem): InventoryItem['lotStatus'] => {
+    const threshold = item.minStockThreshold !== undefined ? item.minStockThreshold : 20;
+    if (item.physicalStockKg <= 0) return 'Out of Stock';
+    if (item.physicalStockKg <= threshold / 2) return 'Critical Low';
+    if (item.physicalStockKg <= threshold) return 'Low Stock';
+    return 'In Stock';
+  };
+
   const getStatusBadge = (status: InventoryItem['lotStatus']) => {
     switch (status) {
       case 'In Stock':
@@ -234,7 +242,12 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
 
                 {/* Status Badge */}
                 <td className="py-3 px-3 text-center">
-                  {getStatusBadge(item.lotStatus)}
+                  {getStatusBadge(getDynamicLotStatus(item))}
+                  {item.minStockThreshold !== undefined && (
+                    <span className="text-[9px] text-slate-400 block font-normal mt-0.5 font-mono-num">
+                      {isUr ? `حد: ${item.minStockThreshold}` : `Min: ${item.minStockThreshold}`}
+                    </span>
+                  )}
                 </td>
 
                 {/* Cost */}
