@@ -20,14 +20,18 @@ export const EditMemoModal: React.FC<EditMemoModalProps> = ({ memo, isOpen, onCl
   const [customerName, setCustomerName] = useState<string>('');
   const [paymentMode, setPaymentMode] = useState<'SPOT CASH' | 'RAAST ONLINE'>('SPOT CASH');
   const [discount, setDiscount] = useState<number>(0);
+  const [memoDate, setMemoDate] = useState<string>('');
   const [items, setItems] = useState<CartItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
   useEffect(() => {
     if (memo) {
       setCustomerName(memo.customerName || 'Counter Retail Buyer');
       setPaymentMode(memo.paymentMode || 'SPOT CASH');
       setDiscount(memo.discount || 0);
+      setMemoDate(memo.dateStr || todayStr);
       setItems(JSON.parse(JSON.stringify(memo.items || [])));
     }
   }, [memo]);
@@ -88,6 +92,7 @@ export const EditMemoModal: React.FC<EditMemoModalProps> = ({ memo, isOpen, onCl
       const updatedRecord: MemoRecord = {
         ...memo,
         customerName: customerName.trim() || 'Counter Retail Buyer',
+        dateStr: memoDate.trim() || memo.dateStr,
         paymentMode,
         discount,
         grossAmount: grossTotal,
@@ -164,17 +169,41 @@ export const EditMemoModal: React.FC<EditMemoModalProps> = ({ memo, isOpen, onCl
 
         {/* Scrollable Content */}
         <div className="p-5 space-y-4 overflow-y-auto">
-          {/* Customer Name & Payment Mode */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Customer Name, Date & Payment Mode */}
+          <div className="grid grid-cols-3 gap-2.5">
             <div>
               <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                {isUr ? 'گاہک / خریدار کا نام:' : 'Customer / Buyer Name:'}
+                {isUr ? 'گاہک کا نام:' : 'Customer Name:'}
               </label>
               <input
                 type="text"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans"
+                className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans text-xs"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] font-bold text-slate-700">
+                  {isUr ? 'تاریخ:' : 'Memo Date:'}
+                </label>
+                {memoDate !== todayStr && (
+                  <button
+                    type="button"
+                    onClick={() => setMemoDate(todayStr)}
+                    className="text-[9.5px] font-bold text-emerald-700 hover:text-emerald-900 underline cursor-pointer"
+                  >
+                    {isUr ? 'آج کی تاریخ' : 'Set Today'}
+                  </button>
+                )}
+              </div>
+              <input
+                type="text"
+                value={memoDate}
+                onChange={(e) => setMemoDate(e.target.value)}
+                placeholder="e.g. 17 Nov 2026"
+                className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono-num text-xs font-semibold"
               />
             </div>
 
@@ -182,11 +211,11 @@ export const EditMemoModal: React.FC<EditMemoModalProps> = ({ memo, isOpen, onCl
               <label className="block text-[11px] font-bold text-slate-700 mb-1">
                 {isUr ? 'طریقہ ادائیگی:' : 'Payment Mode:'}
               </label>
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-2 gap-1">
                 <button
                   type="button"
                   onClick={() => setPaymentMode('SPOT CASH')}
-                  className={`py-1.5 px-2 rounded-lg font-bold text-[10px] transition-all border ${
+                  className={`py-1.5 px-1 rounded-lg font-bold text-[9.5px] transition-all border cursor-pointer ${
                     paymentMode === 'SPOT CASH'
                       ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
                       : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -197,13 +226,13 @@ export const EditMemoModal: React.FC<EditMemoModalProps> = ({ memo, isOpen, onCl
                 <button
                   type="button"
                   onClick={() => setPaymentMode('RAAST ONLINE')}
-                  className={`py-1.5 px-2 rounded-lg font-bold text-[10px] transition-all border ${
+                  className={`py-1.5 px-1 rounded-lg font-bold text-[9.5px] transition-all border cursor-pointer ${
                     paymentMode === 'RAAST ONLINE'
                       ? 'bg-blue-700 text-white border-blue-700 shadow-xs'
                       : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
-                  RAAST ONLINE
+                  RAAST
                 </button>
               </div>
             </div>

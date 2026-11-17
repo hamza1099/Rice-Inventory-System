@@ -3,25 +3,36 @@ import { ShieldCheck, Lock, CheckCircle2, Shield, CalendarCheck } from 'lucide-r
 import { useNavigate } from 'react-router-dom';
 import { RouteName } from '../../routes/RouteName';
 import { usePos } from '../../context/PosContext';
+import type { MemoRecord } from '../../types';
 
 interface DrawerAuditCardProps {
   activePeriod?: string;
+  filteredMemos?: MemoRecord[];
+  dateRangeLabel?: string;
 }
 
-export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({ activePeriod = 'today' }) => {
+export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({
+  activePeriod = 'today',
+  filteredMemos,
+  dateRangeLabel
+}) => {
   const navigate = useNavigate();
   const { isDayClosed, openingFloat, memos, language } = usePos();
   const isUr = language === 'ur';
 
-  const spotMemos = memos.filter((m) => m.paymentMode === 'SPOT CASH');
+  // Use the filtered memos for this exact period/date range!
+  const targetMemos = filteredMemos ?? memos;
+
+  const spotMemos = targetMemos.filter((m) => m.paymentMode === 'SPOT CASH');
   const spotCashCollected = spotMemos.reduce((sum, m) => sum + m.netAmount, 0);
   const spotMemosCount = spotMemos.length;
 
-  const raastMemos = memos.filter((m) => m.paymentMode === 'RAAST ONLINE');
+  const raastMemos = targetMemos.filter((m) => m.paymentMode === 'RAAST ONLINE');
   const onlineRaastTransfers = raastMemos.reduce((sum, m) => sum + m.netAmount, 0);
   const raastTransCount = raastMemos.length;
 
-  const totalHandoverCash = openingFloat + spotCashCollected;
+  const currentFloat = activePeriod === 'today' ? openingFloat : 0;
+  const totalHandoverCash = currentFloat + spotCashCollected;
   const totalBusiness = spotCashCollected + onlineRaastTransfers;
   const cashRatio = totalBusiness > 0 ? Math.round((spotCashCollected / totalBusiness) * 1000) / 10 : 100;
   const raastRatio = totalBusiness > 0 ? Math.round((onlineRaastTransfers / totalBusiness) * 1000) / 10 : 0;
@@ -55,10 +66,10 @@ export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({ activePeriod =
               {isUr ? 'صبح کا ابتدائی کیش:' : 'OPENING FLOAT:'}
             </span>
             <span className="text-base font-black text-slate-900">
-              PKR {openingFloat.toLocaleString()}
+              PKR {currentFloat.toLocaleString()}
             </span>
             <span className="text-[10px] text-slate-400 block font-sans">
-              {isUr ? 'ابتدائی فلوٹ' : 'Base Change Float'}
+              {activePeriod === 'today' ? (isUr ? 'ابتدائی فلوٹ' : 'Base Change Float') : (isUr ? 'ماضی کی تاریخ' : 'Past Period')}
             </span>
           </div>
 
@@ -96,7 +107,9 @@ export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({ activePeriod =
             <div className="text-xl font-black text-slate-900">
               PKR {totalHandoverCash.toLocaleString()}{' '}
               <span className="text-[11px] font-medium text-slate-500">
-                (Float {openingFloat.toLocaleString()} + Drawer {spotCashCollected.toLocaleString()})
+                {activePeriod === 'today'
+                  ? `(Float ${currentFloat.toLocaleString()} + Drawer ${spotCashCollected.toLocaleString()})`
+                  : `(Period Receipts: PKR ${spotCashCollected.toLocaleString()})`}
               </span>
             </div>
           </div>
