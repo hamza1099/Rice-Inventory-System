@@ -115,7 +115,7 @@ export const ReceivePaymentModal: React.FC<ReceivePaymentModalProps> = ({
               <NumberInput
                 required
                 min="0"
-                step="10"
+                step="any"
                 value={amount}
                 onChange={(val) => setAmount(val)}
                 className="w-full text-xl font-black font-mono-num pl-9 pr-3 py-2 bg-white border-2 border-emerald-600 rounded-lg text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20"

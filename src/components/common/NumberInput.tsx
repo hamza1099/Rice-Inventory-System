@@ -17,6 +17,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   className = '',
   allowNegative = false,
   allowDecimals = true,
+  step = 'any',
   ...props
 }) => {
   // Convert 0 or '' to string representation
@@ -83,6 +84,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
       onBlur={handleBlur}
       placeholder={placeholder}
       className={className}
+      step={step}
       {...props}
     />
   );

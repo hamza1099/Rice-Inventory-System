@@ -227,7 +227,7 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
               <div className="relative">
                 <NumberInput
                   min="0"
-                  step="100"
+                  step="any"
                   value={openingBalance}
                   onChange={(val) => setOpeningBalance(val)}
                   className="w-full pl-7 pr-3 py-1.5 bg-white border border-slate-300 rounded font-bold font-mono-num text-slate-900"
@@ -247,7 +247,7 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
               <div className="relative">
                 <NumberInput
                   min="0"
-                  step="5000"
+                  step="any"
                   value={creditLimit}
                   onChange={(val) => setCreditLimit(val)}
                   className="w-full pl-7 pr-3 py-1.5 bg-white border border-slate-300 rounded font-bold font-mono-num text-slate-900"

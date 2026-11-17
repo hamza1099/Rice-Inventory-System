@@ -224,7 +224,7 @@ export const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
                 </label>
                 <NumberInput
                   min="0"
-                  step="5000"
+                  step="any"
                   value={creditLimit}
                   onChange={(val) => setCreditLimit(val)}
                   className="w-full px-2.5 py-1.5 border border-slate-300 rounded font-bold font-mono-num text-slate-900"
