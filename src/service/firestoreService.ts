@@ -97,6 +97,7 @@ export const addInventoryItemDoc = async (item: InventoryItem): Promise<void> =>
     category: item.category || 'Rice',
     badgeLabel: item.category ? item.category.toUpperCase().slice(0, 12) : 'GRAIN',
     ratePerKg: item.counterRatePerKg,
+    costPerKg: item.costPerKg,
     unitLabel: resolvedUnitLabel,
     availableKg: item.physicalStockKg,
     availableStockLabel,
@@ -135,6 +136,7 @@ export const updateInventoryItemDoc = async (
       prodUpdates.badgeLabel = updates.category.toUpperCase().slice(0, 12);
     }
     if (updates.counterRatePerKg !== undefined) prodUpdates.ratePerKg = updates.counterRatePerKg;
+    if (updates.costPerKg !== undefined) prodUpdates.costPerKg = updates.costPerKg;
     if (updates.unitLabel) prodUpdates.unitLabel = updates.unitLabel;
     if (updates.physicalStockKg !== undefined) {
       prodUpdates.availableKg = updates.physicalStockKg;

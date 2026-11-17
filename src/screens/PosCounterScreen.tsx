@@ -21,7 +21,8 @@ export const PosCounterScreen: React.FC = () => {
     isPreviousSessionUnclosed,
     setIsUnclosedModalOpen,
     setIsOpeningModalOpen,
-    startNewDay
+    startNewDay,
+    isProductsLoading
   } = usePos();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -237,20 +238,46 @@ export const PosCounterScreen: React.FC = () => {
 
           {/* Product Cards Grid: ONLY THIS CONTAINER SCROLLS! ("mid wala card khali scrol hona chahya") */}
           <div className="flex-1 min-h-0 overflow-y-auto pr-1">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-2 auto-rows-max pb-1">
-              {filteredProducts.map((prod) => (
-                <ProductCard key={prod.id} product={prod} />
-              ))}
-            </div>
-            {filteredProducts.length === 0 && (
-              <div className="py-12 text-center text-slate-400">
-                <p className="font-bold text-xs">
-                  {language === 'ur' ? 'کوئی پروڈکٹ نہیں ملا' : 'No products found matching filter.'}
-                </p>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  {language === 'ur' ? 'فلٹر یا تلاش کے الفاظ تبدیل کریں' : 'Change search keyword or category filter.'}
-                </p>
+            {isProductsLoading && products.length === 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-2 auto-rows-max pb-1">
+                {Array.from({ length: 15 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="bg-white rounded-xl border border-slate-200 p-2.5 flex flex-col justify-between h-[155px] animate-pulse"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="w-12 h-12 bg-slate-100 rounded-lg" />
+                      <div className="w-10 h-4 bg-slate-100 rounded-md" />
+                    </div>
+                    <div className="space-y-1.5 my-2">
+                      <div className="w-3/4 h-3 bg-slate-100 rounded" />
+                      <div className="w-1/2 h-2.5 bg-slate-100 rounded" />
+                    </div>
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                      <div className="w-14 h-4 bg-slate-100 rounded" />
+                      <div className="w-12 h-4 bg-slate-100 rounded" />
+                    </div>
+                  </div>
+                ))}
               </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-2 auto-rows-max pb-1">
+                  {filteredProducts.map((prod) => (
+                    <ProductCard key={prod.id} product={prod} />
+                  ))}
+                </div>
+                {filteredProducts.length === 0 && (
+                  <div className="py-12 text-center text-slate-400">
+                    <p className="font-bold text-xs">
+                      {language === 'ur' ? 'کوئی پروڈکٹ نہیں ملا' : 'No products found matching filter.'}
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      {language === 'ur' ? 'فلٹر یا تلاش کے الفاظ تبدیل کریں' : 'Change search keyword or category filter.'}
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

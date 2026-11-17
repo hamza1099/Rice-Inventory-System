@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { InventoryItem } from '../../types';
-import { PlusCircle, Edit3, Trash2, FileText, TrendingUp, TrendingDown, Image as ImageIcon, ZoomIn } from 'lucide-react';
+import { PlusCircle, Edit3, Trash2, FileText, TrendingUp, TrendingDown, Image as ImageIcon, ZoomIn, Loader2 } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 import { notifyInfo, notifySuccess } from '../../utils/toast';
 import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/productImages';
@@ -11,13 +11,15 @@ interface InventoryTableProps {
   onOpenInward: (item: InventoryItem) => void;
   onOpenRateEdit: (item: InventoryItem) => void;
   onDeleteItem?: (id: string) => void;
+  isLoading?: boolean;
 }
 
 export const InventoryTable: React.FC<InventoryTableProps> = ({
   inventory,
   onOpenInward,
   onOpenRateEdit,
-  onDeleteItem
+  onDeleteItem,
+  isLoading = false
 }) => {
   const { openImagePreview, language } = usePos();
   const isUr = language === 'ur';
@@ -138,7 +140,27 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-mono-num">
-            {inventory.length === 0 ? (
+            {isLoading && inventory.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="py-20 text-center">
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-800 flex items-center justify-center shadow-xs border border-emerald-200/80 animate-pulse">
+                      <Loader2 className="w-6 h-6 text-emerald-700 animate-spin" />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="font-extrabold text-sm text-slate-800 block">
+                        {isUr ? 'گودام سٹاک لوڈ ہو رہا ہے...' : 'Loading Godown Inventory...'}
+                      </span>
+                      <span className="text-xs text-slate-500 font-sans">
+                        {isUr
+                          ? 'براہ کرم چند سیکنڈ انتظار فرمائیں، تمام اجناس لوڈ ہو رہی ہیں'
+                          : 'Synchronizing live lots and physical stock...'}
+                      </span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            ) : inventory.length === 0 ? (
               <tr>
                 <td colSpan={8} className="py-16 text-center text-slate-500">
                   <div className="flex flex-col items-center justify-center space-y-2">

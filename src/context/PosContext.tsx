@@ -52,6 +52,7 @@ interface PosContextType {
   logout: () => Promise<void>;
   // Products & Cart
   products: Product[];
+  isProductsLoading: boolean;
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
@@ -77,6 +78,7 @@ interface PosContextType {
   setCashReceived: (val: number) => void;
   completeSale: () => MemoRecord | null;
   memos: MemoRecord[];
+  isMemosLoading: boolean;
   activeReceipt: MemoRecord | null;
   setActiveReceipt: (rec: MemoRecord | null) => void;
   deleteMemo: (memoId: string) => Promise<void>;
@@ -85,6 +87,7 @@ interface PosContextType {
 
   // Inventory & Product CRUD
   inventory: InventoryItem[];
+  isInventoryLoading: boolean;
   addInventoryItem: (item: InventoryItem) => void;
   updateInventoryItem: (id: string, updated: Partial<InventoryItem>) => void;
   deleteInventoryItem: (id: string) => void;
@@ -191,7 +194,22 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return localStorage.getItem('ricecms_auth_active') !== 'true';
   });
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const cached = localStorage.getItem('ricecms_cached_products');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isProductsLoading, setIsProductsLoading] = useState<boolean>(() => {
+    try {
+      const cached = localStorage.getItem('ricecms_cached_products');
+      return !cached || JSON.parse(cached).length === 0;
+    } catch {
+      return true;
+    }
+  });
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const [selectedProductForModal, setSelectedProductForModal] = useState<Product | null>(null);
@@ -205,12 +223,42 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [spotDiscount, setSpotDiscount] = useState<number>(0);
   const [paymentMode, setPaymentMode] = useState<'SPOT CASH' | 'RAAST ONLINE'>('SPOT CASH');
   const [cashReceived, setCashReceived] = useState<number>(0);
-  const [memos, setMemos] = useState<MemoRecord[]>([]);
+  const [memos, setMemos] = useState<MemoRecord[]>(() => {
+    try {
+      const cached = localStorage.getItem('ricecms_cached_memos');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isMemosLoading, setIsMemosLoading] = useState<boolean>(() => {
+    try {
+      const cached = localStorage.getItem('ricecms_cached_memos');
+      return !cached || JSON.parse(cached).length === 0;
+    } catch {
+      return true;
+    }
+  });
   const memosRef = useRef<MemoRecord[]>([]);
   const [activeReceipt, setActiveReceipt] = useState<MemoRecord | null>(null);
 
   // Inventory
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>(() => {
+    try {
+      const cached = localStorage.getItem('ricecms_cached_inventory');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isInventoryLoading, setIsInventoryLoading] = useState<boolean>(() => {
+    try {
+      const cached = localStorage.getItem('ricecms_cached_inventory');
+      return !cached || JSON.parse(cached).length === 0;
+    } catch {
+      return true;
+    }
+  });
 
   // Helper to verify if an ISO date string matches today
   const isDateToday = (isoStr: string | null): boolean => {
@@ -385,15 +433,27 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Live Firestore Subscriptions (Clean direct sync, no mock fallback)
     const unsubInv = subscribeToInventory((items) => {
       setInventory(items || []);
+      setIsInventoryLoading(false);
+      try {
+        localStorage.setItem('ricecms_cached_inventory', JSON.stringify(items || []));
+      } catch (_) {}
     });
 
     const unsubProds = subscribeToProducts((prods) => {
       setProducts(prods || []);
+      setIsProductsLoading(false);
+      try {
+        localStorage.setItem('ricecms_cached_products', JSON.stringify(prods || []));
+      } catch (_) {}
     });
 
     const unsubMemos = subscribeToMemos((memosList) => {
       memosRef.current = memosList || [];
       setMemos(memosList || []);
+      setIsMemosLoading(false);
+      try {
+        localStorage.setItem('ricecms_cached_memos', JSON.stringify(memosList || []));
+      } catch (_) {}
     });
 
     const unsubCusts = subscribeToKhataCustomers((custs) => {
@@ -910,6 +970,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       category: categoryMapping,
       badgeLabel: newItem.category.toUpperCase(),
       ratePerKg: newItem.counterRatePerKg,
+      costPerKg: newItem.costPerKg,
       availableKg: newItem.physicalStockKg,
       binLocation: 'Godown Stack',
       imageUrl: newItem.imageUrl,
@@ -971,6 +1032,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             name: updated.varietyName || p.name,
             urduName: updated.urduName || p.urduName,
             ratePerKg: updated.counterRatePerKg !== undefined ? updated.counterRatePerKg : p.ratePerKg,
+            costPerKg: updated.costPerKg !== undefined ? updated.costPerKg : p.costPerKg,
             availableKg: newAvail,
             imageUrl: updated.imageUrl !== undefined ? updated.imageUrl : p.imageUrl,
             minStockThreshold: threshold,
@@ -1157,6 +1219,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isAuthLoading,
         logout,
         products,
+        isProductsLoading,
         cart,
         addToCart,
         removeFromCart,
@@ -1178,12 +1241,14 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCashReceived,
         completeSale,
         memos,
+        isMemosLoading,
         activeReceipt,
         setActiveReceipt,
         deleteMemo,
         updateMemo,
         reloadMemoToCart,
         inventory,
+        isInventoryLoading,
         addInventoryItem,
         updateInventoryItem,
         deleteInventoryItem,

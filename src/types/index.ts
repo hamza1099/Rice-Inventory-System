@@ -7,6 +7,7 @@ export interface Product {
   category: string;
   badgeLabel: string;
   ratePerKg: number;
+  costPerKg?: number;
   unitLabel?: string; // '/ kg', '/ pkt', '/ liter'
   availableKg: number;
   availableStockLabel?: string;
@@ -31,6 +32,7 @@ export interface CartItem {
   tareName: string;
   netWeight: number;
   ratePerKg: number;
+  costPerKg?: number;
   subtotal: number;
 }
 

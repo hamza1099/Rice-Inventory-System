@@ -13,7 +13,8 @@ export const ScaleTerminal: React.FC = () => {
     setIsScaleLocked,
     scaleTare,
     setScaleTare,
-    language
+    language,
+    inventory
   } = usePos();
 
   const [customUnit, setCustomUnit] = useState<'kg' | 'mund' | 'bag'>('kg');
@@ -50,16 +51,24 @@ export const ScaleTerminal: React.FC = () => {
     }
 
     const subtotal = netKg * prod.ratePerKg;
+    const invMatch = inventory.find(
+      (i) =>
+        i.id === prod.id ||
+        i.varietyName.trim().toLowerCase() === prod.name.trim().toLowerCase() ||
+        (prod.urduName && i.urduName && i.urduName.trim() === prod.urduName.trim())
+    );
+    const itemCost = prod.costPerKg ?? invMatch?.costPerKg ?? 0;
 
     addToCart({
       id: `cart-${Date.now()}`,
-      product: prod,
+      product: { ...prod, costPerKg: itemCost },
       mode: customUnit === 'bag' ? 'bags' : customUnit === 'mund' ? 'mund' : 'kg',
       grossWeight: netKg + scaleTare,
       tareWeight: scaleTare,
       tareName: scaleTare > 0 ? 'Scale Tare' : 'Zero Tare',
       netWeight: netKg,
       ratePerKg: prod.ratePerKg,
+      costPerKg: itemCost,
       subtotal
     });
   };

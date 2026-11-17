@@ -7,13 +7,15 @@ import { DrawerAuditCard } from '../components/memo/DrawerAuditCard';
 import { ReceiptPrintModal } from '../components/pos/ReceiptPrintModal';
 import { CalendarRangeModal } from '../components/memo/CalendarRangeModal';
 import { notifySuccess, notifyInfo } from '../utils/toast';
-import { DollarSign, Wallet, CreditCard, TrendingUp, X } from 'lucide-react';
+import { DollarSign, Wallet, CreditCard, TrendingUp, TrendingDown, X } from 'lucide-react';
 
 export const DailyMemoScreen: React.FC = () => {
-  const { memos, language } = usePos();
+  const { memos, inventory, language, isMemosLoading } = usePos();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [activePeriod, setActivePeriod] = useState<string>('today');
   const [selectedPayment, setSelectedPayment] = useState<string>('ALL');
+
+  const isInitialLoading = isMemosLoading && memos.length === 0;
 
   // Dynamic date helpers
   const getTodayIso = () => new Date().toISOString().slice(0, 10);
@@ -107,7 +109,46 @@ export const DailyMemoScreen: React.FC = () => {
   const raastCollected = filteredMemos
     .filter((m) => m.paymentMode === 'RAAST ONLINE')
     .reduce((sum, m) => sum + m.netAmount, 0);
-  const grossProfit = Math.round(totalSales * 0.164); // ~16.4% Mandi margin
+
+  // Exact Cost of Goods Sold (COGS) & Gross Profit / Loss
+  let totalCost = 0;
+  let totalKgSold = 0;
+
+  filteredMemos.forEach((memo) => {
+    if (memo.items && memo.items.length > 0) {
+      memo.items.forEach((item) => {
+        const soldQty = item.netWeight || item.grossWeight || 0;
+        totalKgSold += soldQty;
+
+        // Resolve accurate unit cost
+        let unitCost: number | undefined = item.costPerKg ?? item.product?.costPerKg;
+        if (unitCost === undefined || unitCost === 0) {
+          const invMatch = inventory.find(
+            (inv) =>
+              inv.id === item.product?.id ||
+              inv.varietyName.trim().toLowerCase() === (item.product?.name || '').trim().toLowerCase() ||
+              (item.product?.urduName && inv.urduName && inv.urduName.trim() === item.product.urduName.trim()) ||
+              (item.product?.name && inv.varietyName.trim().toLowerCase().includes(item.product.name.trim().toLowerCase())) ||
+              (item.product?.name && item.product.name.trim().toLowerCase().includes(inv.varietyName.trim().toLowerCase()))
+          );
+          if (invMatch && invMatch.costPerKg !== undefined) {
+            unitCost = invMatch.costPerKg;
+          }
+        }
+
+        if (unitCost !== undefined && unitCost > 0) {
+          totalCost += soldQty * unitCost;
+        }
+      });
+    }
+  });
+
+  const grossProfit = Math.round(totalSales - totalCost);
+  const isLoss = grossProfit < 0;
+  const marginPercentage = totalSales > 0 ? (grossProfit / totalSales) * 100 : 0;
+  const avgProfitPerKg = totalKgSold > 0 ? grossProfit / totalKgSold : 0;
+  const formattedMargin = (marginPercentage > 0 ? '+' : '') + marginPercentage.toFixed(1) + '%';
+  const formattedAvg = (avgProfitPerKg > 0 ? '+' : '') + 'PKR ' + avgProfitPerKg.toFixed(1) + '/KG';
 
   // Export CSV handler
   const handleExportCSV = () => {
@@ -154,6 +195,7 @@ export const DailyMemoScreen: React.FC = () => {
       {/* 4 Stat Cards Dynamically Updated */}
       <div className="grid grid-cols-4 gap-3">
         <StatCard
+          isLoading={isInitialLoading}
           title="PERIOD SPOT SALES"
           urduTitle="کل نقد فروخت"
           value={`PKR ${totalSales.toLocaleString()}`}
@@ -166,6 +208,7 @@ export const DailyMemoScreen: React.FC = () => {
         />
 
         <StatCard
+          isLoading={isInitialLoading}
           title="CASH COLLECTED"
           urduTitle="کیش وصولی"
           value={`PKR ${cashCollected.toLocaleString()}`}
@@ -178,6 +221,7 @@ export const DailyMemoScreen: React.FC = () => {
         />
 
         <StatCard
+          isLoading={isInitialLoading}
           title="RAAST & ONLINE IBFT"
           urduTitle="راست / آن لائن"
           value={`PKR ${raastCollected.toLocaleString()}`}
@@ -190,15 +234,20 @@ export const DailyMemoScreen: React.FC = () => {
         />
 
         <StatCard
-          title="GROSS PROFIT"
-          urduTitle="مجموعی منافع"
-          value={`PKR ${grossProfit.toLocaleString()}`}
-          subValue={`Filtered Margin: +16.4% • AVG PKR 26.5/KG`}
-          badge="+16.4%"
-          badgeColor="emerald"
-          icon={TrendingUp}
-          iconBg="bg-amber-100"
-          iconColor="text-amber-800"
+          isLoading={isInitialLoading}
+          title={isLoss ? "GROSS LOSS" : "GROSS PROFIT"}
+          urduTitle={isLoss ? "مجموعی نقصان" : "مجموعی منافع"}
+          value={`${isLoss ? '-' : ''}PKR ${Math.abs(grossProfit).toLocaleString()}`}
+          subValue={
+            totalSales > 0
+              ? `Filtered Margin: ${formattedMargin} • AVG ${formattedAvg}`
+              : `Filtered Margin: 0% • AVG PKR 0/KG`
+          }
+          badge={formattedMargin}
+          badgeColor={isLoss ? "red" : "emerald"}
+          icon={isLoss ? TrendingDown : TrendingUp}
+          iconBg={isLoss ? "bg-rose-100" : "bg-emerald-100"}
+          iconColor={isLoss ? "text-rose-700" : "text-emerald-800"}
         />
       </div>
 
@@ -232,7 +281,7 @@ export const DailyMemoScreen: React.FC = () => {
       </div>
 
       {/* Memo Records Table */}
-      <MemoLedgerTable memos={filteredMemos} />
+      <MemoLedgerTable memos={filteredMemos} isLoading={isInitialLoading} />
 
       {/* Bottom Shift Reconciliation & Drawer Audit */}
       <DrawerAuditCard activePeriod={activePeriod} />

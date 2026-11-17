@@ -13,6 +13,7 @@ interface StatCardProps {
   iconBg?: string;
   iconColor?: string;
   compact?: boolean;
+  isLoading?: boolean;
 }
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -25,7 +26,8 @@ export const StatCard: React.FC<StatCardProps> = ({
   icon: Icon,
   iconBg = 'bg-emerald-50',
   iconColor = 'text-emerald-700',
-  compact = false
+  compact = false,
+  isLoading = false
 }) => {
   const { language } = usePos();
   const badgeClasses = {
@@ -54,16 +56,22 @@ export const StatCard: React.FC<StatCardProps> = ({
               </span>
             )}
           </div>
-          <div className={`flex items-baseline space-x-2 ${compact ? 'mt-0.5' : 'mt-1'}`}>
-            <span className={`font-black text-slate-900 tracking-tight font-mono-num ${compact ? 'text-base' : 'text-xl font-extrabold'}`}>
-              {value}
-            </span>
-            {badge && (
-              <span className={`font-bold rounded border ${compact ? 'text-[9px] px-1 py-0.2' : 'text-[10px] px-1.5 py-0.5'} ${badgeClasses}`}>
-                {badge}
+          {isLoading ? (
+            <div className="space-y-1.5 py-1">
+              <div className="h-5 w-24 bg-slate-200 animate-pulse rounded" />
+            </div>
+          ) : (
+            <div className={`flex items-baseline space-x-2 ${compact ? 'mt-0.5' : 'mt-1'}`}>
+              <span className={`font-black text-slate-900 tracking-tight font-mono-num ${compact ? 'text-base' : 'text-xl font-extrabold'}`}>
+                {value}
               </span>
-            )}
-          </div>
+              {badge && (
+                <span className={`font-bold rounded border ${compact ? 'text-[9px] px-1 py-0.2' : 'text-[10px] px-1.5 py-0.5'} ${badgeClasses}`}>
+                  {badge}
+                </span>
+              )}
+            </div>
+          )}
         </div>
         {Icon && (
           <div className={`rounded-md shrink-0 ${compact ? 'p-1.5' : 'p-2'} ${iconBg} ${iconColor}`}>
@@ -72,11 +80,15 @@ export const StatCard: React.FC<StatCardProps> = ({
         )}
       </div>
 
-      {subValue && (
+      {isLoading ? (
+        <div className={`border-t border-slate-100 ${compact ? 'mt-1 pt-1' : 'mt-2 pt-2'}`}>
+          <div className="h-3 w-32 bg-slate-100 animate-pulse rounded" />
+        </div>
+      ) : subValue ? (
         <div className={`border-t border-slate-100 text-slate-500 font-medium flex items-center justify-between ${compact ? 'mt-1 pt-1 text-[9.5px]' : 'mt-2 pt-2 text-[10px]'}`}>
           <span className="truncate">{subValue}</span>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

@@ -8,9 +8,10 @@ import { notifySuccess } from '../../utils/toast';
 
 interface MemoLedgerTableProps {
   memos: MemoRecord[];
+  isLoading?: boolean;
 }
 
-export const MemoLedgerTable: React.FC<MemoLedgerTableProps> = ({ memos }) => {
+export const MemoLedgerTable: React.FC<MemoLedgerTableProps> = ({ memos, isLoading = false }) => {
   const { setActiveReceipt, deleteMemo, language } = usePos();
   const isUr = language === 'ur';
   const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -35,10 +36,21 @@ export const MemoLedgerTable: React.FC<MemoLedgerTableProps> = ({ memos }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-mono-num">
-            {memos.length === 0 ? (
+            {isLoading && memos.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="py-14 text-center text-slate-500 font-sans">
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                    <p className="font-bold text-xs text-slate-700 font-mono tracking-wide">
+                      {isUr ? 'روزنامچہ کیش میمو لوڈ ہو رہے ہیں...' : 'Loading Daily Roznamcha Memos...'}
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            ) : memos.length === 0 ? (
               <tr>
                 <td colSpan={7} className="py-10 text-center text-slate-400 font-sans">
-                  No memos match the selected filters.
+                  {isUr ? 'منتخب فلٹر کے مطابق کوئی میمو نہیں ملا' : 'No memos match the selected filters.'}
                 </td>
               </tr>
             ) : (

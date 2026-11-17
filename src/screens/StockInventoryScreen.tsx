@@ -17,9 +17,11 @@ import {
 } from 'lucide-react';
 
 export const StockInventoryScreen: React.FC = () => {
-  const { inventory, setIsMandiChitOpen, deleteInventoryItem, language } = usePos();
+  const { inventory, setIsMandiChitOpen, deleteInventoryItem, language, isInventoryLoading } = usePos();
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const isInitialLoading = isInventoryLoading && inventory.length === 0;
 
   // Modals state
   const [inwardItem, setInwardItem] = useState<InventoryItem | null>(null);
@@ -43,7 +45,12 @@ export const StockInventoryScreen: React.FC = () => {
   const lowStockCount = inventory.filter(isItemLowStock).length;
 
   const filterChips = [
-    { id: 'All', label: isUr ? `سب اشیاء [${inventory.length}]` : `All Items [${inventory.length}]` },
+    {
+      id: 'All',
+      label: isUr
+        ? `سب اشیاء [${isInitialLoading ? '•••' : inventory.length}]`
+        : `All Items [${isInitialLoading ? '•••' : inventory.length}]`
+    },
     { id: 'Rice', label: isUr ? 'چاول' : 'Rice' },
     { id: 'Pulses', label: isUr ? 'دالیں' : 'Pulses / Daal' },
     { id: 'Spices', label: isUr ? 'کھلا مصالحہ' : 'Spices' },
@@ -53,7 +60,12 @@ export const StockInventoryScreen: React.FC = () => {
     { id: 'Atta', label: isUr ? 'آٹا' : 'Atta' },
     { id: 'Sugar', label: isUr ? 'چینی' : 'Sugar' },
     { id: 'Other', label: isUr ? 'دیگر' : 'Other' },
-    { id: 'LowStock', label: isUr ? `کم سٹاک [${lowStockCount}]` : `Low Stock Only [${lowStockCount}]` }
+    {
+      id: 'LowStock',
+      label: isUr
+        ? `کم سٹاک [${isInitialLoading ? '•••' : lowStockCount}]`
+        : `Low Stock Only [${isInitialLoading ? '•••' : lowStockCount}]`
+    }
   ];
 
   const filteredInventory = inventory.filter((item) => {
@@ -155,6 +167,7 @@ export const StockInventoryScreen: React.FC = () => {
       <div className="shrink-0 grid grid-cols-3 gap-2">
         <StatCard
           compact
+          isLoading={isInitialLoading}
           title="VARIETIES TRACKED"
           urduTitle="اجناس لسٹ"
           value={`${inventory.length} Active Lots`}
@@ -168,6 +181,7 @@ export const StockInventoryScreen: React.FC = () => {
 
         <StatCard
           compact
+          isLoading={isInitialLoading}
           title="TOTAL STOCK VALUATION"
           urduTitle="کل مالیت گودام"
           value={`PKR ${Math.round(totalValuation).toLocaleString()}`}
@@ -181,6 +195,7 @@ export const StockInventoryScreen: React.FC = () => {
 
         <StatCard
           compact
+          isLoading={isInitialLoading}
           title="THRESHOLD ALERTS"
           urduTitle="سٹاک وارننگ"
           value={`${String(lowStockCount).padStart(2, '0')} Varieties`}
@@ -232,6 +247,7 @@ export const StockInventoryScreen: React.FC = () => {
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         <InventoryTable
           inventory={filteredInventory}
+          isLoading={isInitialLoading}
           onOpenInward={(item) => {
             setInwardItem(item);
             setIsInwardOpen(true);
