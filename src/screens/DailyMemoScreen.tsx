@@ -8,6 +8,11 @@ import { ReceiptPrintModal } from '../components/pos/ReceiptPrintModal';
 import { CalendarRangeModal } from '../components/memo/CalendarRangeModal';
 import { notifySuccess, notifyInfo } from '../utils/toast';
 import { DollarSign, Wallet, CreditCard, TrendingUp, TrendingDown, X } from 'lucide-react';
+import {
+  getPakistanDateIso,
+  getPakistanDateStr,
+  parseDateStrToIso
+} from '../utils/dateUtils';
 
 export const DailyMemoScreen: React.FC = () => {
   const { memos, inventory, language, isMemosLoading } = usePos();
@@ -17,14 +22,10 @@ export const DailyMemoScreen: React.FC = () => {
 
   const isInitialLoading = isMemosLoading && memos.length === 0;
 
-  // Dynamic date helpers
-  const getTodayIso = () => new Date().toISOString().slice(0, 10);
-  const getTodayStr = () => new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-
-  // Custom range dates
-  const [customStart, setCustomStart] = useState<string>(getTodayIso);
-  const [customEnd, setCustomEnd] = useState<string>(getTodayIso);
-  const [dateRangeLabel, setDateRangeLabel] = useState<string>(() => `${getTodayStr()} (Today)`);
+  // Custom range dates using Pakistan Standard Time (PKT, UTC+5)
+  const [customStart, setCustomStart] = useState<string>(() => getPakistanDateIso());
+  const [customEnd, setCustomEnd] = useState<string>(() => getPakistanDateIso());
+  const [dateRangeLabel, setDateRangeLabel] = useState<string>(() => `${getPakistanDateStr()} (Today)`);
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
 
   // Handle Preset Clicks (Today, Yesterday, Last 7 Days, This Month, Custom Range)
@@ -32,8 +33,8 @@ export const DailyMemoScreen: React.FC = () => {
     setActivePeriod(periodId);
     const isUr = language === 'ur';
     const now = new Date();
-    const todayIso = now.toISOString().slice(0, 10);
-    const todayStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const todayIso = getPakistanDateIso(now);
+    const todayStr = getPakistanDateStr(now);
 
     if (periodId === 'today') {
       setCustomStart(todayIso);
@@ -41,25 +42,25 @@ export const DailyMemoScreen: React.FC = () => {
       setDateRangeLabel(isUr ? `${todayStr} (آج)` : `${todayStr} (Today)`);
     } else if (periodId === 'yesterday') {
       const yDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      const yIso = yDate.toISOString().slice(0, 10);
-      const yStr = yDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const yIso = getPakistanDateIso(yDate);
+      const yStr = getPakistanDateStr(yDate);
       setCustomStart(yIso);
       setCustomEnd(yIso);
       setDateRangeLabel(isUr ? `${yStr} (گزشتہ روز)` : `${yStr} (Yesterday)`);
     } else if (periodId === '7days') {
       const past7 = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
-      const past7Iso = past7.toISOString().slice(0, 10);
-      const past7Str = past7.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const past7Iso = getPakistanDateIso(past7);
+      const past7Str = getPakistanDateStr(past7);
       setCustomStart(past7Iso);
       setCustomEnd(todayIso);
       setDateRangeLabel(isUr ? `${past7Str} تا ${todayStr} (گزشتہ ۷ دن)` : `${past7Str} to ${todayStr} (7 Days)`);
     } else if (periodId === 'month') {
       const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
       const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      const fIso = firstDay.toISOString().slice(0, 10);
-      const lIso = lastDay.toISOString().slice(0, 10);
-      const fStr = firstDay.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-      const lStr = lastDay.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const fIso = getPakistanDateIso(firstDay);
+      const lIso = getPakistanDateIso(lastDay);
+      const fStr = getPakistanDateStr(firstDay);
+      const lStr = getPakistanDateStr(lastDay);
       setCustomStart(fIso);
       setCustomEnd(lIso);
       setDateRangeLabel(isUr ? `${fStr} تا ${lStr} (موجودہ ماہ)` : `${fStr} to ${lStr} (This Month)`);
@@ -75,12 +76,7 @@ export const DailyMemoScreen: React.FC = () => {
     setDateRangeLabel(label);
   };
 
-  // Helper to parse memo date string like "24 Oct 2024" into a comparable Date
-  const parseMemoDate = (dStr: string): Date => {
-    return new Date(dStr);
-  };
-
-  // Filter memos by Search, Payment Mode, and Date Range
+  // Filter memos by Search, Payment Mode, and Date Range (Timezone-Independent)
   const filteredMemos = memos.filter((m) => {
     const matchesSearch =
       m.memoNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -89,14 +85,9 @@ export const DailyMemoScreen: React.FC = () => {
 
     const matchesPayment = selectedPayment === 'ALL' || m.paymentMode === selectedPayment;
 
-    // Date filtering
-    const mDate = parseMemoDate(m.dateStr);
-    const sDate = new Date(customStart);
-    sDate.setHours(0, 0, 0, 0);
-    const eDate = new Date(customEnd);
-    eDate.setHours(23, 59, 59, 999);
-
-    const matchesDate = mDate >= sDate && mDate <= eDate;
+    // Timezone-safe YYYY-MM-DD string comparison
+    const memoIso = parseDateStrToIso(m.dateStr);
+    const matchesDate = !memoIso || (memoIso >= customStart && memoIso <= customEnd);
 
     return matchesSearch && matchesPayment && matchesDate;
   });

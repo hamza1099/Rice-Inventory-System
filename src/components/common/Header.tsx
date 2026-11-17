@@ -4,20 +4,17 @@ import { Clock, User, LogOut, Wifi } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 import { RouteName } from '../../routes/RouteName';
 import { notifyInfo } from '../../utils/toast';
+import { getPakistanTimeStr } from '../../utils/dateUtils';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser, userProfile, logout, language, setLanguage } = usePos();
   const isUr = language === 'ur';
-  const [timeStr, setTimeStr] = useState<string>('14:32:00 PKT');
+  const [timeStr, setTimeStr] = useState<string>(() => getPakistanTimeStr());
 
   useEffect(() => {
     const updateClock = () => {
-      const now = new Date();
-      const hrs = String(now.getHours()).padStart(2, '0');
-      const mins = String(now.getMinutes()).padStart(2, '0');
-      const secs = String(now.getSeconds()).padStart(2, '0');
-      setTimeStr(`${hrs}:${mins}:${secs} PKT`);
+      setTimeStr(getPakistanTimeStr());
     };
     updateClock();
     const interval = setInterval(updateClock, 1000);
