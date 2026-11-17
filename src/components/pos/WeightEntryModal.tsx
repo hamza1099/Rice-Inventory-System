@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Scale, ShoppingBag } from 'lucide-react';
+import { X, Scale, ShoppingBag, AlertTriangle, AlertCircle, Ban } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 import type { EntryMode } from '../../types';
 import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/productImages';
+import { notifyError } from '../../utils/toast';
 
 export const WeightEntryModal: React.FC = () => {
   const { selectedProductForModal, setSelectedProductForModal, addToCart, openImagePreview, language } = usePos();
@@ -178,10 +179,35 @@ export const WeightEntryModal: React.FC = () => {
     netWeightKg = rawNum;
   }
 
+  // Stock availability & boundary checks
+  const availableStockKg = product.availableKg !== undefined ? product.availableKg : 0;
+  const isOutOfStock = availableStockKg <= 0;
+  const isOverStock = !isOutOfStock && netWeightKg > availableStockKg;
+  const isInvalidQty = netWeightKg <= 0;
+  const isAddDisabled = isOutOfStock || isOverStock || isInvalidQty;
+
   // Calculate Subtotal with custom active rate
   const subtotal = Math.round(netWeightKg * activeRate);
 
   const handleSave = () => {
+    if (isOutOfStock) {
+      notifyError(
+        language === 'ur'
+          ? `سٹاک دستیاب نہیں ہے! "${product.urduName || product.name}" کا سٹاک 0 KG ہے۔`
+          : `No Stock Available! "${product.name}" has 0 KG in stock.`
+      );
+      return;
+    }
+
+    if (isOverStock) {
+      notifyError(
+        language === 'ur'
+          ? `مطلوبہ وزن (${netWeightKg} KG) دستیاب سٹاک (${availableStockKg} KG) سے زیادہ ہے!`
+          : `Requested quantity (${netWeightKg} KG) exceeds available stock (${availableStockKg} KG)!`
+      );
+      return;
+    }
+
     if (netWeightKg <= 0 || activeRate <= 0) return;
 
     addToCart({
@@ -332,12 +358,50 @@ export const WeightEntryModal: React.FC = () => {
               <span className="text-[10px] text-slate-500 block font-sans">
                 {isUr ? 'موجودہ سٹاک:' : 'Available Stock:'}
               </span>
-              <span className="text-sm font-bold text-emerald-700">
+              <span className={`text-sm font-bold ${isOutOfStock ? 'text-rose-600 font-extrabold' : 'text-emerald-700'}`}>
                 {product.availableStockLabel || `${product.availableKg} KG`}{' '}
                 <span className="text-[10px] text-slate-500 font-normal font-sans">({product.binLocation})</span>
               </span>
+              {isOutOfStock && (
+                <span className="block text-[9.5px] font-bold text-rose-600 font-sans uppercase">
+                  {isUr ? 'سٹاک ختم ہے (0 KG)' : 'Out of Stock (0 KG)'}
+                </span>
+              )}
             </div>
           </div>
+
+          {/* Out of Stock or Insufficient Stock Banner */}
+          {isOutOfStock ? (
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 flex items-start space-x-2.5 text-rose-900 animate-in fade-in">
+              <Ban className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <span className="font-extrabold text-xs block text-rose-800">
+                  {isUr ? 'سٹاک ختم ہے (0 KG) - بل میں شامل نہیں کیا جا سکتا!' : 'No Stock Available (0 KG) - Cannot Add to Bill!'}
+                </span>
+                <p className="text-[11px] text-rose-700 leading-snug">
+                  {isUr
+                    ? 'اس ورائٹی کا موجودہ سٹاک 0 کلو ہے۔ بل بنانے سے پہلے "Stock & Inventory" مینیو میں جا کر نیا سٹاک داخل کریں۔'
+                    : 'This item has 0 KG available in godown. Please inward new stock via Stock & Inventory before billing.'}
+                </p>
+              </div>
+            </div>
+          ) : isOverStock ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start space-x-2.5 text-amber-900 animate-in fade-in">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <span className="font-extrabold text-xs block text-amber-800">
+                  {isUr
+                    ? `مطلوبہ وزن (${netWeightKg} KG) دستیاب سٹاک (${availableStockKg} KG) سے زیادہ ہے!`
+                    : `Requested quantity (${netWeightKg} KG) exceeds available stock (${availableStockKg} KG)!`}
+                </span>
+                <p className="text-[11px] text-amber-700 leading-snug">
+                  {isUr
+                    ? `آپ کے پاس صرف ${availableStockKg} KG سٹاک موجود ہے۔ براہ کرم وزن کم کریں۔`
+                    : `Only ${availableStockKg} KG remains in stock. Please reduce the quantity.`}
+                </p>
+              </div>
+            </div>
+          ) : null}
 
           {/* Select Entry Mode */}
           <div>
@@ -680,9 +744,34 @@ export const WeightEntryModal: React.FC = () => {
             <button
               type="button"
               onClick={handleSave}
-              className="px-5 py-2 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-lg shadow-sm transition-all active:scale-98 cursor-pointer flex items-center space-x-1.5"
+              disabled={isAddDisabled}
+              className={`px-5 py-2 font-bold rounded-lg shadow-sm transition-all flex items-center space-x-1.5 ${
+                isOutOfStock
+                  ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed shadow-none'
+                  : isOverStock
+                  ? 'bg-amber-200 text-amber-900 border border-amber-300 cursor-not-allowed shadow-none'
+                  : 'bg-emerald-800 hover:bg-emerald-900 active:scale-98 text-white cursor-pointer'
+              }`}
+              title={
+                isOutOfStock
+                  ? (isUr ? 'سٹاک ختم ہے (0 KG دستیاب)' : 'No Stock Available (0 KG)')
+                  : isOverStock
+                  ? (isUr ? 'مطلوبہ وزن دستیاب سٹاک سے زیادہ ہے' : 'Requested weight exceeds available stock')
+                  : undefined
+              }
             >
-              <span>{isUr ? '+ بل میں شامل کریں' : '+ Add to Bill'}</span>
+              {isOutOfStock ? (
+                <Ban className="w-4 h-4 text-rose-500" />
+              ) : isOverStock ? (
+                <AlertTriangle className="w-4 h-4 text-amber-700" />
+              ) : null}
+              <span>
+                {isOutOfStock
+                  ? (isUr ? 'سٹاک دستیاب نہیں (0 KG)' : 'No Stock Available')
+                  : isOverStock
+                  ? (isUr ? 'سٹاک سے زیادہ وزن' : 'Exceeds Stock')
+                  : (isUr ? '+ بل میں شامل کریں' : '+ Add to Bill')}
+              </span>
             </button>
           </div>
         </div>

@@ -1,15 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { MemoRecord } from '../../types';
-import { Printer } from 'lucide-react';
+import { Printer, Edit3, Trash2 } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
+import { ConfirmDeleteModal } from '../common/ConfirmDeleteModal';
+import { EditMemoModal } from './EditMemoModal';
+import { notifySuccess } from '../../utils/toast';
 
 interface MemoLedgerTableProps {
   memos: MemoRecord[];
 }
 
 export const MemoLedgerTable: React.FC<MemoLedgerTableProps> = ({ memos }) => {
-  const { setActiveReceipt } = usePos();
+  const { setActiveReceipt, deleteMemo, language } = usePos();
+  const isUr = language === 'ur';
   const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  const [memoToEdit, setMemoToEdit] = useState<MemoRecord | null>(null);
+  const [memoToDelete, setMemoToDelete] = useState<MemoRecord | null>(null);
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden text-xs">
@@ -95,15 +102,34 @@ export const MemoLedgerTable: React.FC<MemoLedgerTableProps> = ({ memos }) => {
                     </span>
                   </td>
 
-                  {/* Action Print Slip */}
+                  {/* Actions: Print Slip, Edit, Delete */}
                   <td className="py-3 px-3 text-center">
-                    <button
-                      onClick={() => setActiveReceipt(memo)}
-                      className="inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 border border-slate-200 text-slate-700 font-bold text-[10px] transition-colors"
-                    >
-                      <Printer className="w-3 h-3 text-slate-500" />
-                      <span>Slip F7</span>
-                    </button>
+                    <div className="flex items-center justify-center space-x-1.5">
+                      <button
+                        onClick={() => setActiveReceipt(memo)}
+                        className="inline-flex items-center space-x-1 px-2 py-1 rounded bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 border border-slate-200 text-slate-700 font-bold text-[10px] transition-colors cursor-pointer"
+                        title={isUr ? 'پرنٹ سلپ (F7)' : 'Print Receipt Slip (F7)'}
+                      >
+                        <Printer className="w-3 h-3 text-slate-500" />
+                        <span>Slip F7</span>
+                      </button>
+
+                      <button
+                        onClick={() => setMemoToEdit(memo)}
+                        className="p-1 rounded bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 border border-slate-200 text-slate-600 transition-colors cursor-pointer"
+                        title={isUr ? 'میمو میں ترمیم کریں' : 'Edit Memo Details'}
+                      >
+                        <Edit3 className="w-3 h-3" />
+                      </button>
+
+                      <button
+                        onClick={() => setMemoToDelete(memo)}
+                        className="p-1 rounded bg-slate-100 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 border border-slate-200 text-slate-600 transition-colors cursor-pointer"
+                        title={isUr ? 'میمو کینسل / حذف کریں' : 'Delete / Void Memo'}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -112,13 +138,13 @@ export const MemoLedgerTable: React.FC<MemoLedgerTableProps> = ({ memos }) => {
         </table>
       </div>
 
-      {/* Pagination Footer (Exact from Image 1) */}
+      {/* Pagination Footer */}
       <div className="bg-slate-50 px-4 py-2 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
         <div>
           <span>Showing </span>
           <strong className="text-slate-800 font-mono-num">{memos.length}</strong>
           <span> of </span>
-          <strong className="text-slate-800 font-mono-num">84</strong>
+          <strong className="text-slate-800 font-mono-num">{Math.max(memos.length, 84)}</strong>
           <span> completed spot vouchers • No pending drafts • Zero khata accounts</span>
         </div>
 
@@ -140,6 +166,40 @@ export const MemoLedgerTable: React.FC<MemoLedgerTableProps> = ({ memos }) => {
           </button>
         </div>
       </div>
+
+      {/* Confirmation Modal for Memo Deletion */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(memoToDelete)}
+        onClose={() => setMemoToDelete(null)}
+        onConfirm={async () => {
+          if (memoToDelete) {
+            await deleteMemo(memoToDelete.id);
+            notifySuccess(
+              isUr
+                ? `کیش میمو ${memoToDelete.memoNo} حذف کر دیا گیا اور انوینٹری سٹاک بحال ہو گیا۔`
+                : `Memo ${memoToDelete.memoNo} deleted and inventory stock restored.`
+            );
+            setMemoToDelete(null);
+          }
+        }}
+        title={isUr ? `کیش میمو حذف کرنے کی تصدیق (${memoToDelete?.memoNo})` : `Confirm Delete Memo (${memoToDelete?.memoNo})`}
+        description={
+          isUr
+            ? `کیا آپ واقعی میمو ${memoToDelete?.memoNo} کو حذف کرنا چاہتے ہیں؟ اس سے فروخت شدہ سٹاک (${memoToDelete?.weightSummary}) واپس انوینٹری میں بحال ہو جائے گا اور گلے (کیش دراز) سے رقم PKR ${memoToDelete?.netAmount.toLocaleString()} منہا ہو جائے گی۔`
+            : `Are you sure you want to delete memo ${memoToDelete?.memoNo}? Sold stock (${memoToDelete?.weightSummary}) will be restored to inventory and cash drawer turnover will be adjusted.`
+        }
+        itemName={`${memoToDelete?.memoNo} • ${memoToDelete?.itemsSummary}`}
+        itemType={isUr ? 'کیش میمو تفصیل:' : 'Memo Details:'}
+        confirmText={isUr ? 'ہاں، میمو حذف کریں' : 'Delete Memo'}
+        cancelText={isUr ? 'منسوخ' : 'Cancel'}
+      />
+
+      {/* Modal for Editing Memo */}
+      <EditMemoModal
+        memo={memoToEdit}
+        isOpen={Boolean(memoToEdit)}
+        onClose={() => setMemoToEdit(null)}
+      />
     </div>
   );
 };

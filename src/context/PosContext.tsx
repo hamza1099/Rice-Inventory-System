@@ -30,6 +30,8 @@ import {
   deleteInventoryItemDoc,
   addStockInwardDoc,
   createMemoDoc,
+  deleteMemoDoc,
+  updateMemoDoc,
   addKhataCustomerDoc,
   updateKhataCustomerDoc,
   deleteKhataCustomerDoc,
@@ -77,6 +79,9 @@ interface PosContextType {
   memos: MemoRecord[];
   activeReceipt: MemoRecord | null;
   setActiveReceipt: (rec: MemoRecord | null) => void;
+  deleteMemo: (memoId: string) => Promise<void>;
+  updateMemo: (updatedMemo: MemoRecord) => Promise<void>;
+  reloadMemoToCart: (memoId: string) => Promise<void>;
 
   // Inventory & Product CRUD
   inventory: InventoryItem[];
@@ -703,7 +708,11 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const totalWeight = cart.reduce((sum, item) => sum + item.netWeight, 0);
 
     const now = new Date();
-    const memoSeq = String(memos.length + 1).padStart(4, '0');
+    const maxSeq = memos.reduce((max, m) => {
+      const num = parseInt(m.memoNo.replace(/\D/g, ''), 10);
+      return !isNaN(num) && num > max ? num : max;
+    }, 0);
+    const memoSeq = String(Math.max(memos.length, maxSeq) + 1).padStart(4, '0');
     const memoId = `memo-${memoSeq}`;
 
     const cashierLabel = userProfile
@@ -736,6 +745,155 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     createMemoDoc(newRecord).catch(console.error);
 
     return newRecord;
+  };
+
+  const deleteMemo = async (memoId: string): Promise<void> => {
+    const target = memos.find((m) => m.id === memoId);
+    if (!target) return;
+
+    // 1. Remove from local memos state
+    setMemos((prev) => prev.filter((m) => m.id !== memoId));
+    if (activeReceipt?.id === memoId) {
+      setActiveReceipt(null);
+    }
+
+    // 2. Restore stock locally for sold items
+    if (target.items && target.items.length > 0) {
+      setInventory((prev) =>
+        prev.map((invItem) => {
+          const totalSold = target.items
+            .filter(
+              (it) =>
+                it.product?.id === invItem.id ||
+                (it.product?.name && it.product.name.trim().toLowerCase() === invItem.varietyName.trim().toLowerCase())
+            )
+            .reduce((sum, it) => sum + (it.netWeight || 0), 0);
+
+          if (totalSold > 0) {
+            const restoredQty = invItem.physicalStockKg + totalSold;
+            const bagsRestored = Math.floor(totalSold / 50);
+            const newBags = invItem.bagsCount + bagsRestored;
+            const threshold = invItem.minStockThreshold !== undefined ? invItem.minStockThreshold : 20;
+            return {
+              ...invItem,
+              physicalStockKg: Math.round(restoredQty * 100) / 100,
+              bagsCount: newBags,
+              lotStatus: restoredQty <= 0 ? 'Out of Stock' : restoredQty <= (threshold / 2) ? 'Critical Low' : restoredQty <= threshold ? 'Low Stock' : 'In Stock'
+            };
+          }
+          return invItem;
+        })
+      );
+
+      setProducts((prev) =>
+        prev.map((prod) => {
+          const totalSold = target.items
+            .filter(
+              (it) =>
+                it.product?.id === prod.id ||
+                (it.product?.name && it.product.name.trim().toLowerCase() === prod.name.trim().toLowerCase())
+            )
+            .reduce((sum, it) => sum + (it.netWeight || 0), 0);
+
+          if (totalSold > 0) {
+            const restoredAvail = prod.availableKg + totalSold;
+            const threshold = prod.minStockThreshold !== undefined ? prod.minStockThreshold : 20;
+            return {
+              ...prod,
+              availableKg: Math.round(restoredAvail * 100) / 100,
+              availableStockLabel: `${Math.round(restoredAvail)} KG`,
+              isLowStock: restoredAvail <= threshold
+            };
+          }
+          return prod;
+        })
+      );
+    }
+
+    // 3. Persist deletion and stock restoration to Firestore
+    await deleteMemoDoc(memoId, target.items);
+  };
+
+  const updateMemo = async (updatedMemo: MemoRecord): Promise<void> => {
+    const oldMemo = memos.find((m) => m.id === updatedMemo.id);
+    if (!oldMemo) return;
+
+    // Calculate stock adjustments: weightDiff = newWeight - oldWeight
+    const stockAdjustments: { productId: string; weightDiff: number }[] = [];
+
+    for (const oldItem of oldMemo.items) {
+      const newItem = updatedMemo.items.find((it) => it.id === oldItem.id || it.product.id === oldItem.product.id);
+      const newWeight = newItem ? newItem.netWeight : 0;
+      const diff = newWeight - oldItem.netWeight;
+      if (diff !== 0) {
+        stockAdjustments.push({ productId: oldItem.product.id, weightDiff: diff });
+      }
+    }
+
+    for (const newItem of updatedMemo.items) {
+      const existedInOld = oldMemo.items.some((it) => it.id === newItem.id || it.product.id === newItem.product.id);
+      if (!existedInOld) {
+        stockAdjustments.push({ productId: newItem.product.id, weightDiff: newItem.netWeight });
+      }
+    }
+
+    // 1. Update local memos state
+    setMemos((prev) => prev.map((m) => (m.id === updatedMemo.id ? updatedMemo : m)));
+    if (activeReceipt?.id === updatedMemo.id) {
+      setActiveReceipt(updatedMemo);
+    }
+
+    // 2. Adjust local inventory & products
+    if (stockAdjustments.length > 0) {
+      setInventory((prev) =>
+        prev.map((invItem) => {
+          const adj = stockAdjustments.find((a) => a.productId === invItem.id);
+          if (adj) {
+            const newQty = Math.max(0, invItem.physicalStockKg - adj.weightDiff);
+            const threshold = invItem.minStockThreshold !== undefined ? invItem.minStockThreshold : 20;
+            return {
+              ...invItem,
+              physicalStockKg: Math.round(newQty * 100) / 100,
+              lotStatus: newQty <= 0 ? 'Out of Stock' : newQty <= (threshold / 2) ? 'Critical Low' : newQty <= threshold ? 'Low Stock' : 'In Stock'
+            };
+          }
+          return invItem;
+        })
+      );
+
+      setProducts((prev) =>
+        prev.map((prod) => {
+          const adj = stockAdjustments.find((a) => a.productId === prod.id);
+          if (adj) {
+            const newAvail = Math.max(0, prod.availableKg - adj.weightDiff);
+            const threshold = prod.minStockThreshold !== undefined ? prod.minStockThreshold : 20;
+            return {
+              ...prod,
+              availableKg: Math.round(newAvail * 100) / 100,
+              availableStockLabel: `${Math.round(newAvail)} KG`,
+              isLowStock: newAvail <= threshold
+            };
+          }
+          return prod;
+        })
+      );
+    }
+
+    // 3. Persist to Firestore
+    await updateMemoDoc(updatedMemo, stockAdjustments);
+  };
+
+  const reloadMemoToCart = async (memoId: string): Promise<void> => {
+    const target = memos.find((m) => m.id === memoId);
+    if (!target) return;
+
+    // Load items into active cart
+    setCart([...target.items]);
+    setSpotDiscount(target.discount || 0);
+    setPaymentMode(target.paymentMode || 'SPOT CASH');
+
+    // Delete the old memo and restore stock
+    await deleteMemo(memoId);
   };
 
   const addInventoryItem = (newItem: InventoryItem) => {
@@ -1022,6 +1180,9 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         memos,
         activeReceipt,
         setActiveReceipt,
+        deleteMemo,
+        updateMemo,
+        reloadMemoToCart,
         inventory,
         addInventoryItem,
         updateInventoryItem,

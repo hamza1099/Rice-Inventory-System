@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Scale, Lock, RefreshCw, CheckCircle2, Plus } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
+import { notifyError } from '../../utils/toast';
 
 export const ScaleTerminal: React.FC = () => {
   const {
@@ -11,7 +12,8 @@ export const ScaleTerminal: React.FC = () => {
     isScaleLocked,
     setIsScaleLocked,
     scaleTare,
-    setScaleTare
+    setScaleTare,
+    language
   } = usePos();
 
   const [customUnit, setCustomUnit] = useState<'kg' | 'mund' | 'bag'>('kg');
@@ -23,9 +25,29 @@ export const ScaleTerminal: React.FC = () => {
     const prod = products.find((p) => p.id === selectedQuickProduct) || products[0];
     if (!prod) return;
 
+    if ((prod.availableKg ?? 0) <= 0) {
+      notifyError(
+        language === 'ur'
+          ? `سٹاک دستیاب نہیں ہے! "${prod.urduName || prod.name}" کا سٹاک 0 KG ہے۔`
+          : `No Stock Available! "${prod.name}" has 0 KG in stock.`
+      );
+      return;
+    }
+
     let netKg = liveScaleWeight;
     if (customUnit === 'mund') netKg = liveScaleWeight * 40;
     if (customUnit === 'bag') netKg = liveScaleWeight * 50;
+
+    if (netKg <= 0) return;
+
+    if (netKg > (prod.availableKg ?? 0)) {
+      notifyError(
+        language === 'ur'
+          ? `مطلوبہ وزن (${netKg} KG) دستیاب سٹاک (${prod.availableKg} KG) سے زیادہ ہے!`
+          : `Requested weight (${netKg} KG) exceeds available stock (${prod.availableKg} KG)!`
+      );
+      return;
+    }
 
     const subtotal = netKg * prod.ratePerKg;
 

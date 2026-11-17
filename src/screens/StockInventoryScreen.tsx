@@ -47,9 +47,11 @@ export const StockInventoryScreen: React.FC = () => {
     { id: 'Rice', label: isUr ? 'چاول' : 'Rice' },
     { id: 'Pulses', label: isUr ? 'دالیں' : 'Pulses / Daal' },
     { id: 'Spices', label: isUr ? 'کھلا مصالحہ' : 'Spices' },
-    { id: 'Packaged', label: isUr ? 'ڈبہ مصالحہ' : 'Shan & National' },
+    { id: 'Shan', label: isUr ? 'شان' : 'Shan' },
+    { id: 'National', label: isUr ? 'نیشنل' : 'National' },
     { id: 'Oil', label: isUr ? 'تیل و گھی' : 'Oil & Ghee' },
-    { id: 'AttaSugar', label: isUr ? 'آٹا و چینی' : 'Atta & Sugar' },
+    { id: 'Atta', label: isUr ? 'آٹا' : 'Atta' },
+    { id: 'Sugar', label: isUr ? 'چینی' : 'Sugar' },
     { id: 'Other', label: isUr ? 'دیگر' : 'Other' },
     { id: 'LowStock', label: isUr ? `کم سٹاک [${lowStockCount}]` : `Low Stock Only [${lowStockCount}]` }
   ];
@@ -68,12 +70,33 @@ export const StockInventoryScreen: React.FC = () => {
       matchesFilter = item.category.includes('Pulses') || item.category.includes('Daal') || item.category.includes('دال');
     } else if (selectedFilter === 'Spices') {
       matchesFilter = item.category.includes('Spices') || item.category.includes('مصالحہ');
-    } else if (selectedFilter === 'Packaged') {
-      matchesFilter = item.category.includes('Shan') || item.category.includes('National') || item.category.includes('ڈبہ');
+    } else if (selectedFilter === 'Shan') {
+      matchesFilter =
+        item.category.includes('Shan') ||
+        item.varietyName.toLowerCase().includes('shan') ||
+        (item.urduName && item.urduName.includes('شان'));
+    } else if (selectedFilter === 'National') {
+      matchesFilter =
+        item.category.includes('National') ||
+        item.varietyName.toLowerCase().includes('national') ||
+        (item.urduName && item.urduName.includes('نیشنل'));
     } else if (selectedFilter === 'Oil') {
-      matchesFilter = item.category.includes('Oil') || item.category.includes('Ghee');
-    } else if (selectedFilter === 'AttaSugar') {
-      matchesFilter = item.category.includes('Atta') || item.category.includes('Sugar');
+      matchesFilter = item.category.includes('Oil') || item.category.includes('Ghee') || item.category.includes('تیل') || item.category.includes('گھی');
+    } else if (selectedFilter === 'Atta') {
+      matchesFilter =
+        item.category.includes('Atta') ||
+        item.category.includes('آٹا') ||
+        item.varietyName.toLowerCase().includes('atta') ||
+        item.varietyName.toLowerCase().includes('flour') ||
+        (item.urduName && item.urduName.includes('آٹا'));
+    } else if (selectedFilter === 'Sugar') {
+      matchesFilter =
+        item.category.includes('Sugar') ||
+        item.category.includes('چینی') ||
+        item.varietyName.toLowerCase().includes('sugar') ||
+        item.varietyName.toLowerCase().includes('cheeni') ||
+        item.varietyName.toLowerCase().includes('shakar') ||
+        (item.urduName && (item.urduName.includes('چینی') || item.urduName.includes('شکر')));
     } else if (selectedFilter === 'Other') {
       matchesFilter =
         item.category.includes('Other') ||

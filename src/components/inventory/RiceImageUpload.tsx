@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
-import { UploadCloud, Image as ImageIcon, X, Sparkles, Check, ZoomIn, Loader2 } from 'lucide-react';
+import { UploadCloud, Image as ImageIcon, X, Check, ZoomIn, Loader2 } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
-import { ALL_PRODUCT_PRESETS, SVG_RICE_FALLBACK } from '../../utils/productImages';
+import { SVG_RICE_FALLBACK } from '../../utils/productImages';
 import { notifySuccess, notifyWarning } from '../../utils/toast';
 
 interface RiceImageUploadProps {
@@ -170,41 +170,6 @@ export const RiceImageUpload: React.FC<RiceImageUploadProps> = ({
           </span>
         </div>
       )}
-
-      {/* Quick Select Presets Section */}
-      <div className="pt-1">
-        <div className="flex items-center justify-between mb-1.5 text-[10px] text-slate-500 font-semibold">
-          <span className="flex items-center space-x-1 text-slate-700">
-            <Sparkles className="w-3 h-3 text-amber-500" />
-            <span>{isUr ? 'یا کیٹلاگ نمونہ منتخب کریں:' : 'Or Pick from Catalog Samples:'}</span>
-          </span>
-        </div>
-        <div className="grid grid-cols-4 gap-1.5 max-h-24 overflow-y-auto pr-1">
-          {ALL_PRODUCT_PRESETS.slice(0, 12).map((preset) => (
-            <button
-              key={preset.id}
-              type="button"
-              onClick={() => {
-                onChange(preset.imageUrl, null);
-                notifySuccess(isUr ? `${preset.name} کی تصویر لگ گئی!` : `Applied ${preset.name} photo!`);
-              }}
-              className="p-1 rounded-lg border border-slate-200 bg-white hover:border-emerald-600 hover:bg-emerald-50/40 flex items-center space-x-1.5 text-left transition-all cursor-pointer group"
-            >
-              <img
-                src={preset.imageUrl}
-                alt={preset.name}
-                className="w-6 h-6 rounded object-cover shrink-0 bg-slate-100"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = SVG_RICE_FALLBACK;
-                }}
-              />
-              <span className="text-[10px] font-medium text-slate-700 truncate group-hover:text-emerald-900">
-                {preset.name}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };

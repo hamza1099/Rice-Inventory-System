@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trash2, AlertTriangle, X, Loader2 } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 
 export interface ConfirmDeleteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   title?: string;
   description?: string;
   itemName?: string;
@@ -29,22 +29,47 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
 }) => {
   const { language } = usePos();
   const isUr = language === 'ur';
+  const [internalLoading, setInternalLoading] = useState<boolean>(false);
+
+  // Reset internal loading state whenever modal opens or closes
+  useEffect(() => {
+    if (!isOpen) {
+      setInternalLoading(false);
+    }
+  }, [isOpen]);
+
+  const isBusy = Boolean(isDeleting || internalLoading);
+
+  const handleConfirm = async () => {
+    if (isBusy) return;
+    setInternalLoading(true);
+    try {
+      await Promise.all([
+        Promise.resolve(onConfirm()),
+        new Promise((resolve) => setTimeout(resolve, 450))
+      ]);
+    } catch (err) {
+      console.error('Error during deletion:', err);
+    } finally {
+      setInternalLoading(false);
+    }
+  };
 
   // Handle ESC and Enter keys
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !isBusy) {
         e.preventDefault();
         onClose();
-      } else if (e.key === 'Enter' && !isDeleting) {
+      } else if (e.key === 'Enter' && !isBusy) {
         e.preventDefault();
-        onConfirm();
+        handleConfirm();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose, onConfirm, isDeleting]);
+  }, [isOpen, onClose, isBusy]);
 
   if (!isOpen) return null;
 
@@ -52,7 +77,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
     <div
       className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in duration-150"
       onClick={(e) => {
-        if (e.target === e.currentTarget && !isDeleting) onClose();
+        if (e.target === e.currentTarget && !isBusy) onClose();
       }}
     >
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full overflow-hidden text-xs animate-in zoom-in-95 duration-150">
@@ -73,8 +98,8 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            disabled={isDeleting}
-            className="text-slate-400 hover:text-slate-700 transition-colors p-1 -mr-1 -mt-1 cursor-pointer"
+            disabled={isBusy}
+            className="text-slate-400 hover:text-slate-700 transition-colors p-1 -mr-1 -mt-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             title={isUr ? 'بند کریں' : 'Close'}
           >
             <X className="w-5 h-5" />
@@ -107,18 +132,18 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            disabled={isDeleting}
-            className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs transition-colors cursor-pointer disabled:opacity-50"
+            disabled={isBusy}
+            className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {cancelText || (isUr ? 'منسوخ' : 'Cancel')}
           </button>
           <button
             type="button"
-            onClick={onConfirm}
-            disabled={isDeleting}
-            className="px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 active:scale-98 text-white font-bold text-xs flex items-center space-x-1.5 shadow-xs transition-all cursor-pointer disabled:bg-rose-400"
+            onClick={handleConfirm}
+            disabled={isBusy}
+            className="px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 active:scale-98 text-white font-bold text-xs flex items-center space-x-1.5 shadow-xs transition-all cursor-pointer disabled:bg-rose-400 disabled:cursor-not-allowed disabled:opacity-80"
           >
-            {isDeleting ? (
+            {isBusy ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 <span>{isUr ? 'حذف ہو رہا ہے...' : 'Deleting...'}</span>

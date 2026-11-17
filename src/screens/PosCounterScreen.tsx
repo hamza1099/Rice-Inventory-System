@@ -50,9 +50,11 @@ export const PosCounterScreen: React.FC = () => {
     { id: 'Rice', en: 'Rice', ur: 'چاول' },
     { id: 'Pulses', en: 'Pulses / Daal', ur: 'دالیں' },
     { id: 'Spices', en: 'Spices', ur: 'کھلا مصالحہ' },
-    { id: 'Shan & National', en: 'Shan & National', ur: 'ڈبہ مصالحہ' },
+    { id: 'Shan', en: 'Shan', ur: 'شان' },
+    { id: 'National', en: 'National', ur: 'نیشنل' },
     { id: 'Oil & Ghee', en: 'Oil & Ghee', ur: 'تیل و گھی' },
-    { id: 'Atta & Sugar', en: 'Atta & Sugar', ur: 'آٹا و چینی' },
+    { id: 'Atta', en: 'Atta', ur: 'آٹا' },
+    { id: 'Sugar', en: 'Sugar', ur: 'چینی' },
     ...customCategories.map((c) => ({ id: c, en: c, ur: c })),
     { id: 'Other', en: 'Other', ur: 'دیگر' }
   ];
@@ -68,12 +70,38 @@ export const PosCounterScreen: React.FC = () => {
         matchesCat = catLower.includes('pulse') || catLower.includes('daal') || catLower.includes('دال');
       } else if (selectedCategory === 'Spices') {
         matchesCat = catLower.includes('spice') || catLower.includes('کھلا مصالحہ');
-      } else if (selectedCategory === 'Shan & National') {
-        matchesCat = catLower.includes('shan') || catLower.includes('national') || catLower.includes('ڈبہ') || (p.brand && (p.brand.includes('Shan') || p.brand.includes('National')));
+      } else if (selectedCategory === 'Shan') {
+        matchesCat =
+          catLower.includes('shan') ||
+          (p.brand && p.brand.toLowerCase().includes('shan')) ||
+          p.name.toLowerCase().includes('shan') ||
+          (p.urduName && p.urduName.includes('شان'));
+      } else if (selectedCategory === 'National') {
+        matchesCat =
+          catLower.includes('national') ||
+          (p.brand && p.brand.toLowerCase().includes('national')) ||
+          p.name.toLowerCase().includes('national') ||
+          (p.urduName && p.urduName.includes('نیشنل'));
       } else if (selectedCategory === 'Oil & Ghee') {
-        matchesCat = catLower.includes('oil') || catLower.includes('ghee') || catLower.includes('تیل');
-      } else if (selectedCategory === 'Atta & Sugar') {
-        matchesCat = catLower.includes('atta') || catLower.includes('sugar') || catLower.includes('آٹا') || catLower.includes('چینی');
+        matchesCat = catLower.includes('oil') || catLower.includes('ghee') || catLower.includes('تیل') || catLower.includes('گھی');
+      } else if (selectedCategory === 'Atta') {
+        matchesCat =
+          catLower.includes('atta') ||
+          catLower.includes('آٹا') ||
+          catLower.includes('flour') ||
+          p.name.toLowerCase().includes('atta') ||
+          p.name.toLowerCase().includes('flour') ||
+          (p.urduName && p.urduName.includes('آٹا'));
+      } else if (selectedCategory === 'Sugar') {
+        matchesCat =
+          catLower.includes('sugar') ||
+          catLower.includes('چینی') ||
+          catLower.includes('shakar') ||
+          catLower.includes('شکر') ||
+          p.name.toLowerCase().includes('sugar') ||
+          p.name.toLowerCase().includes('cheeni') ||
+          p.name.toLowerCase().includes('shakar') ||
+          (p.urduName && (p.urduName.includes('چینی') || p.urduName.includes('شکر')));
       } else if (selectedCategory === 'Other') {
         matchesCat =
           catLower.includes('other') ||

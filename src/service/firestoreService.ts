@@ -14,6 +14,7 @@ import {
 import { db } from './firebaseClient';
 import type {
   Product,
+  CartItem,
   InventoryItem,
   MemoRecord,
   KhataCustomer,
@@ -291,6 +292,98 @@ export const createMemoDoc = async (memo: MemoRecord): Promise<void> => {
         }
       } catch (err) {
         console.warn(`Failed to decrement stock for item ${item.product.id}:`, err);
+      }
+    }
+  }
+};
+
+export const deleteMemoDoc = async (memoId: string, items?: CartItem[]): Promise<void> => {
+  // 1. Delete memo document from Firestore
+  await deleteDoc(doc(db, MEMOS_COLLECTION, memoId));
+
+  // 2. Restore inventory and product stock for sold items
+  if (items && items.length > 0) {
+    for (const item of items) {
+      if (item.product?.id) {
+        try {
+          const invRef = doc(db, INVENTORY_COLLECTION, item.product.id);
+          const invSnap = await getDoc(invRef);
+          if (invSnap.exists()) {
+            const invData = invSnap.data() as InventoryItem;
+            const restoredQty = invData.physicalStockKg + item.netWeight;
+            const bagsRestored = Math.floor(item.netWeight / 50);
+            const newBags = invData.bagsCount + bagsRestored;
+
+            const threshold = invData.minStockThreshold !== undefined ? invData.minStockThreshold : 20;
+            await updateDoc(invRef, {
+              physicalStockKg: Math.round(restoredQty * 100) / 100,
+              bagsCount: newBags,
+              lotStatus: restoredQty <= 0 ? 'Out of Stock' : restoredQty <= (threshold / 2) ? 'Critical Low' : restoredQty <= threshold ? 'Low Stock' : 'In Stock',
+              updatedAt: new Date().toISOString()
+            });
+          }
+
+          const prodRef = doc(db, PRODUCTS_COLLECTION, item.product.id);
+          const prodSnap = await getDoc(prodRef);
+          if (prodSnap.exists()) {
+            const prodData = prodSnap.data() as Product;
+            const restoredAvail = prodData.availableKg + item.netWeight;
+            const threshold = prodData.minStockThreshold !== undefined ? prodData.minStockThreshold : 20;
+            await updateDoc(prodRef, {
+              availableKg: Math.round(restoredAvail * 100) / 100,
+              availableStockLabel: `${Math.round(restoredAvail)} KG`,
+              isLowStock: restoredAvail <= threshold
+            });
+          }
+        } catch (err) {
+          console.warn(`Failed to restore stock for item ${item.product.id}:`, err);
+        }
+      }
+    }
+  }
+};
+
+export const updateMemoDoc = async (
+  updatedMemo: MemoRecord,
+  stockAdjustments?: { productId: string; weightDiff: number }[]
+): Promise<void> => {
+  const memoRef = doc(db, MEMOS_COLLECTION, updatedMemo.id);
+  await setDoc(memoRef, {
+    ...updatedMemo,
+    updatedAt: new Date().toISOString()
+  }, { merge: true });
+
+  if (stockAdjustments && stockAdjustments.length > 0) {
+    for (const adj of stockAdjustments) {
+      if (!adj.productId || adj.weightDiff === 0) continue;
+      try {
+        const invRef = doc(db, INVENTORY_COLLECTION, adj.productId);
+        const invSnap = await getDoc(invRef);
+        if (invSnap.exists()) {
+          const invData = invSnap.data() as InventoryItem;
+          const newQty = Math.max(0, invData.physicalStockKg - adj.weightDiff);
+          const threshold = invData.minStockThreshold !== undefined ? invData.minStockThreshold : 20;
+          await updateDoc(invRef, {
+            physicalStockKg: Math.round(newQty * 100) / 100,
+            lotStatus: newQty <= 0 ? 'Out of Stock' : newQty <= (threshold / 2) ? 'Critical Low' : newQty <= threshold ? 'Low Stock' : 'In Stock',
+            updatedAt: new Date().toISOString()
+          });
+        }
+
+        const prodRef = doc(db, PRODUCTS_COLLECTION, adj.productId);
+        const prodSnap = await getDoc(prodRef);
+        if (prodSnap.exists()) {
+          const prodData = prodSnap.data() as Product;
+          const newAvail = Math.max(0, prodData.availableKg - adj.weightDiff);
+          const threshold = prodData.minStockThreshold !== undefined ? prodData.minStockThreshold : 20;
+          await updateDoc(prodRef, {
+            availableKg: Math.round(newAvail * 100) / 100,
+            availableStockLabel: `${Math.round(newAvail)} KG`,
+            isLowStock: newAvail <= threshold
+          });
+        }
+      } catch (err) {
+        console.warn(`Failed to adjust stock for item ${adj.productId}:`, err);
       }
     }
   }

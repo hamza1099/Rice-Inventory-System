@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { X, Scale, ShoppingBag, ZoomIn, MapPin, Tag } from 'lucide-react';
+import { X, Scale, ShoppingBag, ZoomIn, MapPin, Tag, Ban } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/productImages';
 
@@ -148,11 +148,23 @@ export const ImagePreviewModal: React.FC = () => {
             {imagePreview.product && (
               <button
                 onClick={handleAction}
-                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-950/50 flex items-center space-x-1.5 transition-all active:scale-98 cursor-pointer"
+                className={`px-5 py-2 rounded-xl font-extrabold text-xs flex items-center space-x-1.5 transition-all cursor-pointer ${
+                  (imagePreview.product.availableKg ?? 0) <= 0
+                    ? 'bg-rose-900/60 hover:bg-rose-900 text-rose-200 border border-rose-700/50'
+                    : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/50 active:scale-98'
+                }`}
               >
-                {isPackaged ? <ShoppingBag className="w-3.5 h-3.5" /> : <Scale className="w-3.5 h-3.5" />}
+                {(imagePreview.product.availableKg ?? 0) <= 0 ? (
+                  <Ban className="w-3.5 h-3.5 text-rose-400" />
+                ) : isPackaged ? (
+                  <ShoppingBag className="w-3.5 h-3.5" />
+                ) : (
+                  <Scale className="w-3.5 h-3.5" />
+                )}
                 <span>
-                  {language === 'ur'
+                  {(imagePreview.product.availableKg ?? 0) <= 0
+                    ? (language === 'ur' ? 'سٹاک ختم ہے (0 KG)' : 'Out of Stock (0 KG)')
+                    : language === 'ur'
                     ? (isPackaged ? 'بل میں شامل کریں' : 'وزن اور بل میں شامل کریں')
                     : (isPackaged ? 'Select & Add to Bill' : 'Weigh & Add to Bill')}
                 </span>

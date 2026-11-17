@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Product } from '../../types';
-import { Scale, AlertCircle, ShoppingBag, ZoomIn } from 'lucide-react';
+import { Scale, AlertCircle, ShoppingBag, ZoomIn, Ban } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 import { DEFAULT_RICE_IMAGE, SVG_RICE_FALLBACK } from '../../utils/productImages';
 
@@ -21,9 +21,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     product.unitLabel === '/ can' ||
     product.unitLabel === '/ carton';
 
-  const isActuallyLowStock = product.minStockThreshold !== undefined
-    ? product.availableKg > 0 && product.availableKg <= product.minStockThreshold
-    : (product.isLowStock ?? false);
+  const isOutOfStock = (product.availableKg ?? 0) <= 0;
+  const isActuallyLowStock = !isOutOfStock && (product.minStockThreshold !== undefined
+    ? product.availableKg <= product.minStockThreshold
+    : (product.isLowStock ?? false));
 
   const handleImageClick = () => {
     openImagePreview({
@@ -145,21 +146,30 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               <div className="flex items-center space-x-1">
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${
-                    isActuallyLowStock ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'
+                    isOutOfStock
+                      ? 'bg-rose-500'
+                      : isActuallyLowStock
+                      ? 'bg-amber-500 animate-pulse'
+                      : 'bg-emerald-500'
                   }`}
                 />
-                <span className={`font-semibold ${isActuallyLowStock ? 'text-amber-700' : 'text-slate-700'}`}>
+                <span className={`font-semibold ${isOutOfStock ? 'text-rose-700 font-extrabold' : isActuallyLowStock ? 'text-amber-700' : 'text-slate-700'}`}>
                   {product.availableStockLabel || `${product.availableKg} KG`}
                 </span>
               </div>
             </div>
 
-            {isActuallyLowStock && (
+            {isOutOfStock ? (
+              <div className="flex items-center space-x-1 text-[8.5px] text-rose-700 font-extrabold pt-0.5">
+                <Ban className="w-2.5 h-2.5 shrink-0" />
+                <span>{language === 'ur' ? 'سٹاک ختم ہے (0 KG)!' : 'Out of Stock (0 KG)!'}</span>
+              </div>
+            ) : isActuallyLowStock ? (
               <div className="flex items-center space-x-1 text-[8.5px] text-amber-700 font-bold pt-0.5">
                 <AlertCircle className="w-2.5 h-2.5 shrink-0" />
                 <span>{language === 'ur' ? 'سٹاک کم ہے!' : 'Low Stock!'}</span>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
@@ -168,11 +178,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div className="p-2 pt-0">
         <button
           onClick={() => setSelectedProductForModal(product)}
-          className="w-full py-1 px-2 rounded-lg font-bold text-[11px] flex items-center justify-center space-x-1 transition-all shadow-2xs active:scale-98 bg-emerald-50 hover:bg-emerald-800 hover:text-white text-emerald-800 border border-emerald-300 hover:border-emerald-800 cursor-pointer"
+          className={`w-full py-1 px-2 rounded-lg font-bold text-[11px] flex items-center justify-center space-x-1 transition-all shadow-2xs cursor-pointer ${
+            isOutOfStock
+              ? 'bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-300'
+              : 'bg-emerald-50 hover:bg-emerald-800 hover:text-white text-emerald-800 border border-emerald-300 hover:border-emerald-800 active:scale-98'
+          }`}
         >
-          {isPackaged ? <ShoppingBag className="w-3 h-3" /> : <Scale className="w-3 h-3" />}
+          {isOutOfStock ? (
+            <Ban className="w-3 h-3 text-rose-600" />
+          ) : isPackaged ? (
+            <ShoppingBag className="w-3 h-3" />
+          ) : (
+            <Scale className="w-3 h-3" />
+          )}
           <span>
-            {language === 'ur'
+            {isOutOfStock
+              ? (language === 'ur' ? 'سٹاک ختم ہے (0 KG)' : 'Out of Stock')
+              : language === 'ur'
               ? (isPackaged ? 'شامل کریں' : 'وزن کریں')
               : (isPackaged ? 'Select & Add' : 'Weigh & Add')}
           </span>
