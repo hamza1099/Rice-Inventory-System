@@ -36,7 +36,7 @@ export const CashDrawerOpeningModal: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpeningModalOpen) return;
-      if (e.key === 'Escape' && isDrawerOpen) {
+      if (e.key === 'Escape') {
         setIsOpeningModalOpen(false);
       } else if (e.key === 'Enter') {
         handleSubmit();
@@ -83,14 +83,14 @@ export const CashDrawerOpeningModal: React.FC = () => {
               </p>
             </div>
           </div>
-          {isDrawerOpen && (
-            <button
-              onClick={() => setIsOpeningModalOpen(false)}
-              className="text-emerald-200 hover:text-white p-1 rounded-full hover:bg-emerald-800 transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setIsOpeningModalOpen(false)}
+            className="text-emerald-200 hover:text-white p-1 rounded-full hover:bg-emerald-800 transition-colors cursor-pointer"
+            title={isUr ? 'بند کریں' : 'Close'}
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Body */}
@@ -208,15 +208,13 @@ export const CashDrawerOpeningModal: React.FC = () => {
               [ENTER] {isUr ? 'اوپن کریں' : 'Confirm & Open'}
             </span>
             <div className="flex items-center space-x-2">
-              {isDrawerOpen && (
-                <button
-                  type="button"
-                  onClick={() => setIsOpeningModalOpen(false)}
-                  className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100 font-bold transition-colors cursor-pointer"
-                >
-                  {isUr ? 'منسوخ' : 'Cancel'}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setIsOpeningModalOpen(false)}
+                className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100 font-bold transition-colors cursor-pointer"
+              >
+                {isUr ? 'منسوخ' : 'Cancel'}
+              </button>
               <button
                 type="submit"
                 className="px-6 py-2.5 bg-emerald-800 hover:bg-emerald-900 active:scale-98 text-white font-extrabold rounded-lg shadow-sm transition-all cursor-pointer flex items-center space-x-2"

@@ -6,13 +6,16 @@ import { transliterateEnglishToUrduName } from '../../utils/urduTransliterator';
 import { formatPakistaniPhone, isValidPakistaniPhone } from '../../utils/phone';
 import { NumberInput } from '../common/NumberInput';
 import { PakistaniPhoneInput } from '../common/PakistaniPhoneInput';
+import { openGoogleMapsSearchTab, parsePastedAddressOrMapLink } from '../../utils/maps';
+import type { KhataCustomer } from '../../types';
 
 interface AddCustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onCustomerCreated?: (cust: KhataCustomer) => void;
 }
 
-export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose }) => {
+export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, onCustomerCreated }) => {
   const { addKhataCustomer, language } = usePos();
   const isUr = language === 'ur';
 
@@ -92,6 +95,9 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
     });
 
     notifySuccess(isUr ? `${created.urduName || created.shopName} کا نیا کھاتہ کھل گیا!` : `Khata opened successfully for ${created.shopName || created.customerName}!`);
+    if (onCustomerCreated) {
+      onCustomerCreated(created);
+    }
     onClose();
   };
 
@@ -202,18 +208,32 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                {isUr ? 'دکان کا پتہ / علاقہ:' : 'Shop Address / Location:'}
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[11px] font-bold text-slate-700">
+                  {isUr ? 'دکان کا پتہ / علاقہ:' : 'Shop Address / Location:'}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => openGoogleMapsSearchTab(shopName || address)}
+                  className="text-[10px] text-emerald-800 hover:text-emerald-950 font-bold flex items-center gap-1.5 cursor-pointer bg-emerald-50 hover:bg-emerald-100 px-2.5 py-0.5 rounded border border-emerald-300 transition-colors shadow-2xs"
+                  title={isUr ? 'گوگل میپس کو نئی ٹیب میں کھولیں' : 'Open Google Maps in new browser tab'}
+                >
+                  <MapPin className="w-3 h-3 text-emerald-700" />
+                  <span>{isUr ? 'گوگل میپ' : 'Google Maps'}</span>
+                </button>
+              </div>
               <div className="relative">
                 <input
                   type="text"
-                  placeholder={isUr ? 'مثلاً دکان نمبر 14، منڈی موڑ' : 'e.g. Shop #14, Grain Market'}
+                  placeholder={isUr ? 'مثلاً دکان نمبر 14، غلہ منڈی یا گوگل میپ سے کاپی کر کے پیسٹ کریں' : 'e.g. Shop #14, Grain Market or paste from Google Maps'}
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded focus:border-emerald-600 focus:outline-hidden text-slate-900"
+                  onChange={(e) => setAddress(parsePastedAddressOrMapLink(e.target.value))}
+                  className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded focus:border-emerald-600 focus:outline-hidden text-slate-900 font-medium text-xs"
                 />
-                <MapPin className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                <MapPin
+                  onClick={() => openGoogleMapsSearchTab(shopName || address)}
+                  className="w-3.5 h-3.5 text-slate-400 hover:text-emerald-700 absolute left-2.5 top-2.5 cursor-pointer"
+                />
               </div>
             </div>
           </div>

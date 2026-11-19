@@ -3,6 +3,7 @@ import type {
   Product,
   CartItem,
   MemoRecord,
+  PaymentMode,
   InventoryItem,
   DenominationRow,
   ImagePreviewData,
@@ -43,6 +44,7 @@ import {
   getOrCreateUserDoc,
   clearMockDataIfPresent
 } from '../service/firestoreService';
+import { getPakistanDateIso, parseDateStrToIso } from '../utils/dateUtils';
 
 interface PosContextType {
   // Authentication & Logged In User
@@ -72,11 +74,17 @@ interface PosContextType {
   // Checkout & Memos
   spotDiscount: number;
   setSpotDiscount: (disc: number) => void;
-  paymentMode: 'SPOT CASH' | 'RAAST ONLINE';
-  setPaymentMode: (mode: 'SPOT CASH' | 'RAAST ONLINE') => void;
+  paymentMode: PaymentMode;
+  setPaymentMode: (mode: PaymentMode) => void;
+  selectedKhataCustomerForBill: KhataCustomer | null;
+  setSelectedKhataCustomerForBill: (cust: KhataCustomer | null) => void;
   cashReceived: number;
   setCashReceived: (val: number) => void;
-  completeSale: () => MemoRecord | null;
+  completeSale: (options?: {
+    khataCustomer?: KhataCustomer | null;
+    partialCash?: number;
+    customPaymentMode?: PaymentMode;
+  }) => MemoRecord | null;
   memos: MemoRecord[];
   isMemosLoading: boolean;
   activeReceipt: MemoRecord | null;
@@ -136,6 +144,7 @@ interface PosContextType {
 
   // Khata / Udhar Customer Book
   khataCustomers: KhataCustomer[];
+  isCustomersLoading: boolean;
   khataTransactions: KhataTransaction[];
   selectedKhataCustomerId: string | null;
   setSelectedKhataCustomerId: (id: string | null) => void;
@@ -221,7 +230,8 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Checkout
   const [spotDiscount, setSpotDiscount] = useState<number>(0);
-  const [paymentMode, setPaymentMode] = useState<'SPOT CASH' | 'RAAST ONLINE'>('SPOT CASH');
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>('SPOT CASH');
+  const [selectedKhataCustomerForBill, setSelectedKhataCustomerForBill] = useState<KhataCustomer | null>(null);
   const [cashReceived, setCashReceived] = useState<number>(0);
   const [memos, setMemos] = useState<MemoRecord[]>(() => {
     try {
@@ -260,18 +270,14 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  // Helper to verify if an ISO date string matches today
+  // Helper to verify if an ISO date string matches today in Pakistan Standard Time (PKT)
   const isDateToday = (isoStr: string | null): boolean => {
     if (!isoStr) return false;
     try {
-      const d = new Date(isoStr);
-      const now = new Date();
-      return (
-        d.getFullYear() === now.getFullYear() &&
-        d.getMonth() === now.getMonth() &&
-        d.getDate() === now.getDate()
-      );
-    } catch (e) {
+      const todayPkt = getPakistanDateIso();
+      const targetDate = isoStr.includes('T') ? isoStr.split('T')[0] : parseDateStrToIso(isoStr);
+      return targetDate === todayPkt;
+    } catch {
       return false;
     }
   };
@@ -306,8 +312,17 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isUnclosedModalOpen, setIsUnclosedModalOpen] = useState<boolean>(false);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(() => {
-    const saved = localStorage.getItem('ricecms_drawer_active');
-    return saved !== null ? saved === 'true' : false;
+    try {
+      const savedDate = localStorage.getItem('ricecms_drawer_date');
+      const todayPkt = getPakistanDateIso();
+      const savedActive = localStorage.getItem('ricecms_drawer_active');
+      if (savedActive === 'true' && savedDate === todayPkt) {
+        return true;
+      }
+      return savedActive === 'true';
+    } catch {
+      return false;
+    }
   });
 
   const [isOpeningModalOpen, setIsOpeningModalOpen] = useState<boolean>(false);
@@ -318,17 +333,19 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const openDrawer = (amount: number, cashierName?: string, notes?: string) => {
+    const todayStr = getPakistanDateIso();
+    const now = new Date().toISOString();
     setOpeningFloatState(amount);
     setIsDrawerOpen(true);
     setIsDayClosed(false);
     setIsPreviousSessionUnclosed(false);
     setIsUnclosedModalOpen(false);
-    const now = new Date().toISOString();
     setDrawerOpenedAt(now);
     setIsOpeningModalOpen(false);
     localStorage.setItem('ricecms_opening_float', amount.toString());
     localStorage.setItem('ricecms_drawer_active', 'true');
     localStorage.setItem('ricecms_drawer_opened_at', now);
+    localStorage.setItem('ricecms_drawer_date', todayStr);
     saveCashDrawerOpeningDoc(amount, now, cashierName, notes).catch(console.error);
   };
 
@@ -381,7 +398,22 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // ==================== KHATA / UDHAR CUSTOMER BOOK ====================
-  const [khataCustomers, setKhataCustomers] = useState<KhataCustomer[]>([]);
+  const [khataCustomers, setKhataCustomers] = useState<KhataCustomer[]>(() => {
+    try {
+      const cached = localStorage.getItem('ricecms_cached_khata_customers');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isCustomersLoading, setIsCustomersLoading] = useState<boolean>(() => {
+    try {
+      const cached = localStorage.getItem('ricecms_cached_khata_customers');
+      return !cached || JSON.parse(cached).length === 0;
+    } catch {
+      return true;
+    }
+  });
   const [khataTransactions, setKhataTransactions] = useState<KhataTransaction[]>([]);
   const [selectedKhataCustomerId, setSelectedKhataCustomerId] = useState<string | null>(null);
 
@@ -466,6 +498,10 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return c;
       });
       setKhataCustomers(sanitized);
+      setIsCustomersLoading(false);
+      try {
+        localStorage.setItem('ricecms_cached_khata_customers', JSON.stringify(sanitized || []));
+      } catch (_) {}
       if (sanitized && sanitized.length > 0) {
         setSelectedKhataCustomerId((prev) => prev || sanitized[0].id);
       }
@@ -477,7 +513,58 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const unsubDrawer = subscribeToCashDrawer((d) => {
       if (d) {
+        const todayPkt = getPakistanDateIso();
+        const openedDate = d.drawerOpenedAt
+          ? (d.drawerOpenedAt.includes('T') ? d.drawerOpenedAt.split('T')[0] : parseDateStrToIso(d.drawerOpenedAt))
+          : null;
+        const isToday = openedDate === todayPkt;
+
+        if (d.isDrawerOpen && isToday) {
+          // Active drawer for today - keep open across reloads and tab navigations
+          setOpeningFloatState(d.openingFloat || 0);
+          setDrawerOpenedAt(d.drawerOpenedAt || null);
+          setIsDrawerOpen(true);
+          setIsOpeningModalOpen(false);
+          setIsPreviousSessionUnclosed(false);
+          setIsUnclosedModalOpen(false);
+          localStorage.setItem('ricecms_drawer_active', 'true');
+          localStorage.setItem('ricecms_drawer_date', todayPkt);
+          localStorage.setItem('ricecms_opening_float', (d.openingFloat || 0).toString());
+          if (d.drawerOpenedAt) {
+            localStorage.setItem('ricecms_drawer_opened_at', d.drawerOpenedAt);
+          }
+          return;
+        }
+
+        if (d.isDrawerOpen && !isToday && d.drawerOpenedAt) {
+          // Drawer was opened on a previous day and not closed
+          if (memosRef.current.length > 0) {
+            setIsPreviousSessionUnclosed(true);
+            setIsUnclosedModalOpen(true);
+            setIsDrawerOpen(false);
+          } else {
+            // Clean reset if there were no memos recorded
+            closeCashDrawerDoc().catch(console.error);
+            setIsPreviousSessionUnclosed(false);
+            setIsUnclosedModalOpen(false);
+            setIsDrawerOpen(false);
+            localStorage.setItem('ricecms_drawer_active', 'false');
+            localStorage.removeItem('ricecms_drawer_opened_at');
+            localStorage.removeItem('ricecms_drawer_date');
+          }
+          return;
+        }
+
         if (!d.isDrawerOpen) {
+          // Fallback: check if opened locally today
+          const localActive = localStorage.getItem('ricecms_drawer_active') === 'true';
+          const localDate = localStorage.getItem('ricecms_drawer_date');
+          if (localActive && localDate === todayPkt) {
+            setIsDrawerOpen(true);
+            setIsOpeningModalOpen(false);
+            return;
+          }
+
           setOpeningFloatState(0);
           setDrawerOpenedAt(null);
           setIsDrawerOpen(false);
@@ -486,31 +573,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           localStorage.setItem('ricecms_drawer_active', 'false');
           localStorage.setItem('ricecms_opening_float', '0');
           localStorage.removeItem('ricecms_drawer_opened_at');
-          return;
-        }
-
-        setOpeningFloatState(d.openingFloat || 0);
-        setDrawerOpenedAt(d.drawerOpenedAt || null);
-
-        const isFromPast = Boolean(d.drawerOpenedAt && !isDateToday(d.drawerOpenedAt));
-        if (isFromPast) {
-          if (memosRef.current.length > 0) {
-            setIsPreviousSessionUnclosed(true);
-            setIsUnclosedModalOpen(true);
-            setIsDrawerOpen(false);
-          } else {
-            // Clean reset if there are no memos in DB
-            closeCashDrawerDoc().catch(console.error);
-            setIsPreviousSessionUnclosed(false);
-            setIsUnclosedModalOpen(false);
-            setIsDrawerOpen(false);
-            localStorage.setItem('ricecms_drawer_active', 'false');
-            localStorage.removeItem('ricecms_drawer_opened_at');
-          }
-        } else {
-          setIsPreviousSessionUnclosed(false);
-          setIsUnclosedModalOpen(false);
-          setIsDrawerOpen(d.isDrawerOpen);
+          localStorage.removeItem('ricecms_drawer_date');
         }
       }
     });
@@ -760,7 +823,11 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSpotDiscount(0);
   };
 
-  const completeSale = (): MemoRecord | null => {
+  const completeSale = (options?: {
+    khataCustomer?: KhataCustomer | null;
+    partialCash?: number;
+    customPaymentMode?: PaymentMode;
+  }): MemoRecord | null => {
     if (cart.length === 0) return null;
 
     const gross = cart.reduce((sum, item) => sum + item.subtotal, 0);
@@ -779,26 +846,89 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ? (language === 'ur' ? userProfile.urduName || userProfile.name : userProfile.name)
       : currentUser?.displayName || currentUser?.email?.split('@')[0] || (language === 'ur' ? 'کیشیئر' : 'Cashier');
 
+    const effectivePaymentMode = options?.customPaymentMode || paymentMode;
+    const targetKhataCust = options?.khataCustomer !== undefined ? options.khataCustomer : selectedKhataCustomerForBill;
+    const isKhata = effectivePaymentMode === 'KHATA / CREDIT' || Boolean(targetKhataCust && effectivePaymentMode !== 'SPOT CASH' && effectivePaymentMode !== 'RAAST ONLINE');
+
+    let customerName = 'Counter Retail Buyer';
+    let customerMeta = 'Spot Cash • Counter 01';
+    let finalPaymentMode: PaymentMode = effectivePaymentMode;
+    let khataCustId: string | undefined = undefined;
+
+    if (isKhata && targetKhataCust) {
+      finalPaymentMode = 'KHATA / CREDIT';
+      khataCustId = targetKhataCust.id;
+      const shop = targetKhataCust.shopName?.trim();
+      const person = targetKhataCust.customerName?.trim();
+      customerName = shop ? `${shop}${person && person !== shop ? ` (${person})` : ''}` : (person || 'Khata Customer');
+      customerMeta = `Khata Account • ${targetKhataCust.phone || 'Udhar'}`;
+    }
+
     const newRecord: MemoRecord = {
       id: memoId,
       memoNo: `#${memoSeq}`,
       dateStr: now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       timeStr: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')} PKT`,
-      customerName: 'Counter Retail Buyer',
-      customerMeta: 'Spot Cash • Counter 01',
+      customerName,
+      customerMeta,
       itemsSummary: cart.map((c) => c.product.name).join(' + '),
       weightSummary: `${cart.length} Items (${totalWeight.toFixed(2)} KG)`,
-      paymentMode,
+      paymentMode: finalPaymentMode,
       grossAmount: gross,
       discount: spotDiscount,
       netAmount: net,
       items: [...cart],
       cashier: cashierLabel,
-      counterId: 'Counter 01'
+      counterId: 'Counter 01',
+      khataCustomerId: khataCustId
     };
 
     setMemos([newRecord, ...memos]);
     setActiveReceipt(newRecord);
+
+    // If Khata sale, automatically record purchase to customer's Khata ledger
+    if (finalPaymentMode === 'KHATA / CREDIT' && targetKhataCust) {
+      const itemSummary = cart
+        .map((c) => `${c.product.urduName || c.product.name} (${c.netWeight < 1 ? c.netWeight.toFixed(3) : c.netWeight.toFixed(2)} ${c.mode === 'packet' ? 'pkt' : 'kg'})`)
+        .join(', ');
+
+      const desc = language === 'ur'
+        ? `کیش میمو ${newRecord.memoNo} (کاؤنٹر بل) - ${itemSummary}`
+        : `Cash Memo ${newRecord.memoNo} (POS Counter Bill) - ${itemSummary}`;
+
+      const khataItems: KhataItemEntry[] = cart.map((c) => ({
+        productName: c.product.name,
+        urduName: c.product.urduName,
+        quantity: c.netWeight,
+        unit: c.mode === 'packet' ? 'packet' : 'kg',
+        rate: c.ratePerKg,
+        subtotal: c.subtotal
+      }));
+
+      addKhataPurchase(
+        targetKhataCust.id,
+        net,
+        desc,
+        khataItems,
+        `POS Counter Memo ${newRecord.memoNo}. Spot Discount: PKR ${spotDiscount}`
+      );
+
+      const partial = options?.partialCash || 0;
+      if (partial > 0) {
+        addKhataPayment(
+          targetKhataCust.id,
+          partial,
+          'CASH',
+          language === 'ur'
+            ? `برائے میمو ${newRecord.memoNo} کے موقع پر نقد وصولی (Spot Cash on Counter)`
+            : `Cash paid on spot for Memo ${newRecord.memoNo}`,
+          newRecord.memoNo
+        );
+      }
+
+      setSelectedKhataCustomerForBill(null);
+    }
+
     clearCart();
 
     // Persist to Firestore and decrement stock in real time
@@ -870,7 +1000,35 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       );
     }
 
-    // 3. Persist deletion and stock restoration to Firestore
+    // 3. If Khata memo, reverse Khata ledger and customer balance
+    if (target.paymentMode === 'KHATA / CREDIT' && target.khataCustomerId) {
+      const custId = target.khataCustomerId;
+      const cust = khataCustomers.find((c) => c.id === custId);
+      if (cust) {
+        const reversedBalance = Math.max(0, cust.currentBalance - target.netAmount);
+        setKhataCustomers((prev) =>
+          prev.map((c) => {
+            if (c.id === custId) {
+              return {
+                ...c,
+                totalDebit: Math.max(0, c.totalDebit - target.netAmount),
+                currentBalance: reversedBalance,
+                status: reversedBalance > 0 ? 'ACTIVE' : 'SETTLED'
+              };
+            }
+            return c;
+          })
+        );
+        const relatedTx = khataTransactions.find(
+          (t) => t.customerId === custId && (t.description.includes(target.memoNo) || t.notes?.includes(target.memoNo))
+        );
+        if (relatedTx) {
+          deleteKhataTransaction(relatedTx.id);
+        }
+      }
+    }
+
+    // 4. Persist deletion and stock restoration to Firestore
     await deleteMemoDoc(memoId, target.items);
   };
 
@@ -1237,6 +1395,8 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSpotDiscount,
         paymentMode,
         setPaymentMode,
+        selectedKhataCustomerForBill,
+        setSelectedKhataCustomerForBill,
         cashReceived,
         setCashReceived,
         completeSale,
@@ -1283,6 +1443,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         openImagePreview,
         closeImagePreview,
         khataCustomers,
+        isCustomersLoading,
         khataTransactions,
         selectedKhataCustomerId,
         setSelectedKhataCustomerId,

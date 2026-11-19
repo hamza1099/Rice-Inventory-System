@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { KhataCustomer, KhataTransaction } from '../../types';
 import { usePos } from '../../context/PosContext';
+import { notifySuccess } from '../../utils/toast';
 import {
   X,
   Phone,
@@ -12,7 +13,10 @@ import {
   Edit,
   Trash2,
   Clock,
-  Send
+  Send,
+  Copy,
+  Check,
+  ExternalLink
 } from 'lucide-react';
 
 interface CustomerLedgerDetailModalProps {
@@ -44,6 +48,29 @@ export const CustomerLedgerDetailModal: React.FC<CustomerLedgerDetailModalProps>
 }) => {
   const { language } = usePos();
   const isUr = language === 'ur';
+
+  const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
+
+  const handleCopyLocation = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!customer?.address) return;
+    try {
+      navigator.clipboard.writeText(customer.address);
+      setCopiedAddress(true);
+      notifySuccess(isUr ? 'لوکیشن ایڈریس کاپی ہو گیا!' : 'Location address copied to clipboard!');
+      setTimeout(() => setCopiedAddress(false), 2000);
+    } catch (_) {
+      const ta = document.createElement('textarea');
+      ta.value = customer.address;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setCopiedAddress(true);
+      notifySuccess(isUr ? 'لوکیشن ایڈریس کاپی ہو گیا!' : 'Location address copied to clipboard!');
+      setTimeout(() => setCopiedAddress(false), 2000);
+    }
+  };
 
   // Ensure that if a customer has an opening balance, it always shows in the ledger table
   const ledgerTransactions = React.useMemo(() => {
@@ -101,10 +128,41 @@ export const CustomerLedgerDetailModal: React.FC<CustomerLedgerDetailModalProps>
                   {customer.phone}
                 </span>
                 {customer.address && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-                    {customer.address}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handleCopyLocation}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-800/80 active:scale-95 text-emerald-200 hover:text-white transition-all cursor-pointer border border-emerald-500/40 max-w-sm sm:max-w-md group"
+                      title={isUr ? 'کلک کریں اور لوکیشن کاپی کریں' : 'Click to copy location address'}
+                    >
+                      {copiedAddress ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+                      ) : (
+                        <MapPin className="w-3.5 h-3.5 text-emerald-400 group-hover:text-emerald-200 shrink-0" />
+                      )}
+                      <span className="truncate max-w-[200px] sm:max-w-[280px] font-medium text-[11px] underline-offset-2 group-hover:underline">
+                        {customer.address}
+                      </span>
+                      {copiedAddress ? (
+                        <span className="text-[10px] bg-emerald-500 text-white font-extrabold px-1.5 py-0.5 rounded shrink-0">
+                          {isUr ? 'کاپی ہو گیا ✓' : 'Copied ✓'}
+                        </span>
+                      ) : (
+                        <Copy className="w-3 h-3 text-emerald-400/80 group-hover:text-white shrink-0 opacity-70 group-hover:opacity-100 transition-opacity" />
+                      )}
+                    </button>
+                    {(customer.address.startsWith('http') || customer.address.includes('maps')) && (
+                      <a
+                        href={customer.address.startsWith('http') ? customer.address : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(customer.address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1 rounded bg-white/10 hover:bg-white/20 text-emerald-300 hover:text-white transition-colors"
+                        title={isUr ? 'گوگل میپس میں کھولیں' : 'Open in Google Maps'}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

@@ -20,12 +20,14 @@ import {
   Building2,
   Coins,
   ShieldCheck,
-  Trash2
+  Trash2,
+  Copy
 } from 'lucide-react';
 
 export const CustomerKhataScreen: React.FC = () => {
   const {
     khataCustomers,
+    isCustomersLoading,
     khataTransactions,
     selectedKhataCustomerId,
     setSelectedKhataCustomerId,
@@ -35,6 +37,7 @@ export const CustomerKhataScreen: React.FC = () => {
   } = usePos();
 
   const isUr = language === 'ur';
+  const isInitialLoading = isCustomersLoading && khataCustomers.length === 0;
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -197,6 +200,7 @@ export const CustomerKhataScreen: React.FC = () => {
         {/* 4 Stat Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard
+            isLoading={isInitialLoading}
             title={isUr ? 'مارکیٹ کل بقایا' : 'Market Receivables'}
             urduTitle="مارکیٹ بقایا"
             value={`PKR ${totalMarketUdhar.toLocaleString()}`}
@@ -209,6 +213,7 @@ export const CustomerKhataScreen: React.FC = () => {
           />
 
           <StatCard
+            isLoading={isInitialLoading}
             title={isUr ? 'زیر التواء کھاتے' : 'Active Khate'}
             urduTitle="زیر التواء کھاتے"
             value={isUr ? `${activeKhateCount} کھاتے` : `${activeKhateCount} Accounts`}
@@ -221,6 +226,7 @@ export const CustomerKhataScreen: React.FC = () => {
           />
 
           <StatCard
+            isLoading={isInitialLoading}
             title={isUr ? 'کل وصول شدہ' : 'Total Recoveries'}
             urduTitle="کل وصول شدہ"
             value={`PKR ${totalRecoveredThisMonth.toLocaleString()}`}
@@ -233,6 +239,7 @@ export const CustomerKhataScreen: React.FC = () => {
           />
 
           <StatCard
+            isLoading={isInitialLoading}
             title={isUr ? 'مکمل بیباق' : 'Settled Accounts'}
             urduTitle="مکمل بیباق"
             value={isUr ? `${settledKhateCount} کھاتے` : `${settledKhateCount} Accounts`}
@@ -273,7 +280,9 @@ export const CustomerKhataScreen: React.FC = () => {
                     : 'hover:text-slate-900'
                 }`}
               >
-                {isUr ? `تمام (${khataCustomers.length})` : `All (${khataCustomers.length})`}
+                {isUr
+                  ? `تمام (${isInitialLoading ? '•••' : khataCustomers.length})`
+                  : `All (${isInitialLoading ? '•••' : khataCustomers.length})`}
               </button>
               <button
                 onClick={() => setFilterStatus('PENDING')}
@@ -283,7 +292,9 @@ export const CustomerKhataScreen: React.FC = () => {
                     : 'hover:text-slate-900'
                 }`}
               >
-                {isUr ? `واجب الادا (${activeKhateCount})` : `Pending (${activeKhateCount})`}
+                {isUr
+                  ? `واجب الادا (${isInitialLoading ? '•••' : activeKhateCount})`
+                  : `Pending (${isInitialLoading ? '•••' : activeKhateCount})`}
               </button>
               <button
                 onClick={() => setFilterStatus('SETTLED')}
@@ -293,14 +304,51 @@ export const CustomerKhataScreen: React.FC = () => {
                     : 'hover:text-slate-900'
                 }`}
               >
-                {isUr ? `مکمل بیباق (${settledKhateCount})` : `Settled (${settledKhateCount})`}
+                {isUr
+                  ? `مکمل بیباق (${isInitialLoading ? '•••' : settledKhateCount})`
+                  : `Settled (${isInitialLoading ? '•••' : settledKhateCount})`}
               </button>
             </div>
           </div>
 
           {/* Customer Cards Grid (Clicking any card opens the Detail Modal) */}
           <div className="flex-1 overflow-y-auto p-4 min-h-0">
-            {filteredCustomers.length === 0 ? (
+            {isInitialLoading ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-center py-6 gap-2.5 text-emerald-800 font-bold text-xs bg-emerald-50/60 rounded-xl border border-emerald-100">
+                  <div className="w-5 h-5 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin" />
+                  <span className="tracking-wide">
+                    {isUr ? 'گاہکوں کے ادھار کھاتے لوڈ ہو رہے ہیں...' : 'Loading Khata Accounts & Ledgers...'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3.5 auto-rows-max">
+                  {[1, 2, 3, 4, 5, 6].map((idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white border border-slate-200 rounded-2xl p-4 animate-pulse flex flex-col justify-between h-44 shadow-xs"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <div className="h-4 w-12 bg-slate-200 rounded" />
+                              <div className="h-4 w-32 bg-slate-200 rounded" />
+                            </div>
+                            <div className="h-3 w-36 bg-slate-100 rounded" />
+                            <div className="h-3 w-28 bg-slate-100 rounded" />
+                          </div>
+                          <div className="h-10 w-24 bg-slate-200 rounded-xl" />
+                        </div>
+                      </div>
+                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <div className="h-4 w-28 bg-slate-100 rounded" />
+                        <div className="h-7 w-24 bg-slate-200 rounded-lg" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : filteredCustomers.length === 0 ? (
               <div className="py-16 text-center text-slate-400">
                 <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                 <p className="text-sm font-bold text-slate-700">
@@ -357,10 +405,30 @@ export const CustomerKhataScreen: React.FC = () => {
                             </p>
 
                             {cust.address && (
-                              <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1 truncate">
-                                <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                                {cust.address}
-                              </p>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  try {
+                                    navigator.clipboard.writeText(cust.address);
+                                    notifySuccess(language === 'ur' ? 'لوکیشن ایڈریس کاپی ہو گیا!' : 'Location address copied!');
+                                  } catch (_) {
+                                    const ta = document.createElement('textarea');
+                                    ta.value = cust.address;
+                                    document.body.appendChild(ta);
+                                    ta.select();
+                                    document.execCommand('copy');
+                                    document.body.removeChild(ta);
+                                    notifySuccess(language === 'ur' ? 'لوکیشن ایڈریس کاپی ہو گیا!' : 'Location address copied!');
+                                  }
+                                }}
+                                className="text-[11px] text-slate-400 hover:text-emerald-700 mt-0.5 flex items-center gap-1 truncate hover:underline cursor-pointer text-left group"
+                                title={language === 'ur' ? 'کلک کریں اور پتہ کاپی کریں' : 'Click to copy address'}
+                              >
+                                <MapPin className="w-3 h-3 text-slate-400 group-hover:text-emerald-600 shrink-0" />
+                                <span className="truncate">{cust.address}</span>
+                                <Copy className="w-2.5 h-2.5 text-slate-300 group-hover:text-emerald-600 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </button>
                             )}
                           </div>
 

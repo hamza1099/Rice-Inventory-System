@@ -36,6 +36,8 @@ export interface CartItem {
   subtotal: number;
 }
 
+export type PaymentMode = 'SPOT CASH' | 'RAAST ONLINE' | 'KHATA / CREDIT';
+
 export interface MemoRecord {
   id: string;
   memoNo: string;
@@ -45,13 +47,14 @@ export interface MemoRecord {
   customerMeta: string;
   itemsSummary: string;
   weightSummary: string;
-  paymentMode: 'SPOT CASH' | 'RAAST ONLINE';
+  paymentMode: PaymentMode;
   netAmount: number;
   grossAmount: number;
   discount: number;
   items: CartItem[];
   cashier: string;
   counterId: string;
+  khataCustomerId?: string;
 }
 
 export interface InventoryItem {

@@ -143,9 +143,10 @@ export const MemoFilterBar: React.FC<MemoFilterBarProps> = ({
             onChange={(e) => setSelectedPayment(e.target.value)}
             className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 font-bold text-slate-700 focus:outline-hidden"
           >
-            <option value="ALL">{isUr ? 'تمام ادائیگیاں (نقد و راست)' : 'Payment Mode: All Modes (Spot Only)'}</option>
+            <option value="ALL">{isUr ? 'تمام ادائیگیاں (نقد، راست، کھاتہ)' : 'Payment Mode: All Modes'}</option>
             <option value="SPOT CASH">{isUr ? 'صرف نقد رقم' : 'Spot Cash Only'}</option>
             <option value="RAAST ONLINE">{isUr ? 'صرف راست / آن لائن' : 'RAAST & Online IBFT Only'}</option>
+            <option value="KHATA / CREDIT">{isUr ? 'صرف ادھار / کھاتہ' : 'Khata / Credit Only'}</option>
           </select>
         </div>
 

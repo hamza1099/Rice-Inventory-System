@@ -187,10 +187,10 @@ export const DailyMemoScreen: React.FC = () => {
       <div className="grid grid-cols-4 gap-3">
         <StatCard
           isLoading={isInitialLoading}
-          title="PERIOD SPOT SALES"
-          urduTitle="کل نقد فروخت"
+          title="PERIOD TOTAL SALES"
+          urduTitle="کل فروخت (نقد و ادھار)"
           value={`PKR ${totalSales.toLocaleString()}`}
-          subValue={`${filteredMemos.length} Spot Invoices • 0 CREDIT / KHATA`}
+          subValue={`${filteredMemos.filter((m) => m.paymentMode !== 'KHATA / CREDIT').length} Spot Invoices • ${filteredMemos.filter((m) => m.paymentMode === 'KHATA / CREDIT').length} CREDIT / KHATA`}
           badge="SETTLED"
           badgeColor="emerald"
           icon={DollarSign}

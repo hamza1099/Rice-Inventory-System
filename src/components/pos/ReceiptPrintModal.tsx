@@ -3,7 +3,10 @@ import { Printer, X, CheckCircle } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 
 export const ReceiptPrintModal: React.FC = () => {
-  const { activeReceipt, setActiveReceipt, language } = usePos();
+  const { activeReceipt, setActiveReceipt, language, khataCustomers } = usePos();
+  const khataCustomer = activeReceipt?.khataCustomerId
+    ? khataCustomers.find((c) => c.id === activeReceipt.khataCustomerId)
+    : null;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -151,8 +154,24 @@ export const ReceiptPrintModal: React.FC = () => {
               </div>
               <div className="flex justify-between text-[10px] text-slate-600 font-normal">
                 <span>PAYMENT MODE:</span>
-                <span className="font-bold">{activeReceipt.paymentMode}</span>
+                <span className="font-bold">
+                  {activeReceipt.paymentMode === 'KHATA / CREDIT'
+                    ? 'KHATA / CREDIT (ادھار کھاتہ)'
+                    : activeReceipt.paymentMode}
+                </span>
               </div>
+              {activeReceipt.paymentMode === 'KHATA / CREDIT' && khataCustomer && (
+                <div className="bg-purple-50 p-1.5 rounded border border-purple-200 text-purple-950 text-[10px] font-bold space-y-0.5 mt-1">
+                  <div className="flex justify-between">
+                    <span>CUSTOMER KHATA:</span>
+                    <span className="truncate max-w-[140px]">{khataCustomer.shopName || khataCustomer.customerName}</span>
+                  </div>
+                  <div className="flex justify-between font-mono-num">
+                    <span>TOTAL ACCUMULATED DUE:</span>
+                    <span>PKR {khataCustomer.currentBalance.toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Footer */}

@@ -28,21 +28,15 @@ export const PosCounterScreen: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Automatically prompt:
-  // 1. Alert to close previous day session if left unclosed
-  // 2. Otherwise prompt for opening cash float to start today's fresh day
+  // Automatically prompt only if an unclosed session from a past day is detected
   useEffect(() => {
     if (isPreviousSessionUnclosed) {
       setIsUnclosedModalOpen(true);
       setIsOpeningModalOpen(false);
     } else if (isDayClosed) {
-      // If previous shift was finalized on Day-End Closing and cashier returned to POS Counter,
-      // seamlessly prepare for the fresh day and immediately open the cash float entry modal
       startNewDay();
-    } else if (!isDrawerOpen) {
-      setIsOpeningModalOpen(true);
     }
-  }, [isPreviousSessionUnclosed, isDayClosed, isDrawerOpen]);
+  }, [isPreviousSessionUnclosed, isDayClosed]);
 
   const customCategories = getCustomCategories();
 

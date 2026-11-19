@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, ShoppingCart, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
-import type { MemoRecord, CartItem } from '../../types';
+import type { MemoRecord, CartItem, PaymentMode } from '../../types';
 import { usePos } from '../../context/PosContext';
 import { useNavigate } from 'react-router-dom';
 import { RouteName } from '../../routes/RouteName';
@@ -18,7 +18,7 @@ export const EditMemoModal: React.FC<EditMemoModalProps> = ({ memo, isOpen, onCl
   const isUr = language === 'ur';
 
   const [customerName, setCustomerName] = useState<string>('');
-  const [paymentMode, setPaymentMode] = useState<'SPOT CASH' | 'RAAST ONLINE'>('SPOT CASH');
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>('SPOT CASH');
   const [discount, setDiscount] = useState<number>(0);
   const [memoDate, setMemoDate] = useState<string>('');
   const [items, setItems] = useState<CartItem[]>([]);
@@ -211,11 +211,11 @@ export const EditMemoModal: React.FC<EditMemoModalProps> = ({ memo, isOpen, onCl
               <label className="block text-[11px] font-bold text-slate-700 mb-1">
                 {isUr ? 'طریقہ ادائیگی:' : 'Payment Mode:'}
               </label>
-              <div className="grid grid-cols-2 gap-1">
+              <div className="grid grid-cols-3 gap-1">
                 <button
                   type="button"
                   onClick={() => setPaymentMode('SPOT CASH')}
-                  className={`py-1.5 px-1 rounded-lg font-bold text-[9.5px] transition-all border cursor-pointer ${
+                  className={`py-1.5 px-1 rounded-lg font-bold text-[9px] transition-all border cursor-pointer ${
                     paymentMode === 'SPOT CASH'
                       ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
                       : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -226,13 +226,24 @@ export const EditMemoModal: React.FC<EditMemoModalProps> = ({ memo, isOpen, onCl
                 <button
                   type="button"
                   onClick={() => setPaymentMode('RAAST ONLINE')}
-                  className={`py-1.5 px-1 rounded-lg font-bold text-[9.5px] transition-all border cursor-pointer ${
+                  className={`py-1.5 px-1 rounded-lg font-bold text-[9px] transition-all border cursor-pointer ${
                     paymentMode === 'RAAST ONLINE'
                       ? 'bg-blue-700 text-white border-blue-700 shadow-xs'
                       : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
                   RAAST
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMode('KHATA / CREDIT')}
+                  className={`py-1.5 px-1 rounded-lg font-bold text-[9px] transition-all border cursor-pointer ${
+                    paymentMode === 'KHATA / CREDIT'
+                      ? 'bg-purple-700 text-white border-purple-700 shadow-xs'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  KHATA
                 </button>
               </div>
             </div>

@@ -31,6 +31,10 @@ export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({
   const onlineRaastTransfers = raastMemos.reduce((sum, m) => sum + m.netAmount, 0);
   const raastTransCount = raastMemos.length;
 
+  const khataMemos = targetMemos.filter((m) => m.paymentMode === 'KHATA / CREDIT');
+  const khataCreditSales = khataMemos.reduce((sum, m) => sum + m.netAmount, 0);
+  const khataMemosCount = khataMemos.length;
+
   const currentFloat = activePeriod === 'today' ? openingFloat : 0;
   const totalHandoverCash = currentFloat + spotCashCollected;
   const totalBusiness = spotCashCollected + onlineRaastTransfers;
@@ -59,8 +63,8 @@ export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({
           </span>
         </div>
 
-        {/* 3 Metrics */}
-        <div className="grid grid-cols-3 gap-3 font-mono-num bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+        {/* Key figures */}
+        <div className={`grid ${khataCreditSales > 0 ? 'grid-cols-4' : 'grid-cols-3'} gap-3 font-mono-num bg-slate-50 p-2.5 rounded-lg border border-slate-100`}>
           <div>
             <span className="text-[10px] text-slate-500 font-sans block">
               {isUr ? 'صبح کا ابتدائی کیش:' : 'OPENING FLOAT:'}
@@ -96,6 +100,20 @@ export const DrawerAuditCard: React.FC<DrawerAuditCardProps> = ({
               {isUr ? `${raastTransCount} تصدیق شدہ راست` : `${raastTransCount} Verified IBFT`}
             </span>
           </div>
+
+          {khataCreditSales > 0 && (
+            <div>
+              <span className="text-[10px] text-slate-500 font-sans block">
+                {isUr ? 'ادھار / کھاتہ بل:' : 'KHATA / CREDIT:'}
+              </span>
+              <span className="text-base font-black text-purple-800">
+                PKR {khataCreditSales.toLocaleString()}
+              </span>
+              <span className="text-[10px] text-slate-400 block font-sans">
+                {isUr ? `${khataMemosCount} کھاتہ واؤچرز` : `${khataMemosCount} Credit Invoices`}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Total Physical Cash for Handover */}
