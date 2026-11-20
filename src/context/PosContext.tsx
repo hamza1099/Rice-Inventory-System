@@ -45,6 +45,7 @@ import {
   clearMockDataIfPresent
 } from '../service/firestoreService';
 import { getPakistanDateIso, parseDateStrToIso } from '../utils/dateUtils';
+import { getPackagingPreset } from '../utils/packaging';
 
 interface PosContextType {
   // Authentication & Logged In User
@@ -464,10 +465,28 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Live Firestore Subscriptions (Clean direct sync, no mock fallback)
     const unsubInv = subscribeToInventory((items) => {
-      setInventory(items || []);
+      const sanitized = (items || []).map((item) => {
+        let packWeight = item.unitsPerPack;
+        if (!packWeight || packWeight <= 0) {
+          const matched = getPackagingPreset(item.packagingStandard);
+          packWeight = matched.unitsPerPack || 25;
+        }
+
+        // Auto-correct any mismatched bagsCount from previous /50 bug
+        if (packWeight > 0 && item.physicalStockKg > 0) {
+          const expectedBags = Math.floor(item.physicalStockKg / packWeight);
+          if (item.bagsCount > expectedBags) {
+            updateInventoryItemDoc(item.id, { bagsCount: expectedBags }).catch(console.error);
+            return { ...item, bagsCount: expectedBags, unitsPerPack: packWeight };
+          }
+        }
+        return item;
+      });
+
+      setInventory(sanitized);
       setIsInventoryLoading(false);
       try {
-        localStorage.setItem('ricecms_cached_inventory', JSON.stringify(items || []));
+        localStorage.setItem('ricecms_cached_inventory', JSON.stringify(sanitized));
       } catch (_) {}
     });
 
@@ -961,8 +980,8 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
           if (totalSold > 0) {
             const restoredQty = invItem.physicalStockKg + totalSold;
-            const bagsRestored = Math.floor(totalSold / 50);
-            const newBags = invItem.bagsCount + bagsRestored;
+            const packWeight = invItem.unitsPerPack && invItem.unitsPerPack > 0 ? invItem.unitsPerPack : 25;
+            const newBags = Math.floor(restoredQty / packWeight);
             const threshold = invItem.minStockThreshold !== undefined ? invItem.minStockThreshold : 20;
             return {
               ...invItem,
@@ -1068,10 +1087,13 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const adj = stockAdjustments.find((a) => a.productId === invItem.id);
           if (adj) {
             const newQty = Math.max(0, invItem.physicalStockKg - adj.weightDiff);
+            const packWeight = invItem.unitsPerPack && invItem.unitsPerPack > 0 ? invItem.unitsPerPack : 25;
+            const newBags = Math.floor(newQty / packWeight);
             const threshold = invItem.minStockThreshold !== undefined ? invItem.minStockThreshold : 20;
             return {
               ...invItem,
               physicalStockKg: Math.round(newQty * 100) / 100,
+              bagsCount: newBags,
               lotStatus: newQty <= 0 ? 'Out of Stock' : newQty <= (threshold / 2) ? 'Critical Low' : newQty <= threshold ? 'Low Stock' : 'In Stock'
             };
           }

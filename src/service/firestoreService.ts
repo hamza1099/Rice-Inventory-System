@@ -268,8 +268,8 @@ export const createMemoDoc = async (memo: MemoRecord): Promise<void> => {
         if (invSnap.exists()) {
           const invData = invSnap.data() as InventoryItem;
           const newQty = Math.max(0, invData.physicalStockKg - item.netWeight);
-          const bagsDeducted = Math.floor(item.netWeight / 50);
-          const newBags = Math.max(0, invData.bagsCount - bagsDeducted);
+          const packWeight = invData.unitsPerPack && invData.unitsPerPack > 0 ? invData.unitsPerPack : 25;
+          const newBags = Math.floor(newQty / packWeight);
 
           const threshold = invData.minStockThreshold !== undefined ? invData.minStockThreshold : 20;
           await updateDoc(invRef, {
@@ -313,8 +313,8 @@ export const deleteMemoDoc = async (memoId: string, items?: CartItem[]): Promise
           if (invSnap.exists()) {
             const invData = invSnap.data() as InventoryItem;
             const restoredQty = invData.physicalStockKg + item.netWeight;
-            const bagsRestored = Math.floor(item.netWeight / 50);
-            const newBags = invData.bagsCount + bagsRestored;
+            const packWeight = invData.unitsPerPack && invData.unitsPerPack > 0 ? invData.unitsPerPack : 25;
+            const newBags = Math.floor(restoredQty / packWeight);
 
             const threshold = invData.minStockThreshold !== undefined ? invData.minStockThreshold : 20;
             await updateDoc(invRef, {
@@ -364,9 +364,12 @@ export const updateMemoDoc = async (
         if (invSnap.exists()) {
           const invData = invSnap.data() as InventoryItem;
           const newQty = Math.max(0, invData.physicalStockKg - adj.weightDiff);
+          const packWeight = invData.unitsPerPack && invData.unitsPerPack > 0 ? invData.unitsPerPack : 25;
+          const newBags = Math.floor(newQty / packWeight);
           const threshold = invData.minStockThreshold !== undefined ? invData.minStockThreshold : 20;
           await updateDoc(invRef, {
             physicalStockKg: Math.round(newQty * 100) / 100,
+            bagsCount: newBags,
             lotStatus: newQty <= 0 ? 'Out of Stock' : newQty <= (threshold / 2) ? 'Critical Low' : newQty <= threshold ? 'Low Stock' : 'In Stock',
             updatedAt: new Date().toISOString()
           });

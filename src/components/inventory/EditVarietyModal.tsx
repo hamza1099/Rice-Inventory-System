@@ -152,6 +152,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
       setTareDeductionKg(pr.tareDefault);
       if (costPerUnit > 0) setCostPerPack(Math.round(costPerUnit * pr.unitsPerPack));
       if (counterRatePerUnit > 0) setCounterRatePerPack(Math.round(counterRatePerUnit * pr.unitsPerPack));
+      if (packsCount > 0) setPhysicalStockUnits(Math.round(packsCount * pr.unitsPerPack * 100) / 100);
     }
   };
 
@@ -190,7 +191,14 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
 
   const handlePacksCountChange = (count: number) => {
     setPacksCount(count);
-    setPhysicalStockUnits(count * currentUnitsPerPack);
+    setPhysicalStockUnits(Math.round(count * currentUnitsPerPack * 100) / 100);
+  };
+
+  const handlePhysicalStockChange = (val: number) => {
+    setPhysicalStockUnits(val);
+    if (currentUnitsPerPack > 0) {
+      setPacksCount(Math.floor(val / currentUnitsPerPack));
+    }
   };
 
   const currentMarginPerUnit = counterRatePerUnit - costPerUnit;
@@ -548,8 +556,11 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
           {/* Physical Stock & Counts */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                {isUr ? `سٹاک (${packPluralUr}):` : `Stock (${packPluralEn}):`}
+              <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+                <span>{isUr ? `سٹاک (${packPluralUr}):` : `Stock (${packPluralEn}):`}</span>
+                <span className="text-[10px] text-slate-500 font-mono-num font-semibold">
+                  {currentUnitsPerPack} {unitNameEn}/{packNameEn}
+                </span>
               </label>
               <NumberInput
                 min="0"
@@ -562,13 +573,23 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                {isUr ? `کل فزیکل سٹاک (${unitNameUr}):` : `Total Stock (${unitNameEn}):`}
+              <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+                <span>{isUr ? `کل فزیکل سٹاک (${unitNameUr}):` : `Total Stock (${unitNameEn}):`}</span>
+                {packsCount > 0 && Math.abs(physicalStockUnits - packsCount * currentUnitsPerPack) > 0.01 && (
+                  <button
+                    type="button"
+                    onClick={() => setPhysicalStockUnits(packsCount * currentUnitsPerPack)}
+                    className="text-[9.5px] text-emerald-700 hover:text-emerald-900 font-bold underline cursor-pointer"
+                    title={isUr ? 'مکمل بوری وزن پر سیٹ کریں' : 'Sync to full bags weight'}
+                  >
+                    {isUr ? `سیٹ کریں ${packsCount * currentUnitsPerPack} کلو` : `Set ${packsCount * currentUnitsPerPack} ${unitNameEn}`}
+                  </button>
+                )}
               </label>
               <NumberInput
                 min="0"
                 value={physicalStockUnits}
-                onChange={(val) => setPhysicalStockUnits(val)}
+                onChange={(val) => handlePhysicalStockChange(val)}
                 className="w-full px-2.5 py-1.5 border border-slate-300 rounded font-bold font-mono-num"
                 placeholder="0"
               />

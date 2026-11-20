@@ -257,8 +257,13 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                       ? isUr ? 'لیٹر' : 'L'
                       : isUr ? 'کلو' : 'kg'}
                   </span>
-                  <span className="text-[10px] text-slate-500 font-bold">
+                  <span className="text-[10px] text-slate-500 font-bold block">
                     {item.bagsCount} {getCleanBagLabel(item.bagTypeLabel)}
+                    {item.unitType === 'kg' && item.unitsPerPack && item.physicalStockKg > item.bagsCount * item.unitsPerPack && (
+                      <span className="text-slate-400 font-normal ml-1">
+                        (+{(item.physicalStockKg - item.bagsCount * item.unitsPerPack).toFixed(2)} kg)
+                      </span>
+                    )}
                   </span>
                 </td>
 
