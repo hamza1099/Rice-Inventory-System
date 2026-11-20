@@ -66,13 +66,13 @@ export const ReceiptPrintModal: React.FC = () => {
                   className="urdu-text text-[11px] text-slate-700 font-semibold text-center w-full block pt-1.5 leading-normal" 
                   dir="rtl"
                 >
-                  چکری روڈ، لیاقت کالونی، گلی نمبر 9، راولپنڈی
+                  گلی نمبر 9، لالہ رخ کالونی، چکری روڈ، بنی سٹاپ، راولپنڈی
                 </p>
               </div>
 
               <div className="mt-2.5 pt-2 border-t border-dotted border-slate-300 space-y-1 text-center">
                 <p className="text-[9.5px] text-slate-600 font-medium text-center">
-                  Chakri Road, Liaquat Colony, Lane #9, Rawalpindi
+                  Lane # 9, Lala Rukh Colony, Chakri Road, Bani Stop, Rawalpindi
                 </p>
                 <p className="text-[10px] text-slate-800 font-bold font-mono text-center">
                   Phone: 0310-5612914

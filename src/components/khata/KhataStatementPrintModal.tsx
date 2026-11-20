@@ -120,7 +120,7 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
                     {isUr ? 'بخاری رائس ٹریڈرز (کمیشن ایجنٹس و غلہ آڑھت)' : 'Commission Agents & Wholesale Grain Market'}
                   </h2>
                   <p className="text-xs text-slate-600 mt-1">
-                    {isUr ? 'چکری روڈ، لیاقت کالونی، گلی نمبر 9، راولپنڈی | فون: 0310-5612914' : 'Chakri Road, Liaquat Colony, Lane #9, Rawalpindi | Ph: 0310-5612914'}
+                    {isUr ? 'گلی نمبر 9، لالہ رخ کالونی، چکری روڈ، بنی سٹاپ، راولپنڈی | فون: 0310-5612914' : 'Lane # 9, Lala Rukh Colony, Chakri Road, Bani Stop, Rawalpindi | Ph: 0310-5612914'}
                   </p>
                 </div>
                 <div className="text-right text-xs text-slate-500">
