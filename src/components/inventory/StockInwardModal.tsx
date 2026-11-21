@@ -59,18 +59,33 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
   }, [isOpen, initialItem]);
 
   const activeItem = inventory.find((i) => i.id === selectedItemId) || null;
+  const isMinorLoose = Boolean(
+    activeItem &&
+    (activeItem.packagingStandard?.includes('Loose') ||
+      activeItem.packagingStandard?.includes('Minor') ||
+      activeItem.packagingStandard === 'loose_minor' ||
+      activeItem.bagTypeLabel?.includes('Loose') ||
+      activeItem.bagTypeLabel?.includes('کھلا'))
+  );
 
   // Whenever active item or weight per bag changes, re-sync values
   useEffect(() => {
     if (activeItem) {
-      const bagWeight =
-        activeItem.unitsPerPack ||
-        (activeItem.packagingStandard.includes('25 kg')
-          ? 25
-          : activeItem.packagingStandard.includes('40 kg')
-          ? 40
-          : 50);
+      const isLoose =
+        activeItem.packagingStandard?.includes('Loose') ||
+        activeItem.packagingStandard?.includes('Minor') ||
+        activeItem.packagingStandard === 'loose_minor';
+
+      const bagWeight = isLoose
+        ? 1
+        : (activeItem.unitsPerPack ||
+          (activeItem.packagingStandard.includes('25 kg')
+            ? 25
+            : activeItem.packagingStandard.includes('40 kg')
+            ? 40
+            : 50));
       setWeightPerBag(bagWeight);
+      if (isLoose) setCostMode('kg');
 
       const bagCost = Math.round(activeItem.costPerKg * bagWeight);
       setInwardCostPerBag(bagCost);
@@ -218,13 +233,19 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
               className="w-full text-xs font-bold px-3 py-2 border-2 border-emerald-600 rounded bg-white text-slate-900 shadow-2xs focus:outline-hidden cursor-pointer"
             >
               <option value="">{isUr ? '-- چاول کی جنس کا انتخاب کریں --' : '-- Select Rice Variety --'}</option>
-              {inventory.map((inv) => (
-                <option key={inv.id} value={inv.id}>
-                  {isUr
-                    ? `${inv.urduName || inv.varietyName} • سٹاک: ${inv.physicalStockKg.toLocaleString()} کلو (${inv.bagsCount} بوری) • سابقہ لاگت: PKR ${inv.costPerKg}/کلو`
-                    : `${inv.varietyName} • Stock: ${inv.physicalStockKg.toLocaleString()} KG (${inv.bagsCount} bags) • Prev Cost: PKR ${inv.costPerKg}/kg`}
-                </option>
-              ))}
+              {inventory.map((inv) => {
+                const isInvLoose = inv.packagingStandard?.includes('Loose') || inv.packagingStandard?.includes('Minor') || inv.packagingStandard === 'loose_minor';
+                const stockDesc = isInvLoose
+                  ? `${inv.physicalStockKg < 1 ? `${Math.round(inv.physicalStockKg * 1000)}g` : `${inv.physicalStockKg} kg`} کھلا`
+                  : `${inv.physicalStockKg.toLocaleString()} ${inv.unitType === 'piece' ? (isUr ? 'دانے' : 'pcs') : inv.unitType === 'liter' ? (isUr ? 'لیٹر' : 'L') : (isUr ? 'کلو' : 'kg')} (${inv.bagsCount} بوری)`;
+                return (
+                  <option key={inv.id} value={inv.id}>
+                    {isUr
+                      ? `${inv.urduName || inv.varietyName} • سٹاک: ${stockDesc} • سابقہ لاگت: PKR ${inv.costPerKg}/کلو`
+                      : `${inv.varietyName} • Stock: ${stockDesc} • Prev Cost: PKR ${inv.costPerKg}/kg`}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -305,37 +326,66 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
               </div>
 
               {/* Section 1: Inward Quantity */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    {isUr ? 'تعداد بوری:' : 'Number of Bags:'}
-                  </label>
+              {isMinorLoose ? (
+                <div className="bg-emerald-50/70 border-2 border-emerald-600 rounded-lg p-3 space-y-1.5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-bold text-emerald-950">
+                      {isUr ? 'آمد مقدار (کلو گرام / گرام):' : 'Inward Quantity (KG / Grams):'}
+                    </label>
+                    {bags > 0 && (
+                      <span className="text-xs font-black text-emerald-800 font-mono-num bg-white px-2 py-0.5 rounded border border-emerald-300">
+                        {bags < 1 ? `= ${Math.round(bags * 1000)} Grams (${Math.round(bags * 1000)} گرام)` : `= ${bags} KG`}
+                      </span>
+                    )}
+                  </div>
                   <NumberInput
-                    min="1"
+                    min="0.01"
+                    step="0.05"
                     value={bags}
-                    onChange={(val) => setBags(Math.max(1, val))}
-                    className="w-full text-base font-bold font-mono-num px-3 py-1.5 border border-slate-300 rounded focus:border-emerald-600 focus:outline-hidden"
-                    placeholder="1"
-                    allowDecimals={false}
+                    onChange={(val) => setBags(val)}
+                    className="w-full text-base font-bold font-mono-num px-3 py-1.5 border border-emerald-600 rounded bg-white focus:outline-hidden"
+                    placeholder="e.g. 0.400"
+                    allowDecimals={true}
                   />
+                  <span className="text-[10px] text-slate-500 font-medium block">
+                    {isUr
+                      ? 'بغیر بوری مائنر آئٹم: مطلوبہ کلو یا گرام (مثلاً 0.400 یا 1.5) درج کریں۔'
+                      : 'Loose Item (No Bags): Enter weight directly in KG (e.g. 0.400 for 400g).'}
+                  </span>
                 </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      {isUr ? 'تعداد بوری:' : 'Number of Bags:'}
+                    </label>
+                    <NumberInput
+                      min="1"
+                      value={bags}
+                      onChange={(val) => setBags(Math.max(1, val))}
+                      className="w-full text-base font-bold font-mono-num px-3 py-1.5 border border-slate-300 rounded focus:border-emerald-600 focus:outline-hidden"
+                      placeholder="1"
+                      allowDecimals={false}
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    {isUr ? 'پیکنگ وزن:' : 'Bag Standard Weight:'}
-                  </label>
-                  <select
-                    value={weightPerBag}
-                    onChange={(e) => setWeightPerBag(parseInt(e.target.value))}
-                    className="w-full text-xs font-bold px-2 py-2 border border-slate-300 rounded bg-white"
-                  >
-                    <option value={25}>{isUr ? '25 کلو (پی پی بیگ)' : '25 KG (Poly Woven Bag)'}</option>
-                    <option value={50}>{isUr ? '50 کلو (معیاری جوٹ بوری)' : '50 KG (Standard Jute Bori)'}</option>
-                    <option value={40}>{isUr ? '40 کلو (1 من پکا)' : '40 KG (1 Maan Pakka)'}</option>
-                    <option value={100}>{isUr ? '100 کلو (کٹا)' : '100 KG (Katta)'}</option>
-                  </select>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      {isUr ? 'پیکنگ وزن:' : 'Bag Standard Weight:'}
+                    </label>
+                    <select
+                      value={weightPerBag}
+                      onChange={(e) => setWeightPerBag(parseInt(e.target.value))}
+                      className="w-full text-xs font-bold px-2 py-2 border border-slate-300 rounded bg-white"
+                    >
+                      <option value={25}>{isUr ? '25 کلو (پی پی بیگ)' : '25 KG (Poly Woven Bag)'}</option>
+                      <option value={50}>{isUr ? '50 کلو (معیاری جوٹ بوری)' : '50 KG (Standard Jute Bori)'}</option>
+                      <option value={40}>{isUr ? '40 کلو (1 من پکا)' : '40 KG (1 Maan Pakka)'}</option>
+                      <option value={100}>{isUr ? '100 کلو (کٹا)' : '100 KG (Katta)'}</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Section 2: Inward Purchase Cost Entry */}
               <div className="bg-amber-50/60 border border-amber-200 rounded-lg p-3 space-y-2">

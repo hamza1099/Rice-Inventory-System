@@ -68,22 +68,33 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
       setImageUrl(item.imageUrl || '');
       setCategory(item.category);
 
-      const matchedPreset = getPackagingPreset(item.packagingStandard);
-      const isCustom =
+      const isLoose =
+        item.packagingStandard?.includes('Loose') ||
+        item.packagingStandard?.includes('Minor') ||
+        item.packagingStandard === 'loose_minor' ||
+        item.bagTypeLabel?.includes('Loose') ||
+        item.bagTypeLabel?.includes('کھلا');
+
+      const matchedPreset = isLoose
+        ? (PACKAGING_PRESETS.find((p) => p.id === 'loose_minor') || PACKAGING_PRESETS[0])
+        : getPackagingPreset(item.packagingStandard);
+
+      const isCustom = !isLoose && (
         item.packagingStandard.includes('Custom') ||
-        (!PACKAGING_PRESETS.some((p) => p.id === item.packagingStandard) && Boolean(item.unitsPerPack));
+        (!PACKAGING_PRESETS.some((p) => p.id === item.packagingStandard) && Boolean(item.unitsPerPack))
+      );
 
       const uType = (item.unitType || matchedPreset.unitType) as PackagingUnitType;
-      const uPerPack = item.unitsPerPack || matchedPreset.unitsPerPack || 25;
+      const uPerPack = isLoose ? 1 : (item.unitsPerPack || matchedPreset.unitsPerPack || 25);
 
-      setPackagingId(isCustom ? (uType === 'piece' ? 'custom_carton' : uType === 'liter' ? 'custom_liquid' : 'custom_kg') : matchedPreset.id);
+      setPackagingId(isLoose ? 'loose_minor' : isCustom ? (uType === 'piece' ? 'custom_carton' : uType === 'liter' ? 'custom_liquid' : 'custom_kg') : matchedPreset.id);
       setIsCustomUnits(isCustom);
       setCustomUnitsInput(uPerPack);
       setUnitType(uType);
       setUnitsPerPack(uPerPack);
-      setTareDeductionKg(item.tareDeductionKg ?? matchedPreset.tareDefault ?? 0.12);
+      setTareDeductionKg(isLoose ? 0 : (item.tareDeductionKg ?? matchedPreset.tareDefault ?? 0.12));
 
-      setPacksCount(item.bagsCount);
+      setPacksCount(isLoose ? 0 : item.bagsCount);
       setPhysicalStockUnits(item.physicalStockKg);
       setMinStockThreshold(item.minStockThreshold !== undefined ? item.minStockThreshold : 20);
 
@@ -103,24 +114,51 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
 
   if (!item) return null;
 
+  // Check if current item is a loose / minor item (dry fruit, spices, badam, etc - no bags)
+  const isMinorLoose = packagingId === 'loose_minor' || packagingId.includes('Loose') || packagingId.includes('Minor');
+
   // Derive dynamic labels based on unitType and unitsPerPack
-  const currentUnitsPerPack = Math.max(1, isCustomUnits ? customUnitsInput : unitsPerPack);
+  const currentUnitsPerPack = isMinorLoose ? 1 : Math.max(1, isCustomUnits ? customUnitsInput : unitsPerPack);
   const isBag = unitType === 'kg';
   const isLiquid = unitType === 'liter';
   const isCarton = unitType === 'piece' && currentUnitsPerPack > 1;
 
-  const packNameEn = isBag ? 'Bag' : isLiquid ? (currentUnitsPerPack >= 16 ? 'Tin' : 'Can') : isCarton ? 'Carton' : 'Piece';
-  const packNameUr = isBag ? 'بوری' : isLiquid ? (currentUnitsPerPack >= 16 ? 'ٹن' : 'کین') : isCarton ? 'کارٹن' : 'دانہ';
+  const packNameEn = isMinorLoose ? 'Loose' : isBag ? 'Bag' : isLiquid ? (currentUnitsPerPack >= 16 ? 'Tin' : 'Can') : isCarton ? 'Carton' : 'Piece';
+  const packNameUr = isMinorLoose ? 'کھلا' : isBag ? 'بوری' : isLiquid ? (currentUnitsPerPack >= 16 ? 'ٹن' : 'کین') : isCarton ? 'کارٹن' : 'دانہ';
 
-  const packPluralEn = isBag ? 'Bags' : isLiquid ? (currentUnitsPerPack >= 16 ? 'Tins' : 'Cans') : isCarton ? 'Cartons' : 'Pieces';
-  const packPluralUr = isBag ? 'بوریاں' : isLiquid ? (currentUnitsPerPack >= 16 ? 'ٹن' : 'کین') : isCarton ? 'کارٹن' : 'دانے';
+  const packPluralEn = isMinorLoose ? 'Loose' : isBag ? 'Bags' : isLiquid ? (currentUnitsPerPack >= 16 ? 'Tins' : 'Cans') : isCarton ? 'Cartons' : 'Pieces';
+  const packPluralUr = isMinorLoose ? 'کھلا' : isBag ? 'بوریاں' : isLiquid ? (currentUnitsPerPack >= 16 ? 'ٹن' : 'کین') : isCarton ? 'کارٹن' : 'دانے';
 
   const unitNameEn = isBag ? 'KG' : isLiquid ? 'Litre' : 'Piece';
   const unitNameUr = isBag ? 'کلو' : isLiquid ? 'لیٹر' : 'دانہ';
 
+  const formatGramsHelper = (kgVal: number) => {
+    if (kgVal <= 0) return '';
+    if (kgVal < 1) {
+      const grams = Math.round(kgVal * 1000);
+      return `= ${grams} Grams (${grams} گرام)`;
+    }
+    const wholeKg = Math.floor(kgVal);
+    const remGrams = Math.round((kgVal - wholeKg) * 1000);
+    if (remGrams === 0) {
+      return `= ${wholeKg} KG (${wholeKg} کلو)`;
+    }
+    return `= ${wholeKg} KG ${remGrams}g (${wholeKg} کلو ${remGrams} گرام)`;
+  };
+
   const handlePackagingChange = (id: string) => {
     setPackagingId(id);
-    if (id === 'custom_kg') {
+    if (id === 'loose_minor') {
+      setIsCustomUnits(false);
+      setUnitType('kg');
+      setUnitsPerPack(1);
+      setTareDeductionKg(0);
+      setPacksCount(0);
+      if (costPerUnit > 0) {
+        setCostPerPack(costPerUnit);
+        setCounterRatePerPack(counterRatePerUnit);
+      }
+    } else if (id === 'custom_kg') {
       setIsCustomUnits(true);
       setUnitType('kg');
       const val = customUnitsInput || 25;
@@ -196,7 +234,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
 
   const handlePhysicalStockChange = (val: number) => {
     setPhysicalStockUnits(val);
-    if (currentUnitsPerPack > 0) {
+    if (!isMinorLoose && currentUnitsPerPack > 0) {
       setPacksCount(Math.floor(val / currentUnitsPerPack));
     }
   };
@@ -234,7 +272,9 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
       }
 
       let resolvedPackaging = packagingId;
-      if (isCustomUnits) {
+      if (isMinorLoose) {
+        resolvedPackaging = 'Loose / Minor Item (No Bags)';
+      } else if (isCustomUnits) {
         if (packagingId === 'custom_kg') resolvedPackaging = `${currentUnitsPerPack} kg Custom Bag`;
         else if (packagingId === 'custom_carton') resolvedPackaging = `Carton (${currentUnitsPerPack} Pieces)`;
         else if (packagingId === 'custom_liquid') resolvedPackaging = `${currentUnitsPerPack} Litre Custom Pack`;
@@ -242,7 +282,7 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
 
       const resolvedUnitLabel = unitType === 'piece' ? '/ pc' : unitType === 'liter' ? '/ liter' : '/ kg';
 
-      const threshold = minStockThreshold !== undefined ? Number(minStockThreshold) : 20;
+      const threshold = minStockThreshold !== undefined ? Number(minStockThreshold) : (isMinorLoose ? 0.2 : 20);
       const lotStatus = physicalStockUnits <= 0
         ? 'Out of Stock'
         : physicalStockUnits <= (threshold / 2)
@@ -257,9 +297,9 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
         imageUrl: finalImageUrl || undefined,
         category,
         packagingStandard: resolvedPackaging,
-        tareDeductionKg,
-        bagsCount: packsCount,
-        bagTypeLabel: isUr ? packPluralUr : packPluralEn,
+        tareDeductionKg: isMinorLoose ? 0 : tareDeductionKg,
+        bagsCount: isMinorLoose ? 0 : packsCount,
+        bagTypeLabel: isMinorLoose ? (isUr ? 'کھلا' : 'Loose') : (isUr ? packPluralUr : packPluralEn),
         physicalStockKg: physicalStockUnits,
         minStockThreshold: threshold,
         lotStatus,
@@ -271,10 +311,10 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
         qualityNotes: qualityNotes.trim(),
         unitType,
         unitLabel: resolvedUnitLabel,
-        unitsPerPack: currentUnitsPerPack,
-        costPerBag: costPerPack,
-        counterRatePerBag: counterRatePerPack,
-        packTypeLabel: isUr ? packPluralUr : packPluralEn
+        unitsPerPack: isMinorLoose ? 1 : currentUnitsPerPack,
+        costPerBag: isMinorLoose ? costPerUnit : costPerPack,
+        counterRatePerBag: isMinorLoose ? counterRatePerUnit : counterRatePerPack,
+        packTypeLabel: isMinorLoose ? (isUr ? 'کھلا' : 'Loose') : (isUr ? packPluralUr : packPluralEn)
       });
 
       notifySuccess(isUr ? `${varietyName} کے ریٹ و تفصیل کامیابی سے تبدیل ہو گئے!` : `Rates & Details updated successfully for ${varietyName}!`);
@@ -458,75 +498,129 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
 
           {/* Pricing & Cost Structure */}
           <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-2.5">
-            <div className="grid grid-cols-2 gap-3">
-              {/* Godown Cost */}
-              <div className="bg-amber-50/60 p-2.5 rounded border border-amber-200 space-y-1.5">
-                <span className="text-[10px] font-bold text-amber-950 uppercase block">
-                  {isUr ? 'خریداری لاگت' : 'Purchase Cost'}
-                </span>
-                <div>
-                  <label className="block text-[10px] text-slate-600 mb-0.5">
-                    {isUr ? `ریٹ فی ${unitNameUr}:` : `Cost per ${unitNameEn}:`}
-                  </label>
-                  <NumberInput
-                    step="0.5"
-                    min="0"
-                    value={costPerUnit}
-                    onChange={(val) => handleCostUnitChange(val)}
-                    className="w-full px-2 py-1 border border-slate-300 rounded font-bold font-mono-num bg-white text-xs"
-                    placeholder="0"
-                  />
-                </div>
-                {currentUnitsPerPack > 1 && (
+            {isMinorLoose ? (
+              <div className="grid grid-cols-2 gap-3">
+                {/* Godown Cost */}
+                <div className="bg-amber-50/60 p-2.5 rounded border border-amber-200 space-y-1.5">
+                  <span className="text-[10px] font-bold text-amber-950 uppercase block">
+                    {isUr ? 'خریداری لاگت' : 'Purchase Cost'}
+                  </span>
                   <div>
-                    <label className="block text-[10px] text-slate-600 mb-0.5">
-                      {isUr ? `ریٹ فی ${packNameUr}:` : `Cost per ${packNameEn}:`}
+                    <label className="block text-[10px] text-slate-600 mb-0.5 font-bold">
+                      {isUr ? 'لاگت فی کلو:' : 'Cost per KG:'}
                     </label>
                     <NumberInput
+                      step="1"
                       min="0"
-                      value={costPerPack}
-                      onChange={(val) => handleCostPackChange(val)}
+                      value={costPerUnit}
+                      onChange={(val) => handleCostUnitChange(val)}
+                      className="w-full px-2 py-1.5 border border-slate-300 rounded font-bold font-mono-num bg-white text-xs"
+                      placeholder="0"
+                    />
+                    {costPerUnit > 0 && (
+                      <span className="text-[10px] text-amber-800 font-mono-num font-semibold mt-0.5 block">
+                        ≈ PKR {(costPerUnit / 10).toFixed(1)} / 100g
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Selling Counter Rate */}
+                <div className="bg-white p-2.5 rounded border-2 border-emerald-600 space-y-1.5">
+                  <span className="text-[10px] font-black text-emerald-800 uppercase block">
+                    {isUr ? 'فروخت ریٹ' : 'Counter Selling Rate'}
+                  </span>
+                  <div>
+                    <label className="block text-[10px] text-slate-600 mb-0.5 font-bold">
+                      {isUr ? 'ریٹ فی کلو:' : 'Selling Rate per KG:'}
+                    </label>
+                    <NumberInput
+                      step="1"
+                      min="0"
+                      value={counterRatePerUnit}
+                      onChange={(val) => handleRateUnitChange(val)}
+                      className="w-full text-base font-black font-mono-num px-2.5 py-1 border-2 border-emerald-600 rounded text-emerald-950"
+                      placeholder="0"
+                    />
+                    {counterRatePerUnit > 0 && (
+                      <span className="text-[10px] text-emerald-700 font-mono-num font-bold mt-0.5 block">
+                        ≈ PKR {(counterRatePerUnit / 10).toFixed(1)} / 100g
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {/* Godown Cost */}
+                <div className="bg-amber-50/60 p-2.5 rounded border border-amber-200 space-y-1.5">
+                  <span className="text-[10px] font-bold text-amber-950 uppercase block">
+                    {isUr ? 'خریداری لاگت' : 'Purchase Cost'}
+                  </span>
+                  <div>
+                    <label className="block text-[10px] text-slate-600 mb-0.5">
+                      {isUr ? `ریٹ فی ${unitNameUr}:` : `Cost per ${unitNameEn}:`}
+                    </label>
+                    <NumberInput
+                      step="0.5"
+                      min="0"
+                      value={costPerUnit}
+                      onChange={(val) => handleCostUnitChange(val)}
                       className="w-full px-2 py-1 border border-slate-300 rounded font-bold font-mono-num bg-white text-xs"
                       placeholder="0"
                     />
                   </div>
-                )}
-              </div>
-
-              {/* Selling Counter Rate */}
-              <div className="bg-white p-2.5 rounded border-2 border-emerald-600 space-y-1.5">
-                <span className="text-[10px] font-black text-emerald-800 uppercase block">
-                  {isUr ? 'فروخت ریٹ' : 'Counter Selling Rate'}
-                </span>
-                <div>
-                  <label className="block text-[10px] text-slate-600 mb-0.5 font-bold">
-                    {isUr ? `ریٹ فی ${unitNameUr}:` : `Selling Rate per ${unitNameEn}:`}
-                  </label>
-                  <NumberInput
-                    step="0.5"
-                    min="0"
-                    value={counterRatePerUnit}
-                    onChange={(val) => handleRateUnitChange(val)}
-                    className="w-full text-base font-black font-mono-num px-2.5 py-1 border-2 border-emerald-600 rounded text-emerald-950"
-                    placeholder="0"
-                  />
+                  {currentUnitsPerPack > 1 && (
+                    <div>
+                      <label className="block text-[10px] text-slate-600 mb-0.5">
+                        {isUr ? `ریٹ فی ${packNameUr}:` : `Cost per ${packNameEn}:`}
+                      </label>
+                      <NumberInput
+                        min="0"
+                        value={costPerPack}
+                        onChange={(val) => handleCostPackChange(val)}
+                        className="w-full px-2 py-1 border border-slate-300 rounded font-bold font-mono-num bg-white text-xs"
+                        placeholder="0"
+                      />
+                    </div>
+                  )}
                 </div>
-                {currentUnitsPerPack > 1 && (
+
+                {/* Selling Counter Rate */}
+                <div className="bg-white p-2.5 rounded border-2 border-emerald-600 space-y-1.5">
+                  <span className="text-[10px] font-black text-emerald-800 uppercase block">
+                    {isUr ? 'فروخت ریٹ' : 'Counter Selling Rate'}
+                  </span>
                   <div>
                     <label className="block text-[10px] text-slate-600 mb-0.5 font-bold">
-                      {isUr ? `ریٹ فی ${packNameUr}:` : `Selling Rate per ${packNameEn}:`}
+                      {isUr ? `ریٹ فی ${unitNameUr}:` : `Selling Rate per ${unitNameEn}:`}
                     </label>
                     <NumberInput
+                      step="0.5"
                       min="0"
-                      value={counterRatePerPack}
-                      onChange={(val) => handleRatePackChange(val)}
-                      className="w-full text-xs font-bold font-mono-num px-2 py-1 border border-slate-300 rounded text-slate-700"
+                      value={counterRatePerUnit}
+                      onChange={(val) => handleRateUnitChange(val)}
+                      className="w-full text-base font-black font-mono-num px-2.5 py-1 border-2 border-emerald-600 rounded text-emerald-950"
                       placeholder="0"
                     />
                   </div>
-                )}
+                  {currentUnitsPerPack > 1 && (
+                    <div>
+                      <label className="block text-[10px] text-slate-600 mb-0.5 font-bold">
+                        {isUr ? `ریٹ فی ${packNameUr}:` : `Selling Rate per ${packNameEn}:`}
+                      </label>
+                      <NumberInput
+                        min="0"
+                        value={counterRatePerPack}
+                        onChange={(val) => handleRatePackChange(val)}
+                        className="w-full text-xs font-bold font-mono-num px-2 py-1 border border-slate-300 rounded text-slate-700"
+                        placeholder="0"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Calculated Profit Margin Display */}
             <div className="bg-emerald-50 border border-emerald-200 rounded p-2.5 flex items-center justify-between font-mono-num">
@@ -544,57 +638,104 @@ export const EditVarietyModal: React.FC<EditVarietyModalProps> = ({ item, onClos
                     currentMarginPerUnit >= 0 ? 'text-emerald-800' : 'text-red-700'
                   }`}
                 >
-                  {currentMarginPerUnit >= 0 ? '+' : ''}PKR {currentMarginPerUnit.toFixed(2)} / {unitNameEn.toLowerCase()}
+                  {isMinorLoose ? (
+                    `${currentMarginPerUnit >= 0 ? '+' : ''}PKR ${currentMarginPerUnit.toFixed(2)} / kg (+PKR ${(currentMarginPerUnit / 10).toFixed(2)} / 100g)`
+                  ) : (
+                    `${currentMarginPerUnit >= 0 ? '+' : ''}PKR ${currentMarginPerUnit.toFixed(2)} / ${unitNameEn.toLowerCase()}`
+                  )}
                 </span>
                 <span className="text-[10px] text-slate-600 block font-bold">
-                  (+PKR {currentMarginPerPack.toLocaleString()} / {packNameEn.toLowerCase()} • {marginPct.toFixed(1)}% Markup)
+                  {isMinorLoose ? (
+                    `Markup: ${marginPct.toFixed(1)}%`
+                  ) : (
+                    `(+PKR ${currentMarginPerPack.toLocaleString()} / ${packNameEn.toLowerCase()} • ${marginPct.toFixed(1)}% Markup)`
+                  )}
                 </span>
               </div>
             </div>
           </div>
 
           {/* Physical Stock & Counts */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
-                <span>{isUr ? `سٹاک (${packPluralUr}):` : `Stock (${packPluralEn}):`}</span>
-                <span className="text-[10px] text-slate-500 font-mono-num font-semibold">
-                  {currentUnitsPerPack} {unitNameEn}/{packNameEn}
-                </span>
-              </label>
-              <NumberInput
-                min="0"
-                value={packsCount}
-                onChange={(val) => handlePacksCountChange(val)}
-                className="w-full px-2.5 py-1.5 border border-slate-300 rounded font-bold font-mono-num"
-                placeholder="0"
-                allowDecimals={false}
-              />
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
-                <span>{isUr ? `کل فزیکل سٹاک (${unitNameUr}):` : `Total Stock (${unitNameEn}):`}</span>
-                {packsCount > 0 && Math.abs(physicalStockUnits - packsCount * currentUnitsPerPack) > 0.01 && (
-                  <button
-                    type="button"
-                    onClick={() => setPhysicalStockUnits(packsCount * currentUnitsPerPack)}
-                    className="text-[9.5px] text-emerald-700 hover:text-emerald-900 font-bold underline cursor-pointer"
-                    title={isUr ? 'مکمل بوری وزن پر سیٹ کریں' : 'Sync to full bags weight'}
-                  >
-                    {isUr ? `سیٹ کریں ${packsCount * currentUnitsPerPack} کلو` : `Set ${packsCount * currentUnitsPerPack} ${unitNameEn}`}
-                  </button>
+          {isMinorLoose ? (
+            <div className="bg-emerald-50/70 border-2 border-emerald-600 rounded-lg p-3 space-y-1.5 shadow-xs">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-black text-emerald-950 flex items-center gap-1.5">
+                  <span>{isUr ? 'موجودہ سٹاک (کلو گرام / گرام):' : 'Stock Quantity (KG / Grams):'}</span>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold border border-emerald-300">
+                    {isUr ? 'بغیر بوری - کھلا مال' : 'Loose Item (No Bags)'}
+                  </span>
+                </label>
+                {physicalStockUnits > 0 && (
+                  <span className="text-xs font-black text-emerald-800 font-mono-num bg-white px-2 py-0.5 rounded border border-emerald-300 shadow-2xs">
+                    {formatGramsHelper(physicalStockUnits)}
+                  </span>
                 )}
-              </label>
-              <NumberInput
-                min="0"
-                value={physicalStockUnits}
-                onChange={(val) => handlePhysicalStockChange(val)}
-                className="w-full px-2.5 py-1.5 border border-slate-300 rounded font-bold font-mono-num"
-                placeholder="0"
-              />
+              </div>
+              <div className="relative">
+                <NumberInput
+                  min="0"
+                  value={physicalStockUnits}
+                  onChange={(val) => handlePhysicalStockChange(val)}
+                  className="w-full pl-3 pr-20 py-2 border-2 border-emerald-600 rounded bg-white text-sm font-black font-mono-num text-slate-900 focus:outline-hidden"
+                  placeholder="e.g. 0.400"
+                  allowDecimals={true}
+                  step="0.05"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-emerald-800 uppercase">
+                  KG / کلو
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium pt-0.5">
+                <span>
+                  {isUr
+                    ? 'مثال: 400 گرام کے لیے 0.400 لکھیں، 50 گرام کے لیے 0.050 لکھیں۔'
+                    : 'Example: Enter 0.400 for 400 grams, 0.050 for 50 grams, 1.250 for 1kg 250g.'}
+                </span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>{isUr ? `سٹاک (${packPluralUr}):` : `Stock (${packPluralEn}):`}</span>
+                  <span className="text-[10px] text-slate-500 font-mono-num font-semibold">
+                    {currentUnitsPerPack} {unitNameEn}/{packNameEn}
+                  </span>
+                </label>
+                <NumberInput
+                  min="0"
+                  value={packsCount}
+                  onChange={(val) => handlePacksCountChange(val)}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded font-bold font-mono-num"
+                  placeholder="0"
+                  allowDecimals={false}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>{isUr ? `کل فزیکل سٹاک (${unitNameUr}):` : `Total Stock (${unitNameEn}):`}</span>
+                  {packsCount > 0 && Math.abs(physicalStockUnits - packsCount * currentUnitsPerPack) > 0.01 && (
+                    <button
+                      type="button"
+                      onClick={() => setPhysicalStockUnits(packsCount * currentUnitsPerPack)}
+                      className="text-[9.5px] text-emerald-700 hover:text-emerald-900 font-bold underline cursor-pointer"
+                      title={isUr ? 'مکمل بوری وزن پر سیٹ کریں' : 'Sync to full bags weight'}
+                    >
+                      {isUr ? `سیٹ کریں ${packsCount * currentUnitsPerPack} کلو` : `Set ${packsCount * currentUnitsPerPack} ${unitNameEn}`}
+                    </button>
+                  )}
+                </label>
+                <NumberInput
+                  min="0"
+                  value={physicalStockUnits}
+                  onChange={(val) => handlePhysicalStockChange(val)}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded font-bold font-mono-num"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Low Stock Alert Threshold Setting */}
           <div className="bg-amber-50/70 border border-amber-200/90 rounded-lg p-2.5 space-y-1.5">

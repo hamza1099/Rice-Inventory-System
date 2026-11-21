@@ -15,7 +15,7 @@ export const KhataStatementPrintModal: React.FC<KhataStatementPrintModalProps> =
   customer,
   transactions,
   onClose,
-}) => {
+}) => { 
   const printAreaRef = useRef<HTMLDivElement>(null);
   const { language } = usePos();
   const isUr = language === 'ur';

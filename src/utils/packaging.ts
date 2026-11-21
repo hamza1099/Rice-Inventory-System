@@ -207,6 +207,19 @@ export const PACKAGING_PRESETS: PackagingPreset[] = [
 
   // Custom Options
   {
+    id: 'loose_minor',
+    nameEn: 'Loose / Minor Item (Grams / KG - No Bags)',
+    nameUr: 'کھلا مائنر آئٹم (گرام / کلو - بغیر بوری)',
+    unitType: 'kg',
+    unitsPerPack: 1,
+    packLabelEn: 'Loose',
+    packLabelUr: 'کھلا',
+    unitLabelEn: 'KG',
+    unitLabelUr: 'کلو',
+    tareDefault: 0.0,
+    group: 'custom'
+  },
+  {
     id: 'custom_kg',
     nameEn: 'Custom KG per Bag / Pack...',
     nameUr: 'مرضی کا وزن (کلو گرام)...',
@@ -252,6 +265,10 @@ export const getPackagingPreset = (id: string): PackagingPreset => {
   if (found) return found;
 
   const low = (id || '').toLowerCase();
+  if (low.includes('loose') || low.includes('minor') || low.includes('badam') || low.includes('کھلا') || low.includes('بغیر بوری') || low.includes('gram') || low.includes('گرام')) {
+    const loosePreset = PACKAGING_PRESETS.find((p) => p.id === 'loose_minor');
+    if (loosePreset) return loosePreset;
+  }
   if (low.includes('50 kg') || low.includes('50kg')) return PACKAGING_PRESETS[1];
   if (low.includes('40 kg') || low.includes('40kg') || low.includes('maan') || low.includes('من')) return PACKAGING_PRESETS[2];
   if (low.includes('10 kg') || low.includes('10kg')) return PACKAGING_PRESETS[3];
@@ -284,6 +301,9 @@ export const getDefaultPackagingForCategory = (category: string): PackagingPrese
   if (cat.includes('spice') || cat.includes('masala') || cat.includes('مصالحہ')) {
     return PACKAGING_PRESETS.find((p) => p.id === '1 kg Pack') || PACKAGING_PRESETS[5];
   }
+  if (cat.includes('dry') || cat.includes('fruit') || cat.includes('میوہ') || cat.includes('badam')) {
+    return PACKAGING_PRESETS.find((p) => p.id === 'loose_minor') || PACKAGING_PRESETS[0];
+  }
   // Rice / Pulses / Atta / Sugar default to 25 kg PP Bag
   return PACKAGING_PRESETS[0];
 };
@@ -297,6 +317,8 @@ export const getCategorySkuPrefix = (category: string, nextIndex: number = 1): s
     prefix = 'SKU-GHEE';
   } else if (c.includes('spice') || c.includes('masala') || c.includes('مصالحہ')) {
     prefix = 'SKU-SPICE';
+  } else if (c.includes('dry') || c.includes('fruit') || c.includes('میوہ') || c.includes('badam')) {
+    prefix = 'SKU-DRYFRUIT';
   } else if (c.includes('shan') || c.includes('national')) {
     prefix = 'SKU-SHAN';
   } else if (c.includes('atta') || c.includes('flour') || c.includes('sugar') || c.includes('چینی') || c.includes('آٹا')) {

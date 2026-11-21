@@ -1143,21 +1143,31 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const categoryMapping: string = newItem.category || 'Rice (چاول)';
     const threshold = newItem.minStockThreshold !== undefined ? newItem.minStockThreshold : 20;
 
+    const isLoose = newItem.packagingStandard?.includes('Loose') || newItem.packagingStandard?.includes('Minor') || newItem.packagingStandard === 'loose_minor';
     const newProd: Product = {
       id: newItem.id,
       name: newItem.varietyName,
       urduName: newItem.urduName,
       category: categoryMapping,
-      badgeLabel: newItem.category.toUpperCase(),
+      badgeLabel: newItem.category.toUpperCase().slice(0, 12),
       ratePerKg: newItem.counterRatePerKg,
       costPerKg: newItem.costPerKg,
+      unitLabel: newItem.unitLabel || (newItem.unitType === 'piece' ? '/ pc' : newItem.unitType === 'liter' ? '/ liter' : '/ kg'),
       availableKg: newItem.physicalStockKg,
-      binLocation: 'Godown Stack',
+      availableStockLabel: newItem.unitType === 'piece'
+        ? `${newItem.physicalStockKg} Pcs`
+        : newItem.unitType === 'liter'
+        ? `${newItem.physicalStockKg} L`
+        : (newItem.physicalStockKg < 1 ? `${Math.round(newItem.physicalStockKg * 1000)}g (${newItem.physicalStockKg} kg)` : `${newItem.physicalStockKg} KG`),
+      binLocation: newItem.packagingStandard || 'Godown Stack',
       imageUrl: newItem.imageUrl,
       shortcut: `F${100 + inventory.length + 1}`,
-      tareWeightDefault: newItem.tareDeductionKg || 0.10,
+      tareWeightDefault: isLoose ? 0 : (newItem.tareDeductionKg || 0.10),
       minStockThreshold: threshold,
-      isLowStock: newItem.physicalStockKg <= threshold
+      isLowStock: newItem.physicalStockKg <= threshold,
+      boriWeightKg: isLoose ? 1 : (newItem.unitsPerPack || 25),
+      isWholesalePack: !isLoose && Boolean(newItem.unitsPerPack && newItem.unitsPerPack > 1),
+      wholesaleBoriPrice: isLoose ? newItem.counterRatePerKg : newItem.counterRatePerBag
     };
     setProducts((prev) => [...prev, newProd]);
 
@@ -1207,6 +1217,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const threshold = updated.minStockThreshold !== undefined
             ? updated.minStockThreshold
             : (p.minStockThreshold !== undefined ? p.minStockThreshold : 20);
+          const isLoose = (updated.packagingStandard || p.binLocation)?.includes('Loose') || (updated.packagingStandard || p.binLocation)?.includes('Minor');
           return {
             ...p,
             name: updated.varietyName || p.name,
@@ -1214,9 +1225,17 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             ratePerKg: updated.counterRatePerKg !== undefined ? updated.counterRatePerKg : p.ratePerKg,
             costPerKg: updated.costPerKg !== undefined ? updated.costPerKg : p.costPerKg,
             availableKg: newAvail,
+            availableStockLabel: p.unitLabel?.includes('pc')
+              ? `${newAvail} Pcs`
+              : p.unitLabel?.includes('liter')
+              ? `${newAvail} L`
+              : (newAvail < 1 ? `${Math.round(newAvail * 1000)}g (${newAvail} kg)` : `${newAvail} KG`),
+            binLocation: updated.packagingStandard || p.binLocation,
             imageUrl: updated.imageUrl !== undefined ? updated.imageUrl : p.imageUrl,
             minStockThreshold: threshold,
-            isLowStock: newAvail <= threshold
+            isLowStock: newAvail <= threshold,
+            boriWeightKg: isLoose ? 1 : (updated.unitsPerPack || p.boriWeightKg || 25),
+            isWholesalePack: !isLoose && Boolean(updated.unitsPerPack ? updated.unitsPerPack > 1 : p.isWholesalePack)
           };
         }
         return p;

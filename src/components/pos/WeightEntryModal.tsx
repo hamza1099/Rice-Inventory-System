@@ -19,6 +19,13 @@ export const WeightEntryModal: React.FC = () => {
     product?.unitLabel === '/ can' ||
     product?.unitLabel === '/ carton';
 
+  const isLooseMinor =
+    Boolean(product) &&
+    (product?.binLocation?.includes('Loose') ||
+      product?.binLocation?.includes('Minor') ||
+      product?.binLocation?.includes('کھلا') ||
+      (product?.unitLabel === '/ kg' && product?.boriWeightKg === 1));
+
   const [mode, setMode] = useState<EntryMode>('kg');
   const [inputValue, setInputValue] = useState<string>('1');
   const [rateValue, setRateValue] = useState<string>('');
@@ -32,13 +39,18 @@ export const WeightEntryModal: React.FC = () => {
         setMode('packet');
         setInputValue('1');
         setAmountValue(baseRate.toString());
+      } else if (isLooseMinor) {
+        setMode('kg');
+        const defaultWeight = product.availableKg < 1 ? product.availableKg.toString() : '0.25';
+        setInputValue(defaultWeight);
+        setAmountValue(Math.round(parseFloat(defaultWeight) * baseRate).toString());
       } else {
         setMode('kg');
         setInputValue('1');
         setAmountValue(baseRate.toString());
       }
     }
-  }, [product, isPackaged]);
+  }, [product, isPackaged, isLooseMinor]);
 
   const currentRateNum = parseFloat(rateValue);
   const activeRate = !isNaN(currentRateNum) && currentRateNum > 0 ? currentRateNum : (product?.ratePerKg || 0);
@@ -238,6 +250,16 @@ export const WeightEntryModal: React.FC = () => {
 
   const getPresets = () => {
     const isUr = language === 'ur';
+    if (isLooseMinor) {
+      return [
+        { label: isUr ? '50 گرام' : '50g', val: '0.05' },
+        { label: isUr ? '100 گرام' : '100g', val: '0.1' },
+        { label: isUr ? '250 گرام (پاؤ)' : '250g (Pao)', val: '0.25' },
+        { label: isUr ? '400 گرام' : '400g', val: '0.4' },
+        { label: isUr ? '500 گرام (آدھا کلو)' : '500g (Half KG)', val: '0.5' },
+        { label: isUr ? '1 کلو' : '1 KG', val: '1' }
+      ];
+    }
     if (mode === 'packet') {
       const uLabel = isUr ? (unitSuffix === 'kg' ? 'کلو' : unitSuffix) : unitSuffix;
       return [
@@ -436,6 +458,20 @@ export const WeightEntryModal: React.FC = () => {
                   <span>{isUr ? 'سیلڈ پیکجڈ آئٹم' : 'Standard Sealed Unit'}</span>
                 </div>
               </div>
+            ) : isLooseMinor ? (
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleModeChange('kg')}
+                  className="py-1.5 px-3 rounded-lg border font-bold text-xs bg-emerald-800 text-white border-emerald-900 shadow-xs cursor-pointer flex items-center justify-center space-x-1.5"
+                >
+                  <Scale className="w-3.5 h-3.5" />
+                  <span>{isUr ? 'وزن (گرام / کلو)' : 'Weight (Grams / KG)'}</span>
+                </button>
+                <div className="flex items-center text-[10.5px] text-emerald-800 font-bold px-2.5 bg-emerald-50 rounded-lg border border-emerald-200">
+                  <span>{isUr ? 'کھلا مائنر آئٹم (بغیر بوری)' : 'Loose Minor Item (No Bags)'}</span>
+                </div>
+              </div>
             ) : (
               <div className="grid grid-cols-3 gap-1.5">
                 <button
@@ -489,6 +525,8 @@ export const WeightEntryModal: React.FC = () => {
                     ? `تعداد بوری:`
                     : mode === 'mund'
                     ? 'تعداد من:'
+                    : isLooseMinor
+                    ? 'وزن (کلو / گرام):'
                     : 'وزن (کلو):')
                   : (mode === 'packet'
                     ? `Qty (${unitSuffix.toUpperCase()}):`
@@ -496,6 +534,8 @@ export const WeightEntryModal: React.FC = () => {
                     ? `Bags (${product.boriWeightKg || 25}kg):`
                     : mode === 'mund'
                     ? 'Maan (40kg):'
+                    : isLooseMinor
+                    ? 'Weight (KG / g):'
                     : 'Weight (KG):')}
               </label>
               <div className="relative">
@@ -507,7 +547,7 @@ export const WeightEntryModal: React.FC = () => {
                   value={inputValue}
                   onFocus={(e) => e.target.select()}
                   onChange={(e) => handleWeightChange(e.target.value)}
-                  placeholder="1"
+                  placeholder={isLooseMinor ? "0.400" : "1"}
                   className="w-full text-sm font-bold font-mono-num pl-2.5 pr-8 py-1.5 bg-white border-2 border-emerald-600 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 text-slate-900"
                 />
                 <span className="absolute right-2 top-2 font-bold text-[9.5px] text-slate-500 uppercase pointer-events-none">
@@ -528,6 +568,11 @@ export const WeightEntryModal: React.FC = () => {
                       : 'KG')}
                 </span>
               </div>
+              {parseFloat(inputValue) > 0 && parseFloat(inputValue) < 1 && (
+                <span className="text-[10px] font-bold text-emerald-800 font-mono-num mt-0.5 block truncate">
+                  = {Math.round(parseFloat(inputValue) * 1000)}g ({Math.round(parseFloat(inputValue) * 1000)} گرام)
+                </span>
+              )}
             </div>
 
             {/* Field 2: Custom Selling Rate */}

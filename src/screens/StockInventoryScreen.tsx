@@ -54,6 +54,7 @@ export const StockInventoryScreen: React.FC = () => {
     { id: 'Rice', label: isUr ? 'چاول' : 'Rice' },
     { id: 'Pulses', label: isUr ? 'دالیں' : 'Pulses / Daal' },
     { id: 'Spices', label: isUr ? 'کھلا مصالحہ' : 'Spices' },
+    { id: 'DryFruit', label: isUr ? 'خشک میوہ جات' : 'Dry Fruit' },
     { id: 'Shan', label: isUr ? 'شان' : 'Shan' },
     { id: 'National', label: isUr ? 'نیشنل' : 'National' },
     { id: 'Oil', label: isUr ? 'تیل و گھی' : 'Oil & Ghee' },
@@ -82,6 +83,33 @@ export const StockInventoryScreen: React.FC = () => {
       matchesFilter = item.category.includes('Pulses') || item.category.includes('Daal') || item.category.includes('دال');
     } else if (selectedFilter === 'Spices') {
       matchesFilter = item.category.includes('Spices') || item.category.includes('مصالحہ');
+    } else if (selectedFilter === 'DryFruit') {
+      matchesFilter =
+        item.category.toLowerCase().includes('dry') ||
+        item.category.toLowerCase().includes('fruit') ||
+        item.category.includes('میوہ') ||
+        item.category.includes('بادام') ||
+        item.varietyName.toLowerCase().includes('dry fruit') ||
+        item.varietyName.toLowerCase().includes('badam') ||
+        item.varietyName.toLowerCase().includes('almond') ||
+        item.varietyName.toLowerCase().includes('pista') ||
+        item.varietyName.toLowerCase().includes('kaju') ||
+        item.varietyName.toLowerCase().includes('cashew') ||
+        item.varietyName.toLowerCase().includes('kishmish') ||
+        item.varietyName.toLowerCase().includes('akhrot') ||
+        item.varietyName.toLowerCase().includes('walnut') ||
+        item.varietyName.toLowerCase().includes('anjeer') ||
+        item.varietyName.toLowerCase().includes('khajoor') ||
+        Boolean(item.urduName && (
+          item.urduName.includes('بادام') ||
+          item.urduName.includes('پستہ') ||
+          item.urduName.includes('کاجو') ||
+          item.urduName.includes('اخروٹ') ||
+          item.urduName.includes('کشمش') ||
+          item.urduName.includes('انجیر') ||
+          item.urduName.includes('کھجور') ||
+          item.urduName.includes('میوہ')
+        ));
     } else if (selectedFilter === 'Shan') {
       matchesFilter =
         item.category.includes('Shan') ||
@@ -123,7 +151,9 @@ export const StockInventoryScreen: React.FC = () => {
           !item.category.includes('Oil') &&
           !item.category.includes('Ghee') &&
           !item.category.includes('Atta') &&
-          !item.category.includes('Sugar'));
+          !item.category.includes('Sugar') &&
+          !item.category.includes('Dry') &&
+          !item.category.includes('میوہ'));
     } else if (selectedFilter === 'LowStock') {
       matchesFilter = isItemLowStock(item);
     }

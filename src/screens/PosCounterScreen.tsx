@@ -45,6 +45,7 @@ export const PosCounterScreen: React.FC = () => {
     { id: 'Rice', en: 'Rice', ur: 'چاول' },
     { id: 'Pulses', en: 'Pulses / Daal', ur: 'دالیں' },
     { id: 'Spices', en: 'Spices', ur: 'کھلا مصالحہ' },
+    { id: 'Dry Fruit', en: 'Dry Fruit', ur: 'خشک میوہ جات' },
     { id: 'Shan', en: 'Shan', ur: 'شان' },
     { id: 'National', en: 'National', ur: 'نیشنل' },
     { id: 'Oil & Ghee', en: 'Oil & Ghee', ur: 'تیل و گھی' },
@@ -65,6 +66,33 @@ export const PosCounterScreen: React.FC = () => {
         matchesCat = catLower.includes('pulse') || catLower.includes('daal') || catLower.includes('دال');
       } else if (selectedCategory === 'Spices') {
         matchesCat = catLower.includes('spice') || catLower.includes('کھلا مصالحہ');
+      } else if (selectedCategory === 'Dry Fruit') {
+        matchesCat =
+          catLower.includes('dry') ||
+          catLower.includes('fruit') ||
+          catLower.includes('میوہ') ||
+          catLower.includes('بادام') ||
+          p.name.toLowerCase().includes('dry fruit') ||
+          p.name.toLowerCase().includes('badam') ||
+          p.name.toLowerCase().includes('almond') ||
+          p.name.toLowerCase().includes('pista') ||
+          p.name.toLowerCase().includes('kaju') ||
+          p.name.toLowerCase().includes('cashew') ||
+          p.name.toLowerCase().includes('kishmish') ||
+          p.name.toLowerCase().includes('akhrot') ||
+          p.name.toLowerCase().includes('walnut') ||
+          p.name.toLowerCase().includes('anjeer') ||
+          p.name.toLowerCase().includes('khajoor') ||
+          Boolean(p.urduName && (
+            p.urduName.includes('بادام') ||
+            p.urduName.includes('پستہ') ||
+            p.urduName.includes('کاجو') ||
+            p.urduName.includes('اخروٹ') ||
+            p.urduName.includes('کشمش') ||
+            p.urduName.includes('انجیر') ||
+            p.urduName.includes('کھجور') ||
+            p.urduName.includes('میوہ')
+          ));
       } else if (selectedCategory === 'Shan') {
         matchesCat =
           catLower.includes('shan') ||
@@ -112,7 +140,9 @@ export const PosCounterScreen: React.FC = () => {
             !catLower.includes('oil') &&
             !catLower.includes('ghee') &&
             !catLower.includes('atta') &&
-            !catLower.includes('sugar'));
+            !catLower.includes('sugar') &&
+            !catLower.includes('dry') &&
+            !catLower.includes('میوہ'));
       } else {
         matchesCat = catLower.includes(selLower) || selLower.includes(catLower);
       }

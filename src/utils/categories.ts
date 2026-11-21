@@ -8,6 +8,7 @@ export const DEFAULT_CATEGORY_OPTIONS: CategoryOption[] = [
   { id: 'Rice', en: 'Rice', ur: 'چاول' },
   { id: 'Pulses / Daal', en: 'Pulses / Daal', ur: 'دالیں' },
   { id: 'Spices', en: 'Spices / Masala', ur: 'کھلا مصالحہ' },
+  { id: 'Dry Fruit', en: 'Dry Fruit', ur: 'خشک میوہ جات' },
   { id: 'Shan', en: 'Shan', ur: 'شان' },
   { id: 'National', en: 'National', ur: 'نیشنل' },
   { id: 'Oil & Ghee', en: 'Oil & Ghee', ur: 'تیل و گھی' },

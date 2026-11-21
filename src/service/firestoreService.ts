@@ -80,15 +80,18 @@ export const addInventoryItemDoc = async (item: InventoryItem): Promise<void> =>
   // Also sync to POS products collection
   const prodDocRef = doc(db, PRODUCTS_COLLECTION, item.id);
   const resolvedUnitLabel = item.unitLabel || (item.unitType === 'piece' ? '/ pc' : item.unitType === 'liter' ? '/ liter' : '/ kg');
+  const isLoose = item.packagingStandard?.includes('Loose') || item.packagingStandard?.includes('Minor') || item.packagingStandard === 'loose_minor';
   const availableStockLabel = item.unitType === 'piece'
     ? `${item.physicalStockKg} Pcs`
     : item.unitType === 'liter'
       ? `${item.physicalStockKg} L`
-      : `${item.physicalStockKg} KG`;
+      : (item.physicalStockKg < 1
+        ? `${Math.round(item.physicalStockKg * 1000)}g (${item.physicalStockKg} kg)`
+        : `${item.physicalStockKg} KG`);
 
-  const isWholesalePack = Boolean(item.unitsPerPack && item.unitsPerPack > 1);
-  const wholesaleBoriPrice = item.counterRatePerBag;
-  const boriWeightKg = item.unitsPerPack || 25;
+  const isWholesalePack = !isLoose && Boolean(item.unitsPerPack && item.unitsPerPack > 1);
+  const wholesaleBoriPrice = isLoose ? item.counterRatePerKg : item.counterRatePerBag;
+  const boriWeightKg = isLoose ? 1 : (item.unitsPerPack || 25);
 
   const newProduct: Product = {
     id: item.id,
@@ -101,7 +104,7 @@ export const addInventoryItemDoc = async (item: InventoryItem): Promise<void> =>
     unitLabel: resolvedUnitLabel,
     availableKg: item.physicalStockKg,
     availableStockLabel,
-    binLocation: 'Godown Bay A',
+    binLocation: item.packagingStandard || 'Godown Bay A',
     imageUrl: item.imageUrl || '',
     shortcut: `F${Math.floor(100 + Math.random() * 899)}`,
     tareWeightDefault: item.tareDeductionKg ?? 0.0,
@@ -128,9 +131,11 @@ export const updateInventoryItemDoc = async (
   const prodDocRef = doc(db, PRODUCTS_COLLECTION, id);
   const prodSnap = await getDoc(prodDocRef);
   if (prodSnap.exists()) {
+    const currentProd = prodSnap.data() as Product;
     const prodUpdates: Partial<Product> = {};
     if (updates.varietyName) prodUpdates.name = updates.varietyName;
     if (updates.urduName) prodUpdates.urduName = updates.urduName;
+    if (updates.packagingStandard) prodUpdates.binLocation = updates.packagingStandard;
     if (updates.category) {
       prodUpdates.category = updates.category;
       prodUpdates.badgeLabel = updates.category.toUpperCase().slice(0, 12);
@@ -140,13 +145,14 @@ export const updateInventoryItemDoc = async (
     if (updates.unitLabel) prodUpdates.unitLabel = updates.unitLabel;
     if (updates.physicalStockKg !== undefined) {
       prodUpdates.availableKg = updates.physicalStockKg;
-      const currentProd = prodSnap.data() as Product;
       const uType = updates.unitType || (currentProd.unitLabel?.includes('pc') ? 'piece' : currentProd.unitLabel?.includes('liter') ? 'liter' : 'kg');
       prodUpdates.availableStockLabel = uType === 'piece'
         ? `${updates.physicalStockKg} Pcs`
         : uType === 'liter'
           ? `${updates.physicalStockKg} L`
-          : `${updates.physicalStockKg} KG`;
+          : (updates.physicalStockKg < 1
+            ? `${Math.round(updates.physicalStockKg * 1000)}g (${updates.physicalStockKg} kg)`
+            : `${updates.physicalStockKg} KG`);
       const threshold = updates.minStockThreshold !== undefined 
         ? updates.minStockThreshold 
         : (currentProd.minStockThreshold ?? 20);
@@ -155,8 +161,9 @@ export const updateInventoryItemDoc = async (
     }
     if (updates.counterRatePerBag !== undefined) prodUpdates.wholesaleBoriPrice = updates.counterRatePerBag;
     if (updates.unitsPerPack !== undefined) {
-      prodUpdates.boriWeightKg = updates.unitsPerPack;
-      prodUpdates.isWholesalePack = updates.unitsPerPack > 1;
+      const isLoose = updates.packagingStandard?.includes('Loose') || updates.packagingStandard?.includes('Minor') || updates.packagingStandard === 'loose_minor' || currentProd.binLocation?.includes('Loose');
+      prodUpdates.boriWeightKg = isLoose ? 1 : updates.unitsPerPack;
+      prodUpdates.isWholesalePack = !isLoose && updates.unitsPerPack > 1;
     }
     if (updates.imageUrl !== undefined) prodUpdates.imageUrl = updates.imageUrl;
     if (updates.tareDeductionKg !== undefined) prodUpdates.tareWeightDefault = updates.tareDeductionKg;

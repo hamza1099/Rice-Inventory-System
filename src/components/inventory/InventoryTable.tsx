@@ -30,6 +30,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
       if (cat.includes('Rice') || cat.includes('چاول')) return 'چاول';
       if (cat.includes('Pulses') || cat.includes('Daal') || cat.includes('دال')) return 'دالیں';
       if (cat.includes('Spices') || cat.includes('مصالحہ')) return 'کھلا مصالحہ';
+      if (cat.includes('Dry') || cat.includes('Fruit') || cat.includes('میوہ')) return 'خشک میوہ جات';
       if (cat.includes('Shan') || cat.includes('National')) return 'ڈبہ مصالحہ';
       if (cat.includes('Oil') || cat.includes('Ghee') || cat.includes('تیل')) return 'تیل و گھی';
       if (cat.includes('Atta') || cat.includes('Sugar') || cat.includes('آٹا')) return 'آٹا و چینی';
@@ -39,6 +40,9 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
   };
 
   const getCleanPackaging = (pkg: string) => {
+    if (pkg.includes('Loose') || pkg.includes('Minor') || pkg.includes('کھلا') || pkg === 'loose_minor') {
+      return isUr ? 'کھلا مال (بغیر بوری)' : 'Loose Item (No Bags)';
+    }
     if (isUr) {
       if (pkg.includes('50 kg Jute')) return '50 کلو جوٹ بوری';
       if (pkg.includes('50 kg PP')) return '50 کلو پی پی بوری';
@@ -193,7 +197,9 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                           category: item.category,
                           badgeLabel: item.lotStatus,
                           rate: item.counterRatePerKg,
-                          stock: `${item.physicalStockKg} KG (${item.bagsCount} Bags)`,
+                          stock: item.bagsCount === 0 || item.packagingStandard?.includes('Loose') || item.packagingStandard === 'loose_minor'
+                            ? (item.physicalStockKg < 1 ? `${item.physicalStockKg} KG (${Math.round(item.physicalStockKg * 1000)}g Loose)` : `${item.physicalStockKg} KG (Loose)`)
+                            : `${item.physicalStockKg} KG (${item.bagsCount} Bags)`,
                           binLocation: item.packagingStandard
                         })
                       }
@@ -250,21 +256,38 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                 {/* Stock in KG/Pieces/Litres and Packs */}
                 <td className="py-3 px-3 text-right">
                   <span className="text-sm font-black text-slate-900 block">
-                    {item.physicalStockKg.toLocaleString()}{' '}
-                    {item.unitType === 'piece'
-                      ? isUr ? 'دانے' : 'pcs'
-                      : item.unitType === 'liter'
-                      ? isUr ? 'لیٹر' : 'L'
-                      : isUr ? 'کلو' : 'kg'}
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-bold block">
-                    {item.bagsCount} {getCleanBagLabel(item.bagTypeLabel)}
-                    {item.unitType === 'kg' && item.unitsPerPack && item.physicalStockKg > item.bagsCount * item.unitsPerPack && (
-                      <span className="text-slate-400 font-normal ml-1">
-                        (+{(item.physicalStockKg - item.bagsCount * item.unitsPerPack).toFixed(2)} kg)
-                      </span>
+                    {item.unitType === 'kg' && item.physicalStockKg < 1 ? (
+                      <>
+                        {item.physicalStockKg} {isUr ? 'کلو' : 'kg'}
+                        <span className="text-xs font-bold text-emerald-800 ml-1 block sm:inline">
+                          ({Math.round(item.physicalStockKg * 1000)}g)
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        {item.physicalStockKg.toLocaleString()}{' '}
+                        {item.unitType === 'piece'
+                          ? isUr ? 'دانے' : 'pcs'
+                          : item.unitType === 'liter'
+                          ? isUr ? 'لیٹر' : 'L'
+                          : isUr ? 'کلو' : 'kg'}
+                      </>
                     )}
                   </span>
+                  {item.bagsCount === 0 || item.packagingStandard?.includes('Loose') || item.packagingStandard === 'loose_minor' ? (
+                    <span className="text-[10px] text-emerald-700 font-bold block">
+                      {isUr ? 'کھلا مال (بغیر بوری)' : 'Loose Item (No Bags)'}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-500 font-bold block">
+                      {item.bagsCount} {getCleanBagLabel(item.bagTypeLabel)}
+                      {item.unitType === 'kg' && item.unitsPerPack && item.physicalStockKg > item.bagsCount * item.unitsPerPack && (
+                        <span className="text-slate-400 font-normal ml-1">
+                          (+{(item.physicalStockKg - item.bagsCount * item.unitsPerPack).toFixed(2)} kg)
+                        </span>
+                      )}
+                    </span>
+                  )}
                 </td>
 
                 {/* Status Badge */}
