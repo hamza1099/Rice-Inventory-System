@@ -117,16 +117,18 @@ export const CustomerKhataScreen: React.FC = () => {
       return;
     }
 
-    let cleanPhone = customer.phone.replace(/[\s-]/g, '');
+    let cleanPhone = customer.phone.replace(/\D/g, '');
     if (cleanPhone.startsWith('0')) {
       cleanPhone = '92' + cleanPhone.slice(1);
     } else if (!cleanPhone.startsWith('92')) {
       cleanPhone = '92' + cleanPhone;
     }
 
-    const message = isUr
-      ? `محترم ${customer.customerName} صاحب (${customer.shopName})،\n\nبخاری رائس ٹریڈرز کے ریکارڈ کے مطابق آپ کے کھاتے کا بقیہ واجب الادا بیلنس PKR ${customer.currentBalance.toLocaleString()} ہے۔\n\nبرائے مہربانی اپنا کھاتہ جلد از جلد بیباق فرما کر رسید حاصل کریں۔ شکریہ!\n\nبخاری رائس ٹریڈرز - گلی نمبر 9، لالہ رخ کالونی، چکری روڈ، بنی سٹاپ، راولپنڈی - فون: 0310-5612914`
-      : `Dear ${customer.customerName} (${customer.shopName}),\n\nAccording to records of Bukhari Rice Traders, your outstanding balance due is PKR ${customer.currentBalance.toLocaleString()}.\n\nPlease settle your account at your earliest convenience.\n\nBukhari Rice Traders - Lane # 9, Lala Rukh Colony, Chakri Road, Bani Stop, Rawalpindi - Ph: 0310-5612914`;
+    const customerDisplayName = customer.customerName && customer.shopName
+      ? `${customer.customerName} (${customer.shopName})`
+      : (customer.customerName || customer.shopName || 'گاہک');
+
+    const message = `محترم ${customerDisplayName}،\n\nبخاری رائس ٹریڈرز کے ریکارڈ کے مطابق، آپ کے ذمہ ${customer.currentBalance.toLocaleString()} روپے واجب الادا ہیں۔ براہِ کرم جلد از جلد اپنا حساب کلیئر کر دیں۔\n\nبخاری رائس ٹریڈرز - لین نمبر 9، لالہ رخ کالونی، چکری روڈ، بنی سٹاپ، راولپنڈی - فون: 0310-5612914`;
 
     const encodedMsg = encodeURIComponent(message);
     const waUrl = `https://wa.me/${cleanPhone}?text=${encodedMsg}`;

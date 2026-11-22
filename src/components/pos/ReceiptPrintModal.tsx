@@ -4,9 +4,27 @@ import { usePos } from '../../context/PosContext';
 
 export const ReceiptPrintModal: React.FC = () => {
   const { activeReceipt, setActiveReceipt, language, khataCustomers } = usePos();
+  
+  const isKhata = Boolean(
+    activeReceipt && (
+      activeReceipt.paymentMode === 'KHATA / CREDIT' ||
+      Boolean(activeReceipt.khataCustomerId) ||
+      (Boolean(activeReceipt.customerName) &&
+        activeReceipt.customerName !== 'Counter Retail Buyer' &&
+        !activeReceipt.customerName.toLowerCase().includes('counter'))
+    )
+  );
+
   const khataCustomer = activeReceipt?.khataCustomerId
     ? khataCustomers.find((c) => c.id === activeReceipt.khataCustomerId)
-    : null;
+    : (activeReceipt?.customerName
+      ? khataCustomers.find(
+          (c) =>
+            c.shopName.toLowerCase() === activeReceipt.customerName.toLowerCase() ||
+            activeReceipt.customerName.toLowerCase().includes(c.shopName.toLowerCase()) ||
+            (c.customerName && activeReceipt.customerName.toLowerCase().includes(c.customerName.toLowerCase()))
+        ) || null
+      : null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -91,13 +109,41 @@ export const ReceiptPrintModal: React.FC = () => {
                 <span>{activeReceipt.dateStr} {activeReceipt.timeStr.split(' ')[0]}</span>
               </div>
               <div className="flex justify-between">
-                <span>CUSTOMER:</span>
-                <span className="font-semibold">{activeReceipt.customerName}</span>
-              </div>
-              <div className="flex justify-between">
                 <span>CASHIER:</span>
                 <span>{activeReceipt.cashier} • C-01</span>
               </div>
+
+              {/* KHATA CUSTOMER: Only printed for Khata / Credit bills, NEVER for Spot Cash / Raast */}
+              {isKhata && (
+                <div className="mt-2 pt-2 pb-1 border-t border-b border-dashed border-slate-400 bg-slate-50/80 p-2 rounded text-slate-900 space-y-1">
+                  <div className="flex justify-between items-start">
+                    <span className="font-black text-[10px] text-purple-900 uppercase">
+                      KHATA / کھاتہ:
+                    </span>
+                    <span className="font-black text-[12px] text-right text-slate-950 max-w-[170px] leading-tight">
+                      {khataCustomer?.shopName || activeReceipt.customerName}
+                    </span>
+                  </div>
+                  {khataCustomer?.customerName && khataCustomer.customerName !== khataCustomer.shopName && (
+                    <div className="flex justify-between text-[9.5px] text-slate-700">
+                      <span>PROPRIETOR / مالک:</span>
+                      <span className="font-bold text-slate-900">{khataCustomer.customerName}</span>
+                    </div>
+                  )}
+                  {khataCustomer?.phone && (
+                    <div className="flex justify-between text-[9.5px] text-slate-700">
+                      <span>PHONE / رابطہ:</span>
+                      <span className="font-mono font-bold text-slate-900">{khataCustomer.phone}</span>
+                    </div>
+                  )}
+                  {khataCustomer?.address && (
+                    <div className="flex justify-between text-[9px] text-slate-500">
+                      <span>LOCATION / پتہ:</span>
+                      <span className="truncate max-w-[170px] text-right">{khataCustomer.address}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Items Table */}
@@ -154,25 +200,49 @@ export const ReceiptPrintModal: React.FC = () => {
               </div>
               <div className="flex justify-between text-[10px] text-slate-600 font-normal">
                 <span>PAYMENT MODE:</span>
-                <span className="font-bold">
-                  {activeReceipt.paymentMode === 'KHATA / CREDIT'
+                <span className={`font-bold ${isKhata ? 'text-purple-900 font-black' : ''}`}>
+                  {isKhata
                     ? 'KHATA / CREDIT (ادھار کھاتہ)'
                     : activeReceipt.paymentMode}
                 </span>
               </div>
-              {activeReceipt.paymentMode === 'KHATA / CREDIT' && khataCustomer && (
-                <div className="bg-purple-50 p-1.5 rounded border border-purple-200 text-purple-950 text-[10px] font-bold space-y-0.5 mt-1">
-                  <div className="flex justify-between">
-                    <span>CUSTOMER KHATA:</span>
-                    <span className="truncate max-w-[140px]">{khataCustomer.shopName || khataCustomer.customerName}</span>
+              {isKhata && (
+                <div className="bg-purple-50 p-2 rounded border border-purple-200 text-purple-950 text-[10px] font-bold space-y-1 mt-1.5">
+                  <div className="flex justify-between items-center text-[10.5px]">
+                    <span className="text-purple-900 font-extrabold">KHATA LEDGER:</span>
+                    <span className="font-black text-purple-950 truncate max-w-[150px]">
+                      {khataCustomer?.shopName || activeReceipt.customerName}
+                    </span>
                   </div>
-                  <div className="flex justify-between font-mono-num">
-                    <span>TOTAL ACCUMULATED DUE:</span>
-                    <span>PKR {khataCustomer.currentBalance.toLocaleString()}</span>
-                  </div>
+                  {khataCustomer && (
+                    <>
+                      <div className="flex justify-between text-[9.5px] text-purple-800">
+                        <span>PRIOR BALANCE:</span>
+                        <span>PKR {(khataCustomer.currentBalance - activeReceipt.netAmount > 0 ? khataCustomer.currentBalance - activeReceipt.netAmount : 0).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-[9.5px] text-purple-800">
+                        <span>THIS BILL (+):</span>
+                        <span>+ PKR {activeReceipt.netAmount.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-[11px] font-black border-t border-purple-300 pt-0.5 text-purple-950">
+                        <span>NEW TOTAL DUE:</span>
+                        <span>PKR {khataCustomer.currentBalance.toLocaleString()}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
+
+            {/* Signature Line for Khata Receipts */}
+            {isKhata && (
+              <div className="py-2.5 mb-2 border-b border-dashed border-slate-300 text-[10px]">
+                <div className="flex justify-between items-end pt-2">
+                  <span className="text-[9.5px] font-bold text-slate-700">وصول کنندہ دستخط / کسٹمر:</span>
+                  <span className="text-slate-800 font-mono">____________________</span>
+                </div>
+              </div>
+            )}
 
             {/* Footer */}
             <div className="text-center text-[9px] text-slate-600 pt-2 space-y-1 border-t border-dashed border-slate-300">
