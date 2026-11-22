@@ -60,6 +60,7 @@ interface PosContextType {
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
   updateCartItemRate: (id: string, newRate: number) => void;
+  updateCartItemQty: (id: string, newQtyOrWeight: number) => void;
   clearCart: () => void;
   selectedProductForModal: Product | null;
   setSelectedProductForModal: (p: Product | null) => void;
@@ -837,6 +838,23 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
+  const updateCartItemQty = (id: string, newQtyOrWeight: number) => {
+    setCart((prev) =>
+      prev.map((item) => {
+        if (item.id === id) {
+          const validWeight = Math.max(0.001, newQtyOrWeight);
+          return {
+            ...item,
+            netWeight: validWeight,
+            grossWeight: validWeight + (item.tareWeight || 0),
+            subtotal: Math.round(validWeight * item.ratePerKg)
+          };
+        }
+        return item;
+      })
+    );
+  };
+
   const clearCart = () => {
     setCart([]);
     setSpotDiscount(0);
@@ -1423,6 +1441,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addToCart,
         removeFromCart,
         updateCartItemRate,
+        updateCartItemQty,
         clearCart,
         selectedProductForModal,
         setSelectedProductForModal,

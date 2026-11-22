@@ -8,12 +8,14 @@ interface StatCardProps {
   value: string | number;
   subValue?: string;
   badge?: string;
-  badgeColor?: 'emerald' | 'amber' | 'blue' | 'red';
+  badgeColor?: 'emerald' | 'amber' | 'blue' | 'red' | 'purple';
   icon?: LucideIcon;
   iconBg?: string;
   iconColor?: string;
   compact?: boolean;
   isLoading?: boolean;
+  onClick?: () => void;
+  isActive?: boolean;
 }
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -27,21 +29,29 @@ export const StatCard: React.FC<StatCardProps> = ({
   iconBg = 'bg-emerald-50',
   iconColor = 'text-emerald-700',
   compact = false,
-  isLoading = false
+  isLoading = false,
+  onClick,
+  isActive = false
 }) => {
   const { language } = usePos();
   const badgeClasses = {
     emerald: 'bg-emerald-100 text-emerald-800 border-emerald-200',
     amber: 'bg-amber-100 text-amber-800 border-amber-200',
     blue: 'bg-blue-100 text-blue-800 border-blue-200',
-    red: 'bg-red-100 text-red-800 border-red-200'
+    red: 'bg-red-100 text-red-800 border-red-200',
+    purple: 'bg-purple-100 text-purple-800 border-purple-200'
   }[badgeColor];
 
   return (
     <div
-      className={`bg-white border border-slate-200 rounded-lg shadow-xs relative flex flex-col justify-between hover:border-slate-300 transition-all ${
+      onClick={onClick}
+      className={`bg-white rounded-lg shadow-xs relative flex flex-col justify-between transition-all ${
         compact ? 'p-2' : 'p-3'
-      }`}
+      } ${
+        isActive
+          ? 'border-2 border-emerald-600 ring-2 ring-emerald-500/20'
+          : 'border border-slate-200 hover:border-slate-300'
+      } ${onClick ? 'cursor-pointer hover:shadow-sm' : ''}`}
     >
       <div className="flex items-start justify-between">
         <div className="min-w-0">

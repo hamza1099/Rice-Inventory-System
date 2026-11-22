@@ -11,6 +11,7 @@ export const CashMemoBill: React.FC = () => {
     cart,
     removeFromCart,
     updateCartItemRate,
+    updateCartItemQty,
     clearCart,
     spotDiscount,
     setSpotDiscount,
@@ -387,10 +388,10 @@ export const CashMemoBill: React.FC = () => {
         <table className="w-full text-left text-xs border-collapse">
           <thead className="bg-slate-100 text-slate-600 text-[10px] font-bold uppercase sticky top-0 border-b border-slate-200">
             <tr>
-              <th className="py-2 px-2.5">{language === 'ur' ? 'تفصیل' : 'Item'}</th>
+              <th className="py-2 px-2">{language === 'ur' ? 'تفصیل' : 'Item'}</th>
               <th className="py-2 px-1 text-right">{language === 'ur' ? 'ریٹ' : 'Rate'}</th>
-              <th className="py-2 px-1.5 text-right">{language === 'ur' ? 'وزن' : 'Qty'}</th>
-              <th className="py-2 px-2 text-right">{language === 'ur' ? 'رقم' : 'Amount'}</th>
+              <th className="py-2 px-1 text-center">{language === 'ur' ? 'مقدار / وزن' : 'Qty / Wt'}</th>
+              <th className="py-2 px-1.5 text-right">{language === 'ur' ? 'رقم' : 'Amount'}</th>
               <th className="py-2 px-1 text-center w-6"></th>
             </tr>
           </thead>
@@ -441,7 +442,7 @@ export const CashMemoBill: React.FC = () => {
                             if (e.key === 'Escape') setEditingRateId(null);
                           }}
                           onBlur={() => handleSaveRate(item.id)}
-                          className="w-16 text-right bg-white border-2 border-emerald-600 rounded px-1 py-0.5 text-xs font-bold font-mono-num text-slate-900 focus:outline-hidden shadow-xs"
+                          className="w-16 text-right bg-white border-2 border-emerald-600 rounded px-1 py-0.5 text-xs font-bold font-mono-num text-slate-900 focus:outline-hidden shadow-xs no-spin [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                     ) : (
@@ -477,10 +478,98 @@ export const CashMemoBill: React.FC = () => {
                       </button>
                     )}
                   </td>
-                  <td className="py-2 px-1.5 text-right font-bold text-slate-900 text-[11px]">
-                    {item.mode === 'packet'
-                      ? `${Math.round(item.netWeight)}`
-                      : `${item.netWeight < 1 && item.netWeight > 0 ? parseFloat(item.netWeight.toFixed(3)) : item.netWeight.toFixed(2)} ${language === 'ur' ? 'کلو' : 'kg'}`}
+                  <td className="py-1.5 px-1 text-center">
+                    {item.mode === 'packet' ? (
+                      <div className="inline-flex items-center justify-center gap-1">
+                        <div className="h-6 inline-flex items-center justify-center bg-white border border-slate-300 rounded shadow-2xs overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const currentQty = Math.round(item.netWeight);
+                              if (currentQty > 1) {
+                                updateCartItemQty(item.id, currentQty - 1);
+                              }
+                            }}
+                            className="w-5 h-full hover:bg-slate-100 text-slate-700 font-black flex items-center justify-center text-xs cursor-pointer select-none transition-colors border-r border-slate-200"
+                            title={language === 'ur' ? 'ایک کم کریں' : 'Decrease'}
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={Math.round(item.netWeight)}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              if (!isNaN(val) && val > 0) {
+                                updateCartItemQty(item.id, val);
+                              }
+                            }}
+                            className="w-11 h-full text-center font-black font-mono-num bg-transparent px-0.5 py-0.5 text-xs text-slate-900 focus:outline-hidden focus:bg-emerald-50 no-spin [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const currentQty = Math.round(item.netWeight);
+                              updateCartItemQty(item.id, currentQty + 1);
+                            }}
+                            className="w-5 h-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-black flex items-center justify-center text-xs cursor-pointer select-none transition-colors border-l border-slate-200"
+                            title={language === 'ur' ? 'ایک بڑھائیں' : 'Increase'}
+                          >
+                            +
+                          </button>
+                        </div>
+                        <span className="w-5 text-left text-[10px] text-slate-500 font-bold font-sans shrink-0">
+                          {language === 'ur' ? 'عدد' : 'pc'}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center justify-center gap-1">
+                        <div className="h-6 inline-flex items-center justify-center bg-white border border-slate-300 rounded shadow-2xs overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const step = item.netWeight > 5 ? 1 : item.netWeight > 1 ? 0.5 : 0.1;
+                              const newWt = Math.max(0.01, parseFloat((item.netWeight - step).toFixed(3)));
+                              updateCartItemQty(item.id, newWt);
+                            }}
+                            className="w-5 h-full hover:bg-slate-100 text-slate-700 font-black flex items-center justify-center text-xs cursor-pointer select-none transition-colors border-r border-slate-200"
+                            title={language === 'ur' ? 'وزن کم کریں' : 'Decrease weight'}
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min="0.001"
+                            step="any"
+                            value={item.netWeight < 1 && item.netWeight > 0 ? parseFloat(item.netWeight.toFixed(3)) : parseFloat(item.netWeight.toFixed(2))}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value);
+                              if (!isNaN(val) && val > 0) {
+                                updateCartItemQty(item.id, val);
+                              }
+                            }}
+                            className="w-11 h-full text-center font-black font-mono-num bg-transparent px-0.5 py-0.5 text-xs text-slate-900 focus:outline-hidden focus:bg-emerald-50 no-spin [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const step = item.netWeight >= 5 ? 1 : item.netWeight >= 1 ? 0.5 : 0.1;
+                              const newWt = parseFloat((item.netWeight + step).toFixed(3));
+                              updateCartItemQty(item.id, newWt);
+                            }}
+                            className="w-5 h-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-black flex items-center justify-center text-xs cursor-pointer select-none transition-colors border-l border-slate-200"
+                            title={language === 'ur' ? 'وزن بڑھائیں' : 'Increase weight'}
+                          >
+                            +
+                          </button>
+                        </div>
+                        <span className="w-5 text-left text-[10px] text-slate-500 font-bold font-sans shrink-0">
+                          {language === 'ur' ? 'کلو' : 'kg'}
+                        </span>
+                      </div>
+                    )}
                   </td>
                   <td className="py-2 px-2 text-right font-extrabold text-slate-900 text-xs">
                     {Math.round(item.subtotal).toLocaleString()}

@@ -339,8 +339,8 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                     )}
                   </div>
                   <NumberInput
-                    min="0.01"
-                    step="0.05"
+                    min="0.001"
+                    step="any"
                     value={bags}
                     onChange={(val) => setBags(val)}
                     className="w-full text-base font-bold font-mono-num px-3 py-1.5 border border-emerald-600 rounded bg-white focus:outline-hidden"
@@ -450,7 +450,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                       </span>
                       <NumberInput
                         min="0"
-                        step="0.5"
+                        step="any"
                         value={inwardCostPerKg}
                         onChange={(val) => handleCostPerKgChange(val)}
                         className="w-full text-sm font-black font-mono-num pl-12 pr-3 py-1.5 border border-slate-300 rounded bg-white text-slate-900 focus:outline-hidden"
@@ -660,7 +660,7 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
                       {isUr ? 'فروخت ریٹ فی کلو:' : 'Selling Rate per KG:'}
                     </label>
                     <NumberInput
-                      step="0.5"
+                      step="any"
                       value={sellingRatePerKg}
                       onChange={(val) => handleSellingRatePerKgChange(val)}
                       className="w-full text-sm font-black font-mono-num px-3 py-1.5 border border-slate-300 rounded bg-white text-slate-900 focus:border-emerald-600 focus:outline-hidden"

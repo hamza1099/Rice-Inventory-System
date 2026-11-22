@@ -52,7 +52,7 @@ export const RateEditModal: React.FC<RateEditModalProps> = ({ item, onClose }) =
               New Counter Selling Rate (PKR / KG):
             </label>
             <NumberInput
-              step="0.5"
+              step="any"
               autoFocus
               value={newRate}
               onChange={(val) => setNewRate(val)}

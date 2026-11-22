@@ -209,7 +209,7 @@ export const AddKhataPurchaseModal: React.FC<AddKhataPurchaseModalProps> = ({
                         <div className="flex items-center justify-end space-x-1">
                           <NumberInput
                             min="0"
-                            step="0.5"
+                            step="any"
                             value={row.quantity}
                             onChange={(val) => handleQtyChange(index, val)}
                             className="w-16 px-1.5 py-1 border border-slate-300 rounded text-right font-bold"

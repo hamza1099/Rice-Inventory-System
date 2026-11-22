@@ -274,8 +274,8 @@ export const EditMemoModal: React.FC<EditMemoModalProps> = ({ memo, isOpen, onCl
                   <div className="col-span-3 flex justify-end">
                     <input
                       type="number"
-                      step="0.01"
-                      min="0.01"
+                      step="any"
+                      min="0.001"
                       value={item.netWeight}
                       onChange={(e) => handleWeightChange(idx, parseFloat(e.target.value) || 0)}
                       className="w-20 text-right font-mono font-bold px-2 py-1 border border-slate-300 rounded focus:ring-1 focus:ring-emerald-500"
@@ -284,7 +284,7 @@ export const EditMemoModal: React.FC<EditMemoModalProps> = ({ memo, isOpen, onCl
                   <div className="col-span-2 flex justify-end">
                     <input
                       type="number"
-                      step="1"
+                      step="any"
                       min="0"
                       value={item.ratePerKg}
                       onChange={(e) => handleRateChange(idx, parseFloat(e.target.value) || 0)}

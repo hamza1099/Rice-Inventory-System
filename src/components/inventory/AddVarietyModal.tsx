@@ -594,7 +594,7 @@ export const AddVarietyModal: React.FC<AddVarietyModalProps> = ({ isOpen, onClos
                   className="w-full pl-3 pr-20 py-2 border-2 border-emerald-600 rounded bg-white text-sm font-black font-mono-num text-slate-900 focus:outline-hidden"
                   placeholder="e.g. 0.400"
                   allowDecimals={true}
-                  step="0.05"
+                  step="any"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-emerald-800 uppercase">
                   KG / کلو
@@ -754,7 +754,7 @@ export const AddVarietyModal: React.FC<AddVarietyModalProps> = ({ isOpen, onClos
                       {isUr ? `ریٹ فی ${unitNameUr}:` : `Rate per ${unitNameEn}:`}
                     </label>
                     <NumberInput
-                      step="0.5"
+                      step="any"
                       min="0"
                       value={costPerUnit}
                       onChange={handleCostUnitChange}
@@ -788,7 +788,7 @@ export const AddVarietyModal: React.FC<AddVarietyModalProps> = ({ isOpen, onClos
                       {isUr ? `ریٹ فی ${unitNameUr}:` : `Rate per ${unitNameEn}:`}
                     </label>
                     <NumberInput
-                      step="0.5"
+                      step="any"
                       min="0"
                       value={counterRatePerUnit}
                       onChange={handleRateUnitChange}

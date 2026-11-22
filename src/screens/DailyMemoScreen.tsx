@@ -7,7 +7,7 @@ import { DrawerAuditCard } from '../components/memo/DrawerAuditCard';
 import { ReceiptPrintModal } from '../components/pos/ReceiptPrintModal';
 import { CalendarRangeModal } from '../components/memo/CalendarRangeModal';
 import { notifySuccess, notifyInfo } from '../utils/toast';
-import { DollarSign, Wallet, CreditCard, TrendingUp, TrendingDown, X } from 'lucide-react';
+import { DollarSign, Wallet, CreditCard, BookOpen, TrendingUp, TrendingDown, X } from 'lucide-react';
 import {
   getPakistanDateIso,
   getPakistanDateStr,
@@ -100,6 +100,8 @@ export const DailyMemoScreen: React.FC = () => {
   const raastCollected = filteredMemos
     .filter((m) => m.paymentMode === 'RAAST ONLINE')
     .reduce((sum, m) => sum + m.netAmount, 0);
+  const khataCreditMemos = filteredMemos.filter((m) => m.paymentMode === 'KHATA / CREDIT');
+  const khataCreditSales = khataCreditMemos.reduce((sum, m) => sum + m.netAmount, 0);
 
   // Exact Cost of Goods Sold (COGS) & Gross Profit / Loss
   let totalCost = 0;
@@ -183,32 +185,44 @@ export const DailyMemoScreen: React.FC = () => {
         onDownloadPDF={() => notifyInfo("Generating PDF summary report for thermal/A4 printing...")}
       />
 
-      {/* 4 Stat Cards Dynamically Updated */}
-      <div className="grid grid-cols-4 gap-3">
+      {/* 5 Stat Cards Dynamically Updated */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
         <StatCard
           isLoading={isInitialLoading}
           title="PERIOD TOTAL SALES"
           urduTitle="کل فروخت (نقد و ادھار)"
           value={`PKR ${totalSales.toLocaleString()}`}
-          subValue={`${filteredMemos.filter((m) => m.paymentMode !== 'KHATA / CREDIT').length} Spot Invoices • ${filteredMemos.filter((m) => m.paymentMode === 'KHATA / CREDIT').length} CREDIT / KHATA`}
+          subValue={
+            language === 'ur'
+              ? `${filteredMemos.filter((m) => m.paymentMode !== 'KHATA / CREDIT').length} نقد/راست • ${khataCreditMemos.length} کھاتہ ادھار`
+              : `${filteredMemos.filter((m) => m.paymentMode !== 'KHATA / CREDIT').length} Spot Invoices • ${khataCreditMemos.length} CREDIT / KHATA`
+          }
           badge="SETTLED"
           badgeColor="emerald"
           icon={DollarSign}
           iconBg="bg-emerald-100"
           iconColor="text-emerald-800"
+          onClick={() => setSelectedPayment('ALL')}
+          isActive={selectedPayment === 'ALL'}
         />
 
         <StatCard
           isLoading={isInitialLoading}
           title="CASH COLLECTED"
-          urduTitle="کیش وصولی"
+          urduTitle="کیش وصولی (نقد)"
           value={`PKR ${cashCollected.toLocaleString()}`}
-          subValue={`${filteredMemos.filter((m) => m.paymentMode === 'SPOT CASH').length} Cash Receipts Settled • 100% RECONCILED`}
+          subValue={
+            language === 'ur'
+              ? `${filteredMemos.filter((m) => m.paymentMode === 'SPOT CASH').length} رسیدیں • 100% گلہ وصولی`
+              : `${filteredMemos.filter((m) => m.paymentMode === 'SPOT CASH').length} Cash Receipts Settled • 100% RECONCILED`
+          }
           badge="100%"
           badgeColor="emerald"
           icon={Wallet}
           iconBg="bg-blue-100"
           iconColor="text-blue-800"
+          onClick={() => setSelectedPayment(selectedPayment === 'SPOT CASH' ? 'ALL' : 'SPOT CASH')}
+          isActive={selectedPayment === 'SPOT CASH'}
         />
 
         <StatCard
@@ -216,12 +230,37 @@ export const DailyMemoScreen: React.FC = () => {
           title="RAAST & ONLINE IBFT"
           urduTitle="راست / آن لائن"
           value={`PKR ${raastCollected.toLocaleString()}`}
-          subValue={`${filteredMemos.filter((m) => m.paymentMode === 'RAAST ONLINE').length} Online Transfers • Instant Bank Clearing`}
+          subValue={
+            language === 'ur'
+              ? `${filteredMemos.filter((m) => m.paymentMode === 'RAAST ONLINE').length} آن لائن ٹرانسفرز • فوری کلیئرنگ`
+              : `${filteredMemos.filter((m) => m.paymentMode === 'RAAST ONLINE').length} Online Transfers • Instant Bank Clearing`
+          }
           badge="VERIFIED"
           badgeColor="blue"
           icon={CreditCard}
+          iconBg="bg-sky-100"
+          iconColor="text-sky-800"
+          onClick={() => setSelectedPayment(selectedPayment === 'RAAST ONLINE' ? 'ALL' : 'RAAST ONLINE')}
+          isActive={selectedPayment === 'RAAST ONLINE'}
+        />
+
+        <StatCard
+          isLoading={isInitialLoading}
+          title="KHATA / CREDIT SALES"
+          urduTitle="ادھار کھاتہ (فروخت)"
+          value={`PKR ${khataCreditSales.toLocaleString()}`}
+          subValue={
+            language === 'ur'
+              ? `${khataCreditMemos.length} ادھار بل • کسٹمر کھاتے میں درج`
+              : `${khataCreditMemos.length} Credit Memos • Customer Khata Dispatched`
+          }
+          badge="KHATA"
+          badgeColor="purple"
+          icon={BookOpen}
           iconBg="bg-purple-100"
           iconColor="text-purple-800"
+          onClick={() => setSelectedPayment(selectedPayment === 'KHATA / CREDIT' ? 'ALL' : 'KHATA / CREDIT')}
+          isActive={selectedPayment === 'KHATA / CREDIT'}
         />
 
         <StatCard
