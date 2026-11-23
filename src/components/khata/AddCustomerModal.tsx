@@ -136,7 +136,7 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
               <input
                 type="text"
                 required
-                placeholder={isUr ? 'مثلاً حاجی رشید کریانہ اسٹور / مدینہ ہوٹل' : 'e.g. Haji Rasheed Store / Madina Hotel'}
+                placeholder={isUr ? 'مثلاً المدینہ کریانہ اسٹور / بسم اللہ ہوٹل' : 'e.g. Al-Madina Kiryana Store / Bismillah Hotel'}
                 value={shopName}
                 onChange={(e) => handleShopNameChange(e.target.value)}
                 className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded focus:border-emerald-600 focus:outline-hidden font-medium text-slate-900"
@@ -153,7 +153,7 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
               </label>
               <input
                 type="text"
-                placeholder={isUr ? 'مثلاً حاجی رشید احمد' : 'e.g. Haji Rasheed Ahmed'}
+                placeholder={isUr ? 'مثلاً محمد احمد' : 'e.g. Muhammad Ahmed'}
                 value={customerName}
                 onChange={(e) => handleCustomerNameChange(e.target.value)}
                 className="w-full px-2.5 py-1.5 border border-slate-300 rounded focus:border-emerald-600 focus:outline-hidden text-slate-900 font-medium"

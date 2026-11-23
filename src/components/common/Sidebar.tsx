@@ -7,7 +7,8 @@ import {
   CheckCircle2,
   Users,
   Settings,
-  BookOpen
+  BookOpen,
+  Truck
 } from 'lucide-react';
 import { RouteName } from '../../routes/RouteName';
 import { usePos } from '../../context/PosContext';
@@ -35,6 +36,9 @@ export const Sidebar: React.FC = () => {
       } else if (e.key === 'F5') {
         e.preventDefault();
         navigate(RouteName.KHATA);
+      } else if (e.key === 'F6') {
+        e.preventDefault();
+        navigate(RouteName.SUPPLIER_KHATA);
       } else if (e.key === 'F8' && !isCashier) {
         e.preventDefault();
         navigate(RouteName.USER_MANAGEMENT);
@@ -79,6 +83,13 @@ export const Sidebar: React.FC = () => {
       urdu: 'ادھار کھاتہ رجسٹر',
       key: 'F5',
       icon: BookOpen
+    },
+    {
+      to: RouteName.SUPPLIER_KHATA,
+      label: 'Mill / Supplier Khata',
+      urdu: 'مل و سپلائر کھاتہ',
+      key: 'F6',
+      icon: Truck
     },
     {
       to: RouteName.DAY_END,

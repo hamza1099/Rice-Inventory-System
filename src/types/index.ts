@@ -156,4 +156,53 @@ export interface KhataCustomer {
   notes?: string;
 }
 
+// ==================== SUPPLIER / MILL KHATA TYPES ====================
+export interface SupplierItemEntry {
+  productName: string;
+  urduName?: string;
+  bags: number;
+  weightPerBag: number;
+  totalKg: number;
+  ratePerBag?: number;
+  ratePerKg?: number;
+  subtotal: number;
+  unit?: string;
+}
+
+export interface SupplierTransaction {
+  id: string;
+  supplierId: string;
+  dateStr: string;
+  timeStr: string;
+  timestamp: number;
+  type: 'PURCHASE' | 'PAYMENT' | 'OPENING_BALANCE' | 'RETURN';
+  description: string;
+  items?: SupplierItemEntry[];
+  vehicleNo?: string; // گاڑی نمبر
+  biltyNo?: string; // بلٹی / گیٹ پاس نمبر
+  billAmount: number; // خریداری رقم (مال کی قیمت)
+  paidAmount: number; // ادا شدہ رقم
+  balanceAfter: number; // بقایا رقم جو ہم نے دینی ہے
+  paymentMode?: 'CASH' | 'RAAST' | 'BANK' | 'CHEQUE';
+  referenceNo?: string;
+  notes?: string;
+}
+
+export interface Supplier {
+  id: string;
+  name: string; // Mill or Dealer Name
+  urduName?: string;
+  contactPerson?: string;
+  phone: string;
+  city: string;
+  address?: string;
+  totalPurchases: number; // کل خریدا گیا مال
+  totalPaid: number; // کل ادا شدہ رقم
+  currentBalance: number; // واجب الادا بقایا رقم
+  status: 'ACTIVE' | 'SETTLED';
+  createdAt: string;
+  lastTransactionDate?: string;
+  notes?: string;
+}
+
 

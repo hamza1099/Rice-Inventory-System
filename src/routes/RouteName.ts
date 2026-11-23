@@ -6,6 +6,7 @@ export const RouteName = {
   STOCK_INVENTORY: "/stock-inventory",
   DAY_END: "/day-end-closing",
   KHATA: "/khata",
+  SUPPLIER_KHATA: "/supplier-khata",
   USER_MANAGEMENT: "/user-management",
   SYSTEM_SETTINGS: "/system-settings",
   NOT_FOUND: "*",

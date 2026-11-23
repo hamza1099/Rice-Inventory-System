@@ -18,7 +18,9 @@ import type {
   InventoryItem,
   MemoRecord,
   KhataCustomer,
-  KhataTransaction
+  KhataTransaction,
+  Supplier,
+  SupplierTransaction
 } from '../types';
 import type { TerminalUser } from '../components/users/AddUserModal';
 // Collection references
@@ -27,6 +29,8 @@ const PRODUCTS_COLLECTION = 'products';
 const MEMOS_COLLECTION = 'memos';
 const KHATA_CUSTOMERS_COLLECTION = 'khata_customers';
 const KHATA_TRANSACTIONS_COLLECTION = 'khata_transactions';
+const SUPPLIERS_COLLECTION = 'suppliers';
+const SUPPLIER_TRANSACTIONS_COLLECTION = 'supplier_transactions';
 const USERS_COLLECTION = 'users';
 const CASH_DRAWER_COLLECTION = 'cash_drawer';
 const DAY_CLOSINGS_COLLECTION = 'day_closings';
@@ -538,6 +542,143 @@ export const deleteKhataTransactionDoc = async (
 };
 
 // =========================================================================
+// 3B. SUPPLIER / MILL KHATA CRUD + REAL-TIME LISTENERS
+// =========================================================================
+
+export const subscribeToSuppliers = (callback: (suppliers: Supplier[]) => void) => {
+  const colRef = collection(db, SUPPLIERS_COLLECTION);
+  return onSnapshot(
+    colRef,
+    (snapshot) => {
+      const suppliers: Supplier[] = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Omit<Supplier, 'id'>)
+      }));
+      callback(suppliers);
+    },
+    (err) => {
+      console.error('Error in subscribeToSuppliers:', err);
+    }
+  );
+};
+
+export const subscribeToSupplierTransactions = (callback: (txs: SupplierTransaction[]) => void) => {
+  const colRef = collection(db, SUPPLIER_TRANSACTIONS_COLLECTION);
+  return onSnapshot(
+    colRef,
+    (snapshot) => {
+      const txs: SupplierTransaction[] = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Omit<SupplierTransaction, 'id'>)
+      }));
+      callback(txs);
+    },
+    (err) => {
+      console.error('Error in subscribeToSupplierTransactions:', err);
+    }
+  );
+};
+
+export const addSupplierDoc = async (supplier: Supplier): Promise<void> => {
+  const docRef = doc(db, SUPPLIERS_COLLECTION, supplier.id);
+  await setDoc(docRef, {
+    ...supplier,
+    createdAt: supplier.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  });
+};
+
+export const updateSupplierDoc = async (
+  id: string,
+  updates: Partial<Supplier>
+): Promise<void> => {
+  const docRef = doc(db, SUPPLIERS_COLLECTION, id);
+  await updateDoc(docRef, {
+    ...updates,
+    updatedAt: new Date().toISOString()
+  });
+};
+
+export const deleteSupplierDoc = async (id: string): Promise<void> => {
+  await deleteDoc(doc(db, SUPPLIERS_COLLECTION, id));
+  try {
+    const txCol = collection(db, SUPPLIER_TRANSACTIONS_COLLECTION);
+    const snap = await getDocs(txCol);
+    for (const d of snap.docs) {
+      if (d.data().supplierId === id) {
+        await deleteDoc(d.ref);
+      }
+    }
+  } catch (err) {
+    console.error('Error deleting supplier transactions on cleanup:', err);
+  }
+};
+
+export const addSupplierTransactionDoc = async (tx: SupplierTransaction): Promise<void> => {
+  const docRef = doc(db, SUPPLIER_TRANSACTIONS_COLLECTION, tx.id);
+  await setDoc(docRef, {
+    ...tx,
+    createdAt: new Date().toISOString()
+  });
+
+  // If this is an OPENING_BALANCE transaction, the supplier's totalPurchases
+  // and currentBalance were already initialized when the supplier account was created.
+  // We only persist the ledger record and must NOT double-add to totalPurchases!
+  if (tx.type === 'OPENING_BALANCE') {
+    return;
+  }
+
+  const suppRef = doc(db, SUPPLIERS_COLLECTION, tx.supplierId);
+  const suppSnap = await getDoc(suppRef);
+  if (suppSnap.exists()) {
+    const supp = suppSnap.data() as Supplier;
+    const newTotalPurchases = (supp.totalPurchases || 0) + (tx.billAmount || 0);
+    const newTotalPaid = (supp.totalPaid || 0) + (tx.paidAmount || 0);
+    const newBalance = Math.max(0, newTotalPurchases - newTotalPaid);
+
+    await updateDoc(suppRef, {
+      totalPurchases: newTotalPurchases,
+      totalPaid: newTotalPaid,
+      currentBalance: newBalance,
+      status: newBalance <= 0 ? 'SETTLED' : 'ACTIVE',
+      lastTransactionDate: tx.dateStr,
+      updatedAt: new Date().toISOString()
+    });
+  }
+};
+
+export const deleteSupplierTransactionDoc = async (
+  txId: string,
+  supplierId: string,
+  billAmount: number,
+  paidAmount: number,
+  type: string
+): Promise<void> => {
+  await deleteDoc(doc(db, SUPPLIER_TRANSACTIONS_COLLECTION, txId));
+
+  const suppRef = doc(db, SUPPLIERS_COLLECTION, supplierId);
+  const suppSnap = await getDoc(suppRef);
+  if (suppSnap.exists()) {
+    const supp = suppSnap.data() as Supplier;
+    const newPurchases = (type === 'PURCHASE' || type === 'OPENING_BALANCE')
+      ? Math.max(0, (supp.totalPurchases || 0) - billAmount)
+      : (supp.totalPurchases || 0);
+    const newPaid = type === 'PAYMENT'
+      ? Math.max(0, (supp.totalPaid || 0) - paidAmount)
+      : (supp.totalPaid || 0);
+    const newBalance = Math.max(0, newPurchases - newPaid);
+
+    await updateDoc(suppRef, {
+      totalPurchases: newPurchases,
+      totalPaid: newPaid,
+      currentBalance: newBalance,
+      status: newBalance <= 0 ? 'SETTLED' : 'ACTIVE',
+      updatedAt: new Date().toISOString()
+    });
+  }
+};
+
+// =========================================================================
 // 4. USERS CRUD & AUTHENTICATION
 // =========================================================================
 
@@ -721,10 +862,51 @@ export const clearMockDataIfPresent = async (): Promise<void> => {
     try { await deleteDoc(doc(db, PRODUCTS_COLLECTION, id)); } catch (_) {}
   }
 
-  const mockCustIds = ['cust-1', 'cust-2', 'cust-3', 'cust-4', 'cust-5', 'cust-6'];
+  const mockCustIds = [
+    'cust-1', 'cust-2', 'cust-3', 'cust-4', 'cust-5', 'cust-6',
+    'khata-cust-01', 'khata-cust-02', 'khata-cust-03', 'khata-cust-04'
+  ];
   for (const id of mockCustIds) {
     try { await deleteDoc(doc(db, KHATA_CUSTOMERS_COLLECTION, id)); } catch (_) {}
   }
+
+  const mockTxIds = ['tx-001', 'tx-002', 'tx-003', 'tx-004', 'tx-005', 'tx-006'];
+  for (const id of mockTxIds) {
+    try { await deleteDoc(doc(db, KHATA_TRANSACTIONS_COLLECTION, id)); } catch (_) {}
+  }
+
+  const mockSuppIds = ['supp-001', 'supp-002', 'supp-003', 'supp-004'];
+  for (const id of mockSuppIds) {
+    try { await deleteDoc(doc(db, SUPPLIERS_COLLECTION, id)); } catch (_) {}
+  }
+
+  const mockSuppTxIds = [
+    'stx-101', 'stx-102', 'stx-103', 'stx-104',
+    'stx-201', 'stx-202',
+    'stx-301', 'stx-302',
+    'stx-401', 'stx-402'
+  ];
+  for (const id of mockSuppTxIds) {
+    try { await deleteDoc(doc(db, SUPPLIER_TRANSACTIONS_COLLECTION, id)); } catch (_) {}
+  }
+
+  // Also query suppliers collection to purge any doc with legacy mock name if created
+  try {
+    const suppCol = collection(db, SUPPLIERS_COLLECTION);
+    const snap = await getDocs(suppCol);
+    for (const d of snap.docs) {
+      const name = (d.data().name || '').toLowerCase();
+      if (
+        d.id.startsWith('supp-00') ||
+        name.includes('al-rehman') ||
+        name.includes('hafizabad modern') ||
+        name.includes('madina rice processing') ||
+        name.includes('mandi bahauddin basmati hub')
+      ) {
+        await deleteDoc(d.ref);
+      }
+    }
+  } catch (_) {}
 
   const mockUserIds = ['usr-1', 'usr-2', 'usr-3', 'usr-4'];
   for (const id of mockUserIds) {

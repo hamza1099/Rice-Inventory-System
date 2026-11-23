@@ -371,18 +371,41 @@ export const StockInwardModal: React.FC<StockInwardModalProps> = ({
 
                   <div>
                     <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      {isUr ? 'پیکنگ وزن:' : 'Bag Standard Weight:'}
+                      {isUr ? 'پیکنگ وزن (KG یا کسٹم):' : 'Bag / Pack Weight (KG):'}
                     </label>
-                    <select
-                      value={weightPerBag}
-                      onChange={(e) => setWeightPerBag(parseInt(e.target.value))}
-                      className="w-full text-xs font-bold px-2 py-2 border border-slate-300 rounded bg-white"
-                    >
-                      <option value={25}>{isUr ? '25 کلو (پی پی بیگ)' : '25 KG (Poly Woven Bag)'}</option>
-                      <option value={50}>{isUr ? '50 کلو (معیاری جوٹ بوری)' : '50 KG (Standard Jute Bori)'}</option>
-                      <option value={40}>{isUr ? '40 کلو (1 من پکا)' : '40 KG (1 Maan Pakka)'}</option>
-                      <option value={100}>{isUr ? '100 کلو (کٹا)' : '100 KG (Katta)'}</option>
-                    </select>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        step="any"
+                        min="0.001"
+                        value={weightPerBag === 0 ? '' : weightPerBag}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
+                          setWeightPerBag(val);
+                          if (val > 0) {
+                            if (costMode === 'bag') {
+                              setInwardCostPerKg(Math.round((inwardCostPerBag / val) * 100) / 100);
+                            } else {
+                              setInwardCostPerBag(Math.round(inwardCostPerKg * val));
+                            }
+                          }
+                        }}
+                        list="inward-wt-presets"
+                        placeholder="25, 0.5, 5..."
+                        className="w-full text-xs font-bold px-2 py-2 border border-slate-300 rounded bg-white text-center focus:ring-2 focus:ring-emerald-700 focus:outline-none"
+                      />
+                      <datalist id="inward-wt-presets">
+                        <option value="25">25 KG (Poly Woven)</option>
+                        <option value="50">50 KG (Standard Jute)</option>
+                        <option value="40">40 KG (1 Maan)</option>
+                        <option value="100">100 KG (Katta)</option>
+                        <option value="10">10 KG</option>
+                        <option value="5">5 KG</option>
+                        <option value="1">1 KG</option>
+                        <option value="0.5">0.500 KG (500g)</option>
+                        <option value="0.25">0.250 KG (250g)</option>
+                      </datalist>
+                    </div>
                   </div>
                 </div>
               )}

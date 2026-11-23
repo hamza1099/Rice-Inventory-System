@@ -9,7 +9,10 @@ import type {
   ImagePreviewData,
   KhataCustomer,
   KhataTransaction,
-  KhataItemEntry
+  KhataItemEntry,
+  Supplier,
+  SupplierTransaction,
+  SupplierItemEntry
 } from '../types';
 import type { TerminalUser } from '../components/users/AddUserModal';
 import { INITIAL_DENOMINATIONS } from '../data/mockData';
@@ -25,6 +28,8 @@ import {
   subscribeToMemos,
   subscribeToKhataCustomers,
   subscribeToKhataTransactions,
+  subscribeToSuppliers,
+  subscribeToSupplierTransactions,
   subscribeToCashDrawer,
   addInventoryItemDoc,
   updateInventoryItemDoc,
@@ -38,6 +43,11 @@ import {
   deleteKhataCustomerDoc,
   addKhataTransactionDoc,
   deleteKhataTransactionDoc,
+  addSupplierDoc,
+  updateSupplierDoc,
+  deleteSupplierDoc,
+  addSupplierTransactionDoc,
+  deleteSupplierTransactionDoc,
   saveCashDrawerOpeningDoc,
   closeCashDrawerDoc,
   saveDayClosingDoc,
@@ -177,6 +187,47 @@ interface PosContextType {
     referenceNo?: string
   ) => void;
   deleteKhataTransaction: (txId: string) => void;
+
+  // ==================== SUPPLIER / MILL KHATA BOOK ====================
+  suppliers: Supplier[];
+  isSuppliersLoading: boolean;
+  supplierTransactions: SupplierTransaction[];
+  selectedSupplierId: string | null;
+  setSelectedSupplierId: (id: string | null) => void;
+  addSupplier: (data: {
+    name: string;
+    urduName?: string;
+    contactPerson?: string;
+    phone: string;
+    city: string;
+    address?: string;
+    openingBalance?: number;
+    notes?: string;
+  }) => Supplier;
+  updateSupplier: (id: string, updated: Partial<Supplier>) => void;
+  deleteSupplier: (id: string) => void;
+  addSupplierPurchase: (
+    supplierId: string,
+    data: {
+      billAmount: number;
+      description: string;
+      items?: SupplierItemEntry[];
+      vehicleNo?: string;
+      biltyNo?: string;
+      notes?: string;
+      updateInventoryStock?: boolean;
+    }
+  ) => void;
+  addSupplierPayment: (
+    supplierId: string,
+    data: {
+      paidAmount: number;
+      paymentMode: 'CASH' | 'RAAST' | 'BANK' | 'CHEQUE';
+      referenceNo?: string;
+      notes?: string;
+    }
+  ) => void;
+  deleteSupplierTransaction: (txId: string) => void;
 
   // Language Toggle (English / Urdu)
   language: 'en' | 'ur';
@@ -419,6 +470,54 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [khataTransactions, setKhataTransactions] = useState<KhataTransaction[]>([]);
   const [selectedKhataCustomerId, setSelectedKhataCustomerId] = useState<string | null>(null);
 
+  // ==================== SUPPLIER / MILL KHATA BOOK ====================
+  const [suppliers, setSuppliers] = useState<Supplier[]>(() => {
+    try {
+      const cached = localStorage.getItem('ricecms_cached_suppliers');
+      if (cached) {
+        const parsed: Supplier[] = JSON.parse(cached);
+        return parsed.filter(
+          (s) =>
+            !s.id.startsWith('supp-00') &&
+            !s.name.toLowerCase().includes('al-rehman') &&
+            !s.name.toLowerCase().includes('hafizabad') &&
+            !s.name.toLowerCase().includes('madina rice') &&
+            !s.name.toLowerCase().includes('mandi bahauddin')
+        );
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  });
+  const [isSuppliersLoading, setIsSuppliersLoading] = useState<boolean>(() => {
+    try {
+      const cached = localStorage.getItem('ricecms_cached_suppliers');
+      return !cached || JSON.parse(cached).length === 0;
+    } catch {
+      return true;
+    }
+  });
+  const [supplierTransactions, setSupplierTransactions] = useState<SupplierTransaction[]>(() => {
+    try {
+      const cached = localStorage.getItem('ricecms_cached_supplier_txs');
+      if (cached) {
+        const parsed: SupplierTransaction[] = JSON.parse(cached);
+        return parsed.filter(
+          (t) =>
+            !t.id.startsWith('stx-1') &&
+            !t.id.startsWith('stx-2') &&
+            !t.id.startsWith('stx-3') &&
+            !t.id.startsWith('stx-4')
+        );
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  });
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
+
   const logout = async () => {
     try {
       localStorage.removeItem('ricecms_auth_active');
@@ -434,6 +533,25 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Synchronize Firebase Auth & Firestore in real time
   useEffect(() => {
+    // Purge any cached mock data from localStorage immediately on startup
+    try {
+      const cachedSupps = localStorage.getItem('ricecms_cached_suppliers');
+      if (
+        cachedSupps &&
+        (cachedSupps.includes('Al-Rehman') ||
+          cachedSupps.includes('supp-001') ||
+          cachedSupps.includes('Hafizabad') ||
+          cachedSupps.includes('Madina Rice'))
+      ) {
+        localStorage.removeItem('ricecms_cached_suppliers');
+        localStorage.removeItem('ricecms_cached_supplier_txs');
+      }
+      const cachedCusts = localStorage.getItem('ricecms_cached_khata_customers');
+      if (cachedCusts && (cachedCusts.includes('khata-cust-01') || cachedCusts.includes('Haji Rasheed'))) {
+        localStorage.removeItem('ricecms_cached_khata_customers');
+      }
+    } catch (_) {}
+
     // Clean any legacy mock data from Firestore
     clearMockDataIfPresent().catch((err) => {
       console.warn('Mock cleanup notice:', err);
@@ -531,6 +649,41 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setKhataTransactions(txs || []);
     });
 
+    const unsubSupps = subscribeToSuppliers((supps) => {
+      const cleaned = (supps || []).filter(
+        (s) =>
+          !s.id.startsWith('supp-00') &&
+          !s.name.toLowerCase().includes('al-rehman') &&
+          !s.name.toLowerCase().includes('hafizabad') &&
+          !s.name.toLowerCase().includes('madina rice') &&
+          !s.name.toLowerCase().includes('mandi bahauddin')
+      );
+      setSuppliers(cleaned);
+      setIsSuppliersLoading(false);
+      try {
+        localStorage.setItem('ricecms_cached_suppliers', JSON.stringify(cleaned));
+      } catch (_) {}
+      if (cleaned.length > 0) {
+        setSelectedSupplierId((prev) => (prev && cleaned.some((s) => s.id === prev) ? prev : cleaned[0].id));
+      } else {
+        setSelectedSupplierId(null);
+      }
+    });
+
+    const unsubSuppTxs = subscribeToSupplierTransactions((txs) => {
+      const cleaned = (txs || []).filter(
+        (t) =>
+          !t.id.startsWith('stx-1') &&
+          !t.id.startsWith('stx-2') &&
+          !t.id.startsWith('stx-3') &&
+          !t.id.startsWith('stx-4')
+      );
+      setSupplierTransactions(cleaned);
+      try {
+        localStorage.setItem('ricecms_cached_supplier_txs', JSON.stringify(cleaned));
+      } catch (_) {}
+    });
+
     const unsubDrawer = subscribeToCashDrawer((d) => {
       if (d) {
         const todayPkt = getPakistanDateIso();
@@ -605,6 +758,8 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       unsubMemos();
       unsubCusts();
       unsubTxs();
+      unsubSupps();
+      unsubSuppTxs();
       unsubDrawer();
     };
   }, []);
@@ -812,6 +967,278 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
 
     deleteKhataTransactionDoc(tx.id, tx.customerId, tx.debit || 0, tx.credit || 0, tx.type).catch(console.error);
+  };
+
+  // ==================== SUPPLIER / MILL KHATA ACTIONS ====================
+  const addSupplier = (data: {
+    name: string;
+    urduName?: string;
+    contactPerson?: string;
+    phone: string;
+    city: string;
+    address?: string;
+    openingBalance?: number;
+    notes?: string;
+  }) => {
+    const openingBal = data.openingBalance || 0;
+    const newSupp: Supplier = {
+      id: `supp-${Date.now()}`,
+      name: data.name.trim(),
+      urduName: data.urduName?.trim() || undefined,
+      contactPerson: data.contactPerson?.trim() || undefined,
+      phone: data.phone.trim(),
+      city: data.city.trim(),
+      address: data.address?.trim() || undefined,
+      totalPurchases: openingBal,
+      totalPaid: 0,
+      currentBalance: openingBal,
+      status: openingBal > 0 ? 'ACTIVE' : 'SETTLED',
+      createdAt: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      lastTransactionDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      notes: data.notes?.trim() || ''
+    };
+
+    setSuppliers((prev) => {
+      const next = [newSupp, ...prev];
+      try { localStorage.setItem('ricecms_cached_suppliers', JSON.stringify(next)); } catch (_) {}
+      return next;
+    });
+    setSelectedSupplierId(newSupp.id);
+
+    addSupplierDoc(newSupp).catch(console.error);
+
+    if (openingBal > 0) {
+      const now = new Date();
+      const openTx: SupplierTransaction = {
+        id: `stx-${Date.now()}`,
+        supplierId: newSupp.id,
+        dateStr: now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        timeStr: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} PKT`,
+        timestamp: Date.now(),
+        type: 'OPENING_BALANCE',
+        description: 'سابقہ پرانا کھاتہ (Opening Balance Payable)',
+        billAmount: openingBal,
+        paidAmount: 0,
+        balanceAfter: openingBal,
+        notes: 'Initial balance recorded at supplier account opening'
+      };
+      setSupplierTransactions((prev) => {
+        const next = [openTx, ...prev];
+        try { localStorage.setItem('ricecms_cached_supplier_txs', JSON.stringify(next)); } catch (_) {}
+        return next;
+      });
+      addSupplierTransactionDoc(openTx).catch(console.error);
+    }
+
+    return newSupp;
+  };
+
+  const updateSupplier = (id: string, updated: Partial<Supplier>) => {
+    setSuppliers((prev) => {
+      const next = prev.map((s) => (s.id === id ? { ...s, ...updated } : s));
+      try { localStorage.setItem('ricecms_cached_suppliers', JSON.stringify(next)); } catch (_) {}
+      return next;
+    });
+    updateSupplierDoc(id, updated).catch(console.error);
+  };
+
+  const deleteSupplier = (id: string) => {
+    setSuppliers((prev) => {
+      const next = prev.filter((s) => s.id !== id);
+      try { localStorage.setItem('ricecms_cached_suppliers', JSON.stringify(next)); } catch (_) {}
+      return next;
+    });
+    setSupplierTransactions((prev) => {
+      const next = prev.filter((tx) => tx.supplierId !== id);
+      try { localStorage.setItem('ricecms_cached_supplier_txs', JSON.stringify(next)); } catch (_) {}
+      return next;
+    });
+    if (selectedSupplierId === id) {
+      const remaining = suppliers.filter((s) => s.id !== id);
+      setSelectedSupplierId(remaining[0]?.id || null);
+    }
+    deleteSupplierDoc(id).catch(console.error);
+  };
+
+  const addSupplierPurchase = (
+    supplierId: string,
+    data: {
+      billAmount: number;
+      description: string;
+      items?: SupplierItemEntry[];
+      vehicleNo?: string;
+      biltyNo?: string;
+      notes?: string;
+      updateInventoryStock?: boolean;
+    }
+  ) => {
+    const supp = suppliers.find((s) => s.id === supplierId);
+    if (!supp) return;
+
+    const newBalance = supp.currentBalance + data.billAmount;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} PKT`;
+
+    const newTx: SupplierTransaction = {
+      id: `stx-${Date.now()}`,
+      supplierId,
+      dateStr,
+      timeStr,
+      timestamp: Date.now(),
+      type: 'PURCHASE',
+      description: data.description,
+      items: data.items,
+      vehicleNo: data.vehicleNo?.trim() || undefined,
+      biltyNo: data.biltyNo?.trim() || undefined,
+      billAmount: data.billAmount,
+      paidAmount: 0,
+      balanceAfter: newBalance,
+      notes: data.notes
+    };
+
+    setSupplierTransactions((prev) => {
+      const next = [newTx, ...prev];
+      try { localStorage.setItem('ricecms_cached_supplier_txs', JSON.stringify(next)); } catch (_) {}
+      return next;
+    });
+
+    setSuppliers((prev) => {
+      const next = prev.map((s) => {
+        if (s.id === supplierId) {
+          return {
+            ...s,
+            totalPurchases: s.totalPurchases + data.billAmount,
+            currentBalance: newBalance,
+            status: (newBalance > 0 ? 'ACTIVE' : 'SETTLED') as 'ACTIVE' | 'SETTLED',
+            lastTransactionDate: dateStr
+          };
+        }
+        return s;
+      });
+      try { localStorage.setItem('ricecms_cached_suppliers', JSON.stringify(next)); } catch (_) {}
+      return next;
+    });
+
+    addSupplierTransactionDoc(newTx).catch(console.error);
+
+    // If auto-update stock is selected
+    if (data.updateInventoryStock && data.items && data.items.length > 0) {
+      data.items.forEach((it) => {
+        const matchedItem = inventory.find(
+          (inv) =>
+            inv.varietyName.toLowerCase().includes(it.productName.toLowerCase()) ||
+            it.productName.toLowerCase().includes(inv.varietyName.toLowerCase())
+        );
+        if (matchedItem) {
+          addStockInward(
+            matchedItem.id,
+            it.totalKg,
+            it.bags,
+            it.ratePerKg || (it.ratePerBag ? Math.round(it.ratePerBag / it.weightPerBag) : matchedItem.costPerKg)
+          );
+        }
+      });
+    }
+  };
+
+  const addSupplierPayment = (
+    supplierId: string,
+    data: {
+      paidAmount: number;
+      paymentMode: 'CASH' | 'RAAST' | 'BANK' | 'CHEQUE';
+      referenceNo?: string;
+      notes?: string;
+    }
+  ) => {
+    const supp = suppliers.find((s) => s.id === supplierId);
+    if (!supp) return;
+
+    const newBalance = Math.max(0, supp.currentBalance - data.paidAmount);
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} PKT`;
+
+    const newTx: SupplierTransaction = {
+      id: `stx-${Date.now()}`,
+      supplierId,
+      dateStr,
+      timeStr,
+      timestamp: Date.now(),
+      type: 'PAYMENT',
+      description:
+        language === 'ur'
+          ? `ادائیگی بذریعہ (${data.paymentMode}): PKR ${data.paidAmount.toLocaleString()} ادا کی گئی`
+          : `Payment via (${data.paymentMode}): PKR ${data.paidAmount.toLocaleString()} paid`,
+      billAmount: 0,
+      paidAmount: data.paidAmount,
+      balanceAfter: newBalance,
+      paymentMode: data.paymentMode,
+      referenceNo: data.referenceNo,
+      notes: data.notes
+    };
+
+    setSupplierTransactions((prev) => {
+      const next = [newTx, ...prev];
+      try { localStorage.setItem('ricecms_cached_supplier_txs', JSON.stringify(next)); } catch (_) {}
+      return next;
+    });
+
+    setSuppliers((prev) => {
+      const next = prev.map((s) => {
+        if (s.id === supplierId) {
+          return {
+            ...s,
+            totalPaid: s.totalPaid + data.paidAmount,
+            currentBalance: newBalance,
+            status: (newBalance <= 0 ? 'SETTLED' : 'ACTIVE') as 'ACTIVE' | 'SETTLED',
+            lastTransactionDate: dateStr
+          };
+        }
+        return s;
+      });
+      try { localStorage.setItem('ricecms_cached_suppliers', JSON.stringify(next)); } catch (_) {}
+      return next;
+    });
+
+    addSupplierTransactionDoc(newTx).catch(console.error);
+  };
+
+  const deleteSupplierTransaction = (txId: string) => {
+    const tx = supplierTransactions.find((t) => t.id === txId);
+    if (!tx) return;
+
+    setSupplierTransactions((prev) => {
+      const next = prev.filter((t) => t.id !== txId);
+      try { localStorage.setItem('ricecms_cached_supplier_txs', JSON.stringify(next)); } catch (_) {}
+      return next;
+    });
+
+    setSuppliers((prev) => {
+      const next = prev.map((s) => {
+        if (s.id === tx.supplierId) {
+          const newPurchases = (tx.type === 'PURCHASE' || tx.type === 'OPENING_BALANCE')
+            ? Math.max(0, s.totalPurchases - tx.billAmount)
+            : s.totalPurchases;
+          const newPaid = tx.type === 'PAYMENT'
+            ? Math.max(0, s.totalPaid - tx.paidAmount)
+            : s.totalPaid;
+          const newBalance = Math.max(0, newPurchases - newPaid);
+          return {
+            ...s,
+            totalPurchases: newPurchases,
+            totalPaid: newPaid,
+            currentBalance: newBalance,
+            status: (newBalance <= 0 ? 'SETTLED' : 'ACTIVE') as 'ACTIVE' | 'SETTLED'
+          };
+        }
+        return s;
+      });
+      try { localStorage.setItem('ricecms_cached_suppliers', JSON.stringify(next)); } catch (_) {}
+      return next;
+    });
+
+    deleteSupplierTransactionDoc(tx.id, tx.supplierId, tx.billAmount || 0, tx.paidAmount || 0, tx.type).catch(console.error);
   };
 
   const addToCart = (newItem: CartItem) => {
@@ -1513,6 +1940,17 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addKhataPurchase,
         addKhataPayment,
         deleteKhataTransaction,
+        suppliers,
+        isSuppliersLoading,
+        supplierTransactions,
+        selectedSupplierId,
+        setSelectedSupplierId,
+        addSupplier,
+        updateSupplier,
+        deleteSupplier,
+        addSupplierPurchase,
+        addSupplierPayment,
+        deleteSupplierTransaction,
         language,
         setLanguage
       }}

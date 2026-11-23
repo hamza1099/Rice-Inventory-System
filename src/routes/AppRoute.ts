@@ -6,6 +6,7 @@ import { DailyMemoScreen } from "../screens/DailyMemoScreen";
 import { StockInventoryScreen } from "../screens/StockInventoryScreen";
 import { DayEndClosingScreen } from "../screens/DayEndClosingScreen";
 import { CustomerKhataScreen } from "../screens/CustomerKhataScreen";
+import { SupplierKhataScreen } from "../screens/SupplierKhataScreen";
 import { UserManagementScreen } from "../screens/UserManagementScreen";
 import { SystemSettingsScreen } from "../screens/SystemSettingsScreen";
 
@@ -38,6 +39,10 @@ export const AppRoute: RouteConfig[] = [
   {
     path: RouteName.KHATA,
     element: CustomerKhataScreen,
+  },
+  {
+    path: RouteName.SUPPLIER_KHATA,
+    element: SupplierKhataScreen,
   },
   {
     path: RouteName.USER_MANAGEMENT,
