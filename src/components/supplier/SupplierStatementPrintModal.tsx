@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { X, Printer, Download, Phone, MapPin, Truck, Building2, Share2, Loader2 } from 'lucide-react';
-import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import type { Supplier, SupplierTransaction } from '../../types';
 import { usePos } from '../../context/PosContext';
@@ -389,26 +388,7 @@ export const SupplierStatementPrintModal: React.FC<SupplierStatementPrintModalPr
     setIsExportingPdf(true);
 
     try {
-      let canvas: HTMLCanvasElement | null = null;
-      const element = document.getElementById('supplier-printable-statement');
-
-      if (element) {
-        try {
-          canvas = await html2canvas(element, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#ffffff',
-            logging: false
-          });
-        } catch (e) {
-          console.warn('html2canvas failed, using native canvas fallback', e);
-        }
-      }
-
-      if (!canvas) {
-        canvas = drawStatementOnCanvas(supplier, sortedTxns, currentDateStr, currentTimeStr);
-      }
-
+      const canvas = drawStatementOnCanvas(supplier, sortedTxns, currentDateStr, currentTimeStr);
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF({
         orientation: 'portrait',
