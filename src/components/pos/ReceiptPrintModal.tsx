@@ -165,7 +165,12 @@ export const ReceiptPrintModal: React.FC = () => {
                         <span className="text-[9px] text-slate-500 font-sans">{item.product.urduName}</span>
                       </td>
                       <td className="py-1 text-right font-medium">
-                        {item.netWeight < 1 && item.netWeight > 0 ? parseFloat(item.netWeight.toFixed(3)) : item.netWeight.toFixed(2)} kg
+                        {item.netWeight < 0.05 && item.netWeight > 0
+                          ? parseFloat(item.netWeight.toFixed(4))
+                          : item.netWeight < 1 && item.netWeight > 0
+                          ? parseFloat(item.netWeight.toFixed(3))
+                          : item.netWeight.toFixed(2)}{' '}
+                        kg
                       </td>
                       <td className="py-1 text-right font-medium">{item.ratePerKg}</td>
                       <td className="py-1 text-right font-bold">{Math.round(item.subtotal)}</td>

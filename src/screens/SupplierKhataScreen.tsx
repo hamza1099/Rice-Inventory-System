@@ -48,6 +48,7 @@ export const SupplierKhataScreen: React.FC = () => {
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'PENDING' | 'SETTLED'>('ALL');
+  const [mobileSupplierView, setMobileSupplierView] = useState<'list' | 'detail'>('list');
 
   // Modals state
   const [isAddSupplierOpen, setIsAddSupplierOpen] = useState<boolean>(false);
@@ -125,8 +126,8 @@ export const SupplierKhataScreen: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col h-full bg-slate-100 overflow-hidden text-xs">
       {/* Top 4 Stat Cards */}
-      <div className="bg-white border-b border-slate-200 px-6 py-3.5 shadow-2xs">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="bg-white border-b border-slate-200 px-3 sm:px-6 py-2.5 sm:py-3.5 shadow-2xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           <StatCard
             title={isUr ? 'کل چاول ملز و سپلائرز' : 'TOTAL MILLS & VENDORS'}
             value={suppliers.length.toString()}
@@ -168,7 +169,9 @@ export const SupplierKhataScreen: React.FC = () => {
       {/* Main Workspace Split Layout */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Column: Suppliers Directory */}
-        <div className="w-80 md:w-96 bg-white border-r border-slate-200 flex flex-col h-full shrink-0">
+        <div className={`w-full lg:w-80 md:lg:w-96 bg-white lg:border-r border-slate-200 flex flex-col h-full shrink-0 ${
+          mobileSupplierView === 'detail' ? 'hidden lg:flex' : 'flex'
+        }`}>
           {/* Header & Add Button */}
           <div className="p-3.5 border-b border-slate-200 space-y-2.5">
             <div className="flex items-center justify-between">
@@ -253,7 +256,10 @@ export const SupplierKhataScreen: React.FC = () => {
                 return (
                   <div
                     key={supp.id}
-                    onClick={() => setSelectedSupplierId(supp.id)}
+                    onClick={() => {
+                      setSelectedSupplierId(supp.id);
+                      setMobileSupplierView('detail');
+                    }}
                     className={`p-3 rounded-xl border transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-emerald-50/80 border-emerald-600 shadow-xs ring-1 ring-emerald-600'
@@ -304,11 +310,25 @@ export const SupplierKhataScreen: React.FC = () => {
         </div>
 
         {/* Right Column: Selected Supplier Details & Full Ledger */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50">
+        <div className={`flex-1 flex flex-col h-full overflow-hidden bg-slate-50 ${
+          mobileSupplierView === 'list' ? 'hidden lg:flex' : 'flex'
+        }`}>
           {selectedSupplier ? (
             <>
               {/* Top Banner of Selected Supplier */}
-              <div className="bg-white border-b border-slate-200 p-4 shadow-2xs">
+              <div className="bg-white border-b border-slate-200 p-3 sm:p-4 shadow-2xs">
+                {/* Mobile Back Button to return to list */}
+                <div className="lg:hidden mb-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setMobileSupplierView('list')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs cursor-pointer transition-colors"
+                  >
+                    <span>←</span>
+                    <span>{isUr ? 'ملوں کی لسٹ پر واپس جائیں' : 'Back to Mills List'}</span>
+                  </button>
+                </div>
+
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">

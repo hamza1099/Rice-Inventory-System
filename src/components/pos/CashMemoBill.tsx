@@ -543,7 +543,13 @@ export const CashMemoBill: React.FC = () => {
                             type="number"
                             min="0.001"
                             step="any"
-                            value={item.netWeight < 1 && item.netWeight > 0 ? parseFloat(item.netWeight.toFixed(3)) : parseFloat(item.netWeight.toFixed(2))}
+                            value={
+                              item.netWeight < 0.05 && item.netWeight > 0
+                                ? parseFloat(item.netWeight.toFixed(4))
+                                : item.netWeight < 1 && item.netWeight > 0
+                                ? parseFloat(item.netWeight.toFixed(3))
+                                : parseFloat(item.netWeight.toFixed(2))
+                            }
                             onChange={(e) => {
                               const val = parseFloat(e.target.value);
                               if (!isNaN(val) && val > 0) {

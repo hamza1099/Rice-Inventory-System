@@ -113,7 +113,8 @@ export const UserManagementScreen: React.FC = () => {
             </p>
           </div>
         ) : (
-          <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
             <thead className="bg-slate-100 text-slate-600 text-[10px] font-bold uppercase border-b border-slate-200">
               <tr>
                 <th className="py-2.5 px-4">{isUr ? 'صارف کا نام' : 'USER NAME'}</th>
@@ -220,7 +221,8 @@ export const UserManagementScreen: React.FC = () => {
               ))}
             </tbody>
           </table>
-        )}
+        </div>
+      )}
       </div>
 
       {/* Add User Modal */}

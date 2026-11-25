@@ -64,7 +64,7 @@ export const DayEndClosingScreen: React.FC = () => {
         </div>
 
         {/* Status Badges */}
-        <div className="flex items-center space-x-2 font-mono-num">
+        <div className="flex flex-wrap items-center gap-2 font-mono-num">
           <div className="bg-slate-50 border border-slate-200 px-3 py-1 rounded text-right">
             <span className="text-[9px] uppercase font-bold text-slate-400 block font-sans">
               {isUr ? 'آج کی کل سیلز:' : 'GROSS BUSINESS TODAY:'}
@@ -114,14 +114,14 @@ export const DayEndClosingScreen: React.FC = () => {
       )}
 
       {/* Main 2-Column Grid: System Sales & Physical Denomination Calculator */}
-      <div className="grid grid-cols-12 gap-3 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
         {/* Left Column: System Expected Cash */}
-        <div className="col-span-5">
+        <div className="col-span-1 lg:col-span-5">
           <SystemSalesSummary />
         </div>
 
         {/* Right Column: Physical Cash Counting */}
-        <div className="col-span-7">
+        <div className="col-span-1 lg:col-span-7">
           <DenominationCalculator />
         </div>
       </div>

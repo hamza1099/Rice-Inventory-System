@@ -165,7 +165,7 @@ export const StockInventoryScreen: React.FC = () => {
     <div className="h-full flex flex-col space-y-2 overflow-hidden min-h-0">
       {/* Top Banner & Quick Inward Action */}
       <div className="shrink-0 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-xs flex items-center justify-between text-xs flex-wrap gap-2">
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <button
             onClick={() => {
               setInwardItem(null); // Clean state: prompt user to select variety
@@ -194,7 +194,7 @@ export const StockInventoryScreen: React.FC = () => {
       </div>
 
       {/* 3 Stat Cards (Compact Mode for maximum table visibility) */}
-      <div className="shrink-0 grid grid-cols-3 gap-2">
+      <div className="shrink-0 grid grid-cols-1 sm:grid-cols-3 gap-2">
         <StatCard
           compact
           isLoading={isInitialLoading}

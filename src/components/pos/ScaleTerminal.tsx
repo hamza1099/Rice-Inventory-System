@@ -50,7 +50,7 @@ export const ScaleTerminal: React.FC = () => {
       return;
     }
 
-    const subtotal = netKg * prod.ratePerKg;
+    const subtotal = Math.round(netKg * prod.ratePerKg);
     const invMatch = inventory.find(
       (i) =>
         i.id === prod.id ||

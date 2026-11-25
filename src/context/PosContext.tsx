@@ -232,6 +232,10 @@ interface PosContextType {
   // Language Toggle (English / Urdu)
   language: 'en' | 'ur';
   setLanguage: (lang: 'en' | 'ur') => void;
+
+  // Mobile Navigation Drawer
+  isMobileSidebarOpen: boolean;
+  setIsMobileSidebarOpen: (open: boolean) => void;
 }
 
 const PosContext = createContext<PosContextType | undefined>(undefined);
@@ -449,6 +453,9 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setLanguageState(lang);
     localStorage.setItem('ricecms_lang', lang);
   };
+
+  // Mobile Navigation Drawer State
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
 
   // ==================== KHATA / UDHAR CUSTOMER BOOK ====================
   const [khataCustomers, setKhataCustomers] = useState<KhataCustomer[]>(() => {
@@ -1952,7 +1959,9 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addSupplierPayment,
         deleteSupplierTransaction,
         language,
-        setLanguage
+        setLanguage,
+        isMobileSidebarOpen,
+        setIsMobileSidebarOpen
       }}
     >
       {children}

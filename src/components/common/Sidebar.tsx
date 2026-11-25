@@ -8,14 +8,15 @@ import {
   Users,
   Settings,
   BookOpen,
-  Truck
+  Truck,
+  X
 } from 'lucide-react';
 import { RouteName } from '../../routes/RouteName';
 import { usePos } from '../../context/PosContext';
 
 export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
-  const { language, userProfile } = usePos();
+  const { language, userProfile, isMobileSidebarOpen, setIsMobileSidebarOpen } = usePos();
   const isCashier = userProfile?.role === 'Cashier';
 
   // Keyboard shortcut listener for F1, F2, F3, F4, F5, F8, F9
@@ -24,32 +25,40 @@ export const Sidebar: React.FC = () => {
       if (e.key === 'F1') {
         e.preventDefault();
         navigate(RouteName.POS_COUNTER);
+        setIsMobileSidebarOpen(false);
       } else if (e.key === 'F2') {
         e.preventDefault();
         navigate(RouteName.DAILY_MEMO);
+        setIsMobileSidebarOpen(false);
       } else if (e.key === 'F3' && !isCashier) {
         e.preventDefault();
         navigate(RouteName.STOCK_INVENTORY);
+        setIsMobileSidebarOpen(false);
       } else if (e.key === 'F4') {
         e.preventDefault();
         navigate(RouteName.DAY_END);
+        setIsMobileSidebarOpen(false);
       } else if (e.key === 'F5') {
         e.preventDefault();
         navigate(RouteName.KHATA);
+        setIsMobileSidebarOpen(false);
       } else if (e.key === 'F6') {
         e.preventDefault();
         navigate(RouteName.SUPPLIER_KHATA);
+        setIsMobileSidebarOpen(false);
       } else if (e.key === 'F8' && !isCashier) {
         e.preventDefault();
         navigate(RouteName.USER_MANAGEMENT);
+        setIsMobileSidebarOpen(false);
       } else if (e.key === 'F9' && !isCashier) {
         e.preventDefault();
         navigate(RouteName.SYSTEM_SETTINGS);
+        setIsMobileSidebarOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigate, isCashier]);
+  }, [navigate, isCashier, setIsMobileSidebarOpen]);
 
   const navItems = [
     {
@@ -113,50 +122,51 @@ export const Sidebar: React.FC = () => {
     : [];
 
   return (
-    <aside className="w-56 shrink-0 bg-[#064e3b] border-r border-[#033728] flex flex-col justify-between h-full text-xs select-none shadow-sm">
-      <div className="p-2 space-y-4">
-        {/* Workstation Operations */}
-        <div>
-          <span className="text-[10px] uppercase font-extrabold text-emerald-300/85 tracking-wider px-2.5 block mb-1.5">
-            {language === 'ur' ? 'ورک سٹیشن آپریشنز' : 'Workstation Operations'}
-          </span>
-          <nav className="space-y-1">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.key}
-                to={item.to}
-                className={({ isActive }) =>
-                  `flex items-center space-x-2.5 px-3 py-2.5 rounded-lg font-medium transition-all ${
-                    isActive
-                      ? 'bg-white text-emerald-950 shadow-md font-bold'
-                      : 'text-emerald-100/90 hover:bg-emerald-800/70 hover:text-white'
-                  }`
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <item.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-emerald-800' : 'text-emerald-300'}`} />
-                    <span className={language === 'ur' ? 'font-urdu font-semibold text-[13px]' : 'text-xs'}>
-                      {language === 'ur' ? item.urdu : item.label}
-                    </span>
-                  </>
-                )}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
+    <>
+      {/* Mobile Drawer Overlay Backdrop (only visible on mobile when sidebar is open) */}
+      {isMobileSidebarOpen && (
+        <div
+          onClick={() => setIsMobileSidebarOpen(false)}
+          className="fixed inset-0 bg-black/60 z-40 backdrop-blur-xs lg:hidden animate-in fade-in duration-200"
+          aria-hidden="true"
+        />
+      )}
 
-        {/* Terminal Admin */}
-        {adminItems.length > 0 && (
+      {/* Sidebar / Drawer Navigation */}
+      <aside
+        className={`bg-[#064e3b] border-r border-[#033728] flex flex-col justify-between h-full text-xs select-none shadow-sm transition-transform duration-200 ease-in-out ${
+          isMobileSidebarOpen
+            ? 'fixed inset-y-0 left-0 z-50 w-64 shadow-2xl translate-x-0'
+            : 'hidden lg:flex lg:w-56 lg:shrink-0 lg:translate-x-0'
+        }`}
+      >
+        <div className="p-3 space-y-4 overflow-y-auto">
+          {/* Mobile Drawer Header with Close Button */}
+          <div className="flex items-center justify-between pb-2 border-b border-emerald-800/60 lg:hidden">
+            <span className="font-bold text-white text-sm">
+              {language === 'ur' ? 'بخاری مینیو' : 'Bukhari POS Menu'}
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="p-1 rounded-md text-emerald-300 hover:text-white hover:bg-emerald-800 transition-colors"
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Workstation Operations */}
           <div>
             <span className="text-[10px] uppercase font-extrabold text-emerald-300/85 tracking-wider px-2.5 block mb-1.5">
-              {language === 'ur' ? 'ٹرمینل ایڈمن' : 'Terminal Admin'}
+              {language === 'ur' ? 'ورک سٹیشن آپریشنز' : 'Workstation Operations'}
             </span>
             <nav className="space-y-1">
-              {adminItems.map((item) => (
+              {navItems.map((item) => (
                 <NavLink
                   key={item.key}
                   to={item.to}
+                  onClick={() => setIsMobileSidebarOpen(false)}
                   className={({ isActive }) =>
                     `flex items-center space-x-2.5 px-3 py-2.5 rounded-lg font-medium transition-all ${
                       isActive
@@ -177,17 +187,51 @@ export const Sidebar: React.FC = () => {
               ))}
             </nav>
           </div>
-        )}
-      </div>
 
-      {/* Subtle Terminal Watermark Footer */}
-      <div className="p-3 border-t border-emerald-800/60 text-[10.5px] text-emerald-200/70 flex items-center justify-between font-mono">
-        <span>{language === 'ur' ? 'ٹرمینل #01' : 'TERMINAL #01'}</span>
-        <span className="flex items-center space-x-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          <span className="text-[9.5px] uppercase font-bold text-emerald-300">ONLINE</span>
-        </span>
-      </div>
-    </aside>
+          {/* Terminal Admin */}
+          {adminItems.length > 0 && (
+            <div>
+              <span className="text-[10px] uppercase font-extrabold text-emerald-300/85 tracking-wider px-2.5 block mb-1.5">
+                {language === 'ur' ? 'ٹرمینل ایڈمن' : 'Terminal Admin'}
+              </span>
+              <nav className="space-y-1">
+                {adminItems.map((item) => (
+                  <NavLink
+                    key={item.key}
+                    to={item.to}
+                    onClick={() => setIsMobileSidebarOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center space-x-2.5 px-3 py-2.5 rounded-lg font-medium transition-all ${
+                        isActive
+                          ? 'bg-white text-emerald-950 shadow-md font-bold'
+                          : 'text-emerald-100/90 hover:bg-emerald-800/70 hover:text-white'
+                      }`
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <item.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-emerald-800' : 'text-emerald-300'}`} />
+                        <span className={language === 'ur' ? 'font-urdu font-semibold text-[13px]' : 'text-xs'}>
+                          {language === 'ur' ? item.urdu : item.label}
+                        </span>
+                      </>
+                    )}
+                  </NavLink>
+                ))}
+              </nav>
+            </div>
+          )}
+        </div>
+
+        {/* Subtle Terminal Watermark Footer */}
+        <div className="p-3 border-t border-emerald-800/60 text-[10.5px] text-emerald-200/70 flex items-center justify-between font-mono">
+          <span>{language === 'ur' ? 'ٹرمینل #01' : 'TERMINAL #01'}</span>
+          <span className="flex items-center space-x-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span className="text-[9.5px] uppercase font-bold text-emerald-300">ONLINE</span>
+          </span>
+        </div>
+      </aside>
+    </>
   );
 };

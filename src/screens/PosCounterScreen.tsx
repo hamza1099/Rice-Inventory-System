@@ -14,6 +14,7 @@ export const PosCounterScreen: React.FC = () => {
   const navigate = useNavigate();
   const {
     products,
+    cart,
     language,
     isDrawerOpen,
     isDayClosed,
@@ -27,6 +28,10 @@ export const PosCounterScreen: React.FC = () => {
 
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [mobileTab, setMobileTab] = useState<'catalog' | 'bill'>('catalog');
+
+  const cartCount = cart.length;
+  const cartTotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
   // Automatically prompt only if an unclosed session from a past day is detected
   useEffect(() => {
@@ -164,10 +169,47 @@ export const PosCounterScreen: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col space-y-2 overflow-hidden">
+      {/* Mobile Top Segmented View Switch (Only visible on < lg screens) */}
+      <div className="lg:hidden flex items-center bg-slate-200/90 p-1 rounded-xl gap-1 shrink-0">
+        <button
+          type="button"
+          onClick={() => setMobileTab('catalog')}
+          className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+            mobileTab === 'catalog'
+              ? 'bg-emerald-800 text-white shadow-xs'
+              : 'text-slate-700 hover:bg-slate-300/60'
+          }`}
+        >
+          <span>{language === 'ur' ? 'اشیاء کی لسٹ' : 'Products'}</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 font-mono-num">
+            {filteredProducts.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMobileTab('bill')}
+          className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+            mobileTab === 'bill'
+              ? 'bg-emerald-800 text-white shadow-xs'
+              : 'text-slate-700 hover:bg-slate-300/60'
+          }`}
+        >
+          <span>{language === 'ur' ? 'کیش میمو بل' : 'Current Bill'}</span>
+          {cartCount > 0 && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black font-mono-num animate-pulse">
+              {cartCount} • PKR {cartTotal.toLocaleString()}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* Main 2-Column POS Layout */}
       <div className="flex-1 flex gap-2.5 min-h-0 overflow-hidden items-stretch">
         {/* Left Column: Catalog */}
-        <div className="flex-1 min-w-0 flex flex-col h-full space-y-2 overflow-hidden">
+        <div className={`flex-1 min-w-0 flex flex-col h-full space-y-2 overflow-hidden ${
+          mobileTab === 'bill' ? 'hidden lg:flex' : 'flex'
+        }`}>
           {/* Search & Category Filter Chips */}
           <div className="shrink-0 bg-white border border-slate-200 rounded-lg p-2 shadow-2xs space-y-1.5">
             <div className="flex items-center space-x-2">
@@ -263,7 +305,7 @@ export const PosCounterScreen: React.FC = () => {
           {/* Product Cards Grid: ONLY THIS CONTAINER SCROLLS! ("mid wala card khali scrol hona chahya") */}
           <div className="flex-1 min-h-0 overflow-y-auto pr-1">
             {isProductsLoading && products.length === 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-2 auto-rows-max pb-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-2 auto-rows-max pb-1">
                 {Array.from({ length: 15 }).map((_, i) => (
                   <div
                     key={i}
@@ -286,7 +328,7 @@ export const PosCounterScreen: React.FC = () => {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-2 auto-rows-max pb-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-2 auto-rows-max pb-1">
                   {filteredProducts.map((prod) => (
                     <ProductCard key={prod.id} product={prod} />
                   ))}
@@ -304,10 +346,46 @@ export const PosCounterScreen: React.FC = () => {
               </>
             )}
           </div>
+
+          {/* Floating Mobile Cart Banner when items in cart (Only visible on mobile in catalog mode) */}
+          {cartCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setMobileTab('bill')}
+              className="lg:hidden shrink-0 bg-emerald-800 hover:bg-emerald-900 active:scale-98 text-white p-2.5 rounded-xl shadow-lg flex items-center justify-between font-bold text-xs cursor-pointer transition-all"
+            >
+              <div className="flex items-center gap-2">
+                <span className="bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full text-[10px] font-black font-mono-num">
+                  {cartCount} {language === 'ur' ? 'آئٹم' : 'Items'}
+                </span>
+                <span>{language === 'ur' ? 'بل اور وصولی دیکھیں' : 'View Bill & Checkout'}</span>
+              </div>
+              <span className="font-mono-num font-black text-amber-300">
+                PKR {cartTotal.toLocaleString()} →
+              </span>
+            </button>
+          )}
         </div>
 
         {/* Right Column: Cash Memo & Checkout */}
-        <div className="w-[325px] 2xl:w-[350px] shrink-0 h-full min-h-0 flex flex-col overflow-hidden">
+        <div className={`w-full lg:w-[325px] 2xl:w-[350px] shrink-0 h-full min-h-0 flex flex-col overflow-hidden ${
+          mobileTab === 'catalog' ? 'hidden lg:flex' : 'flex'
+        }`}>
+          {/* Mobile Back to Products Button */}
+          <div className="lg:hidden shrink-0 mb-1.5 flex items-center justify-between bg-white border border-slate-200 rounded-lg p-2 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setMobileTab('catalog')}
+              className="text-xs font-bold text-emerald-800 hover:text-emerald-900 flex items-center gap-1 cursor-pointer"
+            >
+              <span>←</span>
+              <span>{language === 'ur' ? 'اشیاء کی لسٹ پر واپس جائیں' : 'Back to Product Catalog'}</span>
+            </button>
+            <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+              {cartCount} {language === 'ur' ? 'آئٹمز' : 'items'}
+            </span>
+          </div>
+
           <CashMemoBill />
         </div>
       </div>

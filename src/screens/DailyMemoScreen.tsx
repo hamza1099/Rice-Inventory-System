@@ -186,7 +186,7 @@ export const DailyMemoScreen: React.FC = () => {
       />
 
       {/* 5 Stat Cards Dynamically Updated */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-3">
         <StatCard
           isLoading={isInitialLoading}
           title="PERIOD TOTAL SALES"
@@ -282,7 +282,7 @@ export const DailyMemoScreen: React.FC = () => {
       </div>
 
       {/* Active Filters Pill */}
-      <div className="flex items-center space-x-2 text-xs text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-xs">
+      <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-600 bg-white border border-slate-200 px-2.5 sm:px-3 py-1.5 rounded-lg shadow-xs">
         <span className="font-bold text-[11px] text-slate-400 uppercase">Active Filters:</span>
         <button
           onClick={() => setIsCalendarOpen(true)}

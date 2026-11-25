@@ -65,7 +65,7 @@ export const MemoFilterBar: React.FC<MemoFilterBarProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <button 
             onClick={onExportCSV}
             className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded border border-slate-200 transition-colors cursor-pointer"
@@ -111,12 +111,12 @@ export const MemoFilterBar: React.FC<MemoFilterBarProps> = ({
       </div>
 
       {/* Dropdown Filters & Search Input */}
-      <div className="grid grid-cols-12 gap-3 pt-1 items-center">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2 sm:gap-3 pt-1 items-center">
         {/* Dynamic Clickable Date Range Box */}
         <div 
           onClick={onOpenCalendar}
           title={isUr ? 'کیلنڈر سے تاریخ منتخب کریں' : 'Click to change date range via calendar'}
-          className="col-span-3 flex items-center space-x-2 bg-slate-50 hover:bg-emerald-50/50 hover:border-emerald-300 transition-all px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-mono-num cursor-pointer group"
+          className="col-span-1 sm:col-span-1 lg:col-span-3 flex items-center space-x-2 bg-slate-50 hover:bg-emerald-50/50 hover:border-emerald-300 transition-all px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-mono-num cursor-pointer group"
         >
           <Calendar className="w-4 h-4 text-emerald-700 shrink-0 group-hover:scale-110 transition-transform" />
           <div className="leading-tight overflow-hidden">
@@ -129,7 +129,7 @@ export const MemoFilterBar: React.FC<MemoFilterBarProps> = ({
           </div>
         </div>
 
-        <div className="col-span-3">
+        <div className="col-span-1 sm:col-span-1 lg:col-span-3">
           <select className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 font-bold text-slate-700 focus:outline-hidden">
             <option>{isUr ? 'کاؤنٹر 01 (سید بخاری)' : 'Counter 01 (S. Bukhari)'}</option>
             <option>{isUr ? 'کاؤنٹر 02 (محمد حمزہ)' : 'Counter 02 (M. Hamza)'}</option>
@@ -137,7 +137,7 @@ export const MemoFilterBar: React.FC<MemoFilterBarProps> = ({
           </select>
         </div>
 
-        <div className="col-span-3">
+        <div className="col-span-1 sm:col-span-1 lg:col-span-3">
           <select 
             value={selectedPayment}
             onChange={(e) => setSelectedPayment(e.target.value)}
@@ -150,7 +150,7 @@ export const MemoFilterBar: React.FC<MemoFilterBarProps> = ({
           </select>
         </div>
 
-        <div className="col-span-3 relative group">
+        <div className="col-span-1 sm:col-span-1 lg:col-span-3 relative group">
           <input
             type="text"
             placeholder={isUr ? 'میمو نمبر، خریدار یا فون...' : 'Memo #, Buyer, or Phone...'}

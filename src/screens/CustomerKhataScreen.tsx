@@ -200,7 +200,7 @@ export const CustomerKhataScreen: React.FC = () => {
         </div>
 
         {/* 4 Stat Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           <StatCard
             isLoading={isInitialLoading}
             title={isUr ? 'مارکیٹ کل بقایا' : 'Market Receivables'}
@@ -256,7 +256,7 @@ export const CustomerKhataScreen: React.FC = () => {
       </div>
 
       {/* Main Full-Width Customer Directory List */}
-      <div className="flex-1 flex flex-col min-h-0 p-4 overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 p-2 sm:p-4 overflow-hidden">
         <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
           {/* Search, Filters & Counter Header */}
           <div className="p-3.5 border-b border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3 shrink-0">
@@ -323,7 +323,7 @@ export const CustomerKhataScreen: React.FC = () => {
                     {isUr ? 'گاہکوں کے ادھار کھاتے لوڈ ہو رہے ہیں...' : 'Loading Khata Accounts & Ledgers...'}
                   </span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3.5 auto-rows-max">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 auto-rows-max">
                   {[1, 2, 3, 4, 5, 6].map((idx) => (
                     <div
                       key={idx}
@@ -369,7 +369,7 @@ export const CustomerKhataScreen: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3.5 auto-rows-max">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 auto-rows-max">
                 {filteredCustomers.map((cust) => {
                   const hasPending = cust.currentBalance > 0;
                   const creditLimit = cust.creditLimit || 0;

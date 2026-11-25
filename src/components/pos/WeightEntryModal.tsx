@@ -30,18 +30,38 @@ export const WeightEntryModal: React.FC = () => {
   const [inputValue, setInputValue] = useState<string>('1');
   const [rateValue, setRateValue] = useState<string>('');
   const [amountValue, setAmountValue] = useState<string>('');
+  // Track whether the user last edited Weight or Amount in PKR
+  const [lastEditedField, setLastEditedField] = useState<'weight' | 'amount'>('weight');
+
+  // Helper: Format weight cleanly for input field with appropriate precision
+  const formatWeightForInput = (calcKg: number): string => {
+    if (calcKg <= 0) return '0';
+    if (calcKg >= 1) {
+      // For 1kg or more, 3 decimal places without useless trailing zeroes (e.g. 1.25, 2.5)
+      return Number(calcKg.toFixed(3)).toString();
+    }
+    if (calcKg >= 0.05) {
+      // 50g to 1kg (e.g. 0.250, 0.400)
+      return Number(calcKg.toFixed(3)).toString();
+    }
+    // High-value spices < 50g (e.g. Elaichi, saffron: 5.6g = 0.0056 kg)
+    return Number(calcKg.toFixed(4)).toString();
+  };
 
   useEffect(() => {
     if (product) {
       const baseRate = product.ratePerKg;
       setRateValue(baseRate.toString());
+      setLastEditedField('weight');
       if (isPackaged) {
         setMode('packet');
         setInputValue('1');
         setAmountValue(baseRate.toString());
       } else if (isLooseMinor) {
         setMode('kg');
-        const defaultWeight = product.availableKg < 1 ? product.availableKg.toString() : '0.25';
+        const defaultWeight = product.availableKg < 1 && product.availableKg > 0
+          ? formatWeightForInput(product.availableKg)
+          : '0.25';
         setInputValue(defaultWeight);
         setAmountValue(Math.round(parseFloat(defaultWeight) * baseRate).toString());
       } else {
@@ -57,20 +77,49 @@ export const WeightEntryModal: React.FC = () => {
   const isRateModified = product ? activeRate !== product.ratePerKg : false;
   const rateDifference = product ? activeRate - product.ratePerKg : 0;
 
+  // Sync weight input value from entered PKR amount
+  const syncWeightFromAmount = (pkr: number, rate: number, currentMode: EntryMode) => {
+    if (!product || rate <= 0 || pkr <= 0) {
+      setInputValue('');
+      return;
+    }
+    if (currentMode === 'bags') {
+      const bagRate = (product.boriWeightKg || 25) * rate;
+      setInputValue(Number((pkr / bagRate).toFixed(2)).toString());
+    } else if (currentMode === 'mund') {
+      const mundRate = 40 * rate;
+      setInputValue(Number((pkr / mundRate).toFixed(2)).toString());
+    } else if (currentMode === 'packet') {
+      const units = Math.max(1, Math.round(pkr / rate));
+      setInputValue(units.toString());
+    } else {
+      // kg mode
+      const calcKg = pkr / rate;
+      setInputValue(formatWeightForInput(calcKg));
+    }
+  };
+
   // Reset rate to original base product rate
   const handleResetRate = () => {
     if (!product) return;
     const baseRate = product.ratePerKg;
     setRateValue(baseRate.toString());
-    const num = parseFloat(inputValue);
-    if (!isNaN(num) && num > 0) {
-      let kg = num;
-      if (mode === 'bags') {
-        kg = num * (product.boriWeightKg || 25);
-      } else if (mode === 'mund') {
-        kg = num * 40;
+    if (lastEditedField === 'amount') {
+      const pkr = parseFloat(amountValue);
+      if (!isNaN(pkr) && pkr > 0 && baseRate > 0) {
+        syncWeightFromAmount(pkr, baseRate, mode);
       }
-      setAmountValue(Math.round(kg * baseRate).toString());
+    } else {
+      const num = parseFloat(inputValue);
+      if (!isNaN(num) && num > 0) {
+        let kg = num;
+        if (mode === 'bags') {
+          kg = num * (product.boriWeightKg || 25);
+        } else if (mode === 'mund') {
+          kg = num * 40;
+        }
+        setAmountValue(Math.round(kg * baseRate).toString());
+      }
     }
   };
 
@@ -78,23 +127,32 @@ export const WeightEntryModal: React.FC = () => {
   const handleRateChange = (newRateStr: string) => {
     setRateValue(newRateStr);
     const newRate = parseFloat(newRateStr);
-    const num = parseFloat(inputValue);
-    if (!isNaN(newRate) && newRate > 0 && !isNaN(num) && num > 0 && product) {
-      let kg = num;
-      if (mode === 'bags') {
-        kg = num * (product.boriWeightKg || 25);
-      } else if (mode === 'mund') {
-        kg = num * 40;
+    if (isNaN(newRate) || newRate <= 0) {
+      return;
+    }
+    if (lastEditedField === 'amount') {
+      const pkr = parseFloat(amountValue);
+      if (!isNaN(pkr) && pkr > 0) {
+        syncWeightFromAmount(pkr, newRate, mode);
       }
-      setAmountValue(Math.round(kg * newRate).toString());
-    } else if (isNaN(newRate) || newRate <= 0) {
-      setAmountValue('');
+    } else {
+      const num = parseFloat(inputValue);
+      if (!isNaN(num) && num > 0 && product) {
+        let kg = num;
+        if (mode === 'bags') {
+          kg = num * (product.boriWeightKg || 25);
+        } else if (mode === 'mund') {
+          kg = num * 40;
+        }
+        setAmountValue(Math.round(kg * newRate).toString());
+      }
     }
   };
 
   // Handle mode switch presets
   const handleModeChange = (newMode: EntryMode) => {
     setMode(newMode);
+    setLastEditedField('weight');
     if (!product) return;
     setInputValue('1');
     const rate = activeRate;
@@ -112,10 +170,11 @@ export const WeightEntryModal: React.FC = () => {
 
   // Bidirectional Weight / Quantity change
   const handleWeightChange = (val: string) => {
+    setLastEditedField('weight');
     setInputValue(val);
     const num = parseFloat(val);
     const rate = activeRate;
-    if (!isNaN(num) && product && rate > 0) {
+    if (!isNaN(num) && num > 0 && product && rate > 0) {
       let kg = num;
       if (mode === 'bags') {
         kg = num * (product.boriWeightKg || 25);
@@ -128,32 +187,14 @@ export const WeightEntryModal: React.FC = () => {
     }
   };
 
-  // Bidirectional PKR Amount change (auto-calculates weight)
+  // Bidirectional PKR Amount change (auto-calculates weight without rounding discrepancies)
   const handleAmountChange = (val: string) => {
+    setLastEditedField('amount');
     setAmountValue(val);
     const pkr = parseFloat(val);
     const rate = activeRate;
-    if (!isNaN(pkr) && product && rate > 0) {
-      if (mode === 'bags') {
-        const bagRate = (product.boriWeightKg || 25) * rate;
-        setInputValue(parseFloat((pkr / bagRate).toFixed(2)).toString());
-      } else if (mode === 'mund') {
-        const mundRate = 40 * rate;
-        setInputValue(parseFloat((pkr / mundRate).toFixed(2)).toString());
-      } else if (mode === 'packet') {
-        const units = Math.max(1, Math.round(pkr / rate));
-        setInputValue(units.toString());
-      } else {
-        // kg mode: calculates exact weight
-        const calc = pkr / rate;
-        const kg2 = parseFloat(calc.toFixed(2));
-        if (Math.round(kg2 * rate) === Math.round(pkr)) {
-          setInputValue(kg2.toString());
-        } else {
-          const kg3 = parseFloat(calc.toFixed(3));
-          setInputValue(kg3.toString());
-        }
-      }
+    if (!isNaN(pkr) && pkr > 0 && product && rate > 0) {
+      syncWeightFromAmount(pkr, rate, mode);
     } else {
       setInputValue('');
     }
@@ -175,20 +216,33 @@ export const WeightEntryModal: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedProductForModal, inputValue, amountValue, rateValue, mode]);
+  }, [selectedProductForModal, inputValue, amountValue, rateValue, mode, lastEditedField]);
 
   if (!product) return null;
 
-  // Calculate actual net weight/qty based on mode (1 Bori = 25 KG by default)
+  // Calculate actual net weight/qty and exact subtotal based on user's active intent
   const rawNum = parseFloat(inputValue) || 0;
-  let netWeightKg = rawNum;
+  const pkrNum = parseFloat(amountValue) || 0;
 
-  if (mode === 'bags') {
-    netWeightKg = rawNum * (product.boriWeightKg || 25);
-  } else if (mode === 'mund') {
-    netWeightKg = rawNum * 40; // 1 Maan = 40 KG in Pakistan Mandi
-  } else if (mode === 'packet') {
-    netWeightKg = rawNum;
+  let netWeightKg = 0;
+  let subtotal = 0;
+
+  if (lastEditedField === 'amount' && pkrNum > 0) {
+    // When user enters an Amount (e.g. 100 PKR), that Amount is the exact subtotal!
+    subtotal = Math.round(pkrNum);
+    if (activeRate > 0) {
+      netWeightKg = pkrNum / activeRate;
+    }
+  } else {
+    // When user enters Weight, Weight is the master
+    if (mode === 'bags') {
+      netWeightKg = rawNum * (product.boriWeightKg || 25);
+    } else if (mode === 'mund') {
+      netWeightKg = rawNum * 40; // 1 Maan = 40 KG in Pakistan Mandi
+    } else {
+      netWeightKg = rawNum;
+    }
+    subtotal = Math.round(netWeightKg * activeRate);
   }
 
   // Stock availability & boundary checks
@@ -197,9 +251,6 @@ export const WeightEntryModal: React.FC = () => {
   const isOverStock = !isOutOfStock && netWeightKg > availableStockKg;
   const isInvalidQty = netWeightKg <= 0;
   const isAddDisabled = isOutOfStock || isOverStock || isInvalidQty;
-
-  // Calculate Subtotal with custom active rate
-  const subtotal = Math.round(netWeightKg * activeRate);
 
   const handleSave = () => {
     if (isOutOfStock) {
@@ -248,9 +299,34 @@ export const WeightEntryModal: React.FC = () => {
 
   const unitSuffix = product.unitLabel ? product.unitLabel.replace('/', '').trim() : 'kg';
 
+  // Format net quantity for the summary card without losing precision on grams
+  const formatNetQuantityDisplay = (wtKg: number): string => {
+    if (wtKg <= 0) return `0 ${isUr ? 'کلو' : 'KG'}`;
+    if (wtKg >= 1) {
+      return `${Number(wtKg.toFixed(3))} ${isUr ? 'کلو' : 'KG'}`;
+    }
+    if (wtKg >= 0.05) {
+      const g = Math.round(wtKg * 1000);
+      return `${Number(wtKg.toFixed(3))} ${isUr ? 'کلو' : 'KG'} (${g}g)`;
+    }
+    // Minor spices / low weights < 50g (e.g. 5.6g, 10g)
+    const g = Number((wtKg * 1000).toFixed(1));
+    return `${Number(wtKg.toFixed(4))} ${isUr ? 'کلو' : 'KG'} (${g}g)`;
+  };
+
   const getPresets = () => {
     const isUr = language === 'ur';
     if (isLooseMinor) {
+      if (product.ratePerKg >= 2000) {
+        return [
+          { label: isUr ? '10 گرام' : '10g', val: '0.01' },
+          { label: isUr ? '20 گرام' : '20g', val: '0.02' },
+          { label: isUr ? '50 گرام' : '50g', val: '0.05' },
+          { label: isUr ? '100 گرام' : '100g', val: '0.1' },
+          { label: isUr ? '250 گرام (پاؤ)' : '250g (Pao)', val: '0.25' },
+          { label: isUr ? '500 گرام' : '500g', val: '0.5' }
+        ];
+      }
       return [
         { label: isUr ? '50 گرام' : '50g', val: '0.05' },
         { label: isUr ? '100 گرام' : '100g', val: '0.1' },
@@ -568,11 +644,15 @@ export const WeightEntryModal: React.FC = () => {
                       : 'KG')}
                 </span>
               </div>
-              {parseFloat(inputValue) > 0 && parseFloat(inputValue) < 1 && (
-                <span className="text-[10px] font-bold text-emerald-800 font-mono-num mt-0.5 block truncate">
-                  = {Math.round(parseFloat(inputValue) * 1000)}g ({Math.round(parseFloat(inputValue) * 1000)} گرام)
-                </span>
-              )}
+              {parseFloat(inputValue) > 0 && parseFloat(inputValue) < 1 && (() => {
+                const g = parseFloat(inputValue) * 1000;
+                const gStr = g < 10 ? Number(g.toFixed(1)).toString() : Math.round(g).toString();
+                return (
+                  <span className="text-[10px] font-bold text-emerald-800 font-mono-num mt-0.5 block truncate">
+                    = {gStr}g ({gStr} گرام)
+                  </span>
+                );
+              })()}
             </div>
 
             {/* Field 2: Custom Selling Rate */}
@@ -749,7 +829,7 @@ export const WeightEntryModal: React.FC = () => {
               <span className="text-sm font-bold">
                 {mode === 'packet'
                   ? `${Math.round(netWeightKg)} ${isUr && unitSuffix === 'kg' ? 'کلو' : unitSuffix}`
-                  : `${netWeightKg.toFixed(2)} ${isUr ? 'کلو' : 'KG'}`}
+                  : formatNetQuantityDisplay(netWeightKg)}
                 {mode === 'bags' && (
                   <span className="text-[11px] text-emerald-300 font-normal font-sans ml-1">
                     ({rawNum} {isUr ? 'بوری' : 'Bags'})
