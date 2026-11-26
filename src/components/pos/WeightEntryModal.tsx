@@ -61,7 +61,7 @@ export const WeightEntryModal: React.FC = () => {
         setMode('kg');
         const defaultWeight = product.availableKg < 1 && product.availableKg > 0
           ? formatWeightForInput(product.availableKg)
-          : '0.25';
+          : '1';
         setInputValue(defaultWeight);
         setAmountValue(Math.round(parseFloat(defaultWeight) * baseRate).toString());
       } else {
@@ -251,6 +251,26 @@ export const WeightEntryModal: React.FC = () => {
   const isOverStock = !isOutOfStock && netWeightKg > availableStockKg;
   const isInvalidQty = netWeightKg <= 0;
   const isAddDisabled = isOutOfStock || isOverStock || isInvalidQty;
+
+  const isPcs =
+    product.unitLabel === '/ pkt' ||
+    product.unitLabel === '/ pc' ||
+    product.unitLabel === '/ piece' ||
+    product.unitLabel === '/ tin' ||
+    product.unitLabel === '/ can' ||
+    product.unitLabel === '/ carton';
+  const isLiter = product.unitLabel === '/ liter';
+
+  const formatModalStock = (qty: number): string => {
+    const val = Math.round(qty * 100) / 100;
+    if (val <= 0) return isPcs ? '0 Pcs' : isLiter ? '0 L' : '0 KG';
+    if (isPcs) return `${Math.round(val)} Pcs`;
+    if (isLiter) return `${val} L`;
+    if (val < 1) return `${Math.round(val * 1000)}g (${val} kg)`;
+    return `${val} KG`;
+  };
+
+  const modalStockLabel = formatModalStock(availableStockKg);
 
   const handleSave = () => {
     if (isOutOfStock) {
@@ -466,7 +486,7 @@ export const WeightEntryModal: React.FC = () => {
                 {isUr ? 'موجودہ سٹاک:' : 'Available Stock:'}
               </span>
               <span className={`text-sm font-bold ${isOutOfStock ? 'text-rose-600 font-extrabold' : 'text-emerald-700'}`}>
-                {product.availableStockLabel || `${product.availableKg} KG`}
+                {modalStockLabel}
               </span>
               <span className="text-[9.5px] text-slate-500 block font-sans">({product.binLocation})</span>
               {isOutOfStock && (

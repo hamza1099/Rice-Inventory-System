@@ -26,6 +26,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     ? product.availableKg <= product.minStockThreshold
     : (product.isLowStock ?? false));
 
+  const isPcs =
+    product.unitLabel === '/ pkt' ||
+    product.unitLabel === '/ pc' ||
+    product.unitLabel === '/ piece' ||
+    product.unitLabel === '/ tin' ||
+    product.unitLabel === '/ can' ||
+    product.unitLabel === '/ carton';
+  const isLiter = product.unitLabel === '/ liter';
+
+  const formatDisplayStock = (qty: number): string => {
+    const val = Math.round(qty * 100) / 100;
+    if (val <= 0) return isPcs ? '0 Pcs' : isLiter ? '0 L' : '0 KG';
+    if (isPcs) return `${Math.round(val)} Pcs`;
+    if (isLiter) return `${val} L`;
+    if (val < 1) return `${Math.round(val * 1000)}g (${val} kg)`;
+    return `${val} KG`;
+  };
+
+  const displayStock = formatDisplayStock(product.availableKg ?? 0);
+
   const handleImageClick = () => {
     openImagePreview({
       imageUrl: product.imageUrl || DEFAULT_RICE_IMAGE,
@@ -35,7 +55,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       badgeLabel: product.badgeLabel,
       rate: product.ratePerKg,
       unitLabel: product.unitLabel,
-      stock: product.availableStockLabel || `${product.availableKg} KG`,
+      stock: displayStock,
       binLocation: product.binLocation,
       product
     });
@@ -154,7 +174,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   }`}
                 />
                 <span className={`font-semibold ${isOutOfStock ? 'text-rose-700 font-extrabold' : isActuallyLowStock ? 'text-amber-700' : 'text-slate-700'}`}>
-                  {product.availableStockLabel || `${product.availableKg} KG`}
+                  {displayStock}
                 </span>
               </div>
             </div>

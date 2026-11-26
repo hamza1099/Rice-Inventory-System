@@ -1430,6 +1430,76 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setSelectedKhataCustomerForBill(null);
     }
 
+    // Optimistically decrement local stock for inventory & products in real time
+    const soldItems = [...cart];
+    if (soldItems.length > 0) {
+      setInventory((prev) => {
+        const updated = prev.map((invItem) => {
+          const matching = soldItems.filter(
+            (c) =>
+              c.product.id === invItem.id ||
+              (c.product.name && c.product.name.trim().toLowerCase() === invItem.varietyName.trim().toLowerCase()) ||
+              (c.product.urduName && invItem.urduName && c.product.urduName.trim() === invItem.urduName.trim())
+          );
+          const totalSold = matching.reduce((sum, c) => sum + (c.netWeight || 0), 0);
+          if (totalSold > 0) {
+            const newQty = Math.max(0, invItem.physicalStockKg - totalSold);
+            const packWeight = invItem.unitsPerPack && invItem.unitsPerPack > 0 ? invItem.unitsPerPack : 25;
+            const isLoose = invItem.packagingStandard?.includes('Loose') || invItem.packagingStandard?.includes('Minor') || invItem.packagingStandard === 'loose_minor';
+            const newBags = isLoose ? 0 : Math.floor(newQty / packWeight);
+            const threshold = invItem.minStockThreshold !== undefined ? invItem.minStockThreshold : 20;
+            const computedStatus: InventoryItem['lotStatus'] = newQty <= 0 ? 'Out of Stock' : newQty <= (threshold / 2) ? 'Critical Low' : newQty <= threshold ? 'Low Stock' : 'In Stock';
+            return {
+              ...invItem,
+              physicalStockKg: Math.round(newQty * 100) / 100,
+              bagsCount: newBags,
+              lotStatus: computedStatus
+            };
+          }
+          return invItem;
+        });
+        try {
+          localStorage.setItem('ricecms_cached_inventory', JSON.stringify(updated));
+        } catch (_) {}
+        return updated;
+      });
+
+      setProducts((prev) => {
+        const updated = prev.map((prod) => {
+          const matching = soldItems.filter(
+            (c) =>
+              c.product.id === prod.id ||
+              (c.product.name && c.product.name.trim().toLowerCase() === prod.name.trim().toLowerCase()) ||
+              (c.product.urduName && prod.urduName && c.product.urduName.trim() === prod.urduName.trim())
+          );
+          const totalSold = matching.reduce((sum, c) => sum + (c.netWeight || 0), 0);
+          if (totalSold > 0) {
+            const newAvail = Math.max(0, (prod.availableKg || 0) - totalSold);
+            const threshold = prod.minStockThreshold !== undefined ? prod.minStockThreshold : 20;
+            const isPcs = prod.unitLabel?.includes('pc') || prod.unitLabel?.includes('piece') || prod.unitLabel?.includes('pkt') || prod.unitLabel?.includes('can') || prod.unitLabel?.includes('tin');
+            const isLiter = prod.unitLabel?.includes('liter') || prod.unitLabel?.includes('L');
+            const roundedAvail = Math.round(newAvail * 100) / 100;
+            const stockLabel = isPcs
+              ? `${Math.round(roundedAvail)} Pcs`
+              : isLiter
+              ? `${roundedAvail} L`
+              : (roundedAvail < 1 && roundedAvail > 0 ? `${Math.round(roundedAvail * 1000)}g (${roundedAvail} kg)` : `${roundedAvail} KG`);
+            return {
+              ...prod,
+              availableKg: roundedAvail,
+              availableStockLabel: stockLabel,
+              isLowStock: roundedAvail <= threshold
+            };
+          }
+          return prod;
+        });
+        try {
+          localStorage.setItem('ricecms_cached_products', JSON.stringify(updated));
+        } catch (_) {}
+        return updated;
+      });
+    }
+
     clearCart();
 
     // Persist to Firestore and decrement stock in real time
@@ -1443,62 +1513,88 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!target) return;
 
     // 1. Remove from local memos state
-    setMemos((prev) => prev.filter((m) => m.id !== memoId));
+    setMemos((prev) => {
+      const updated = prev.filter((m) => m.id !== memoId);
+      try {
+        localStorage.setItem('ricecms_cached_memos', JSON.stringify(updated));
+      } catch (_) {}
+      return updated;
+    });
     if (activeReceipt?.id === memoId) {
       setActiveReceipt(null);
     }
 
     // 2. Restore stock locally for sold items
     if (target.items && target.items.length > 0) {
-      setInventory((prev) =>
-        prev.map((invItem) => {
+      setInventory((prev) => {
+        const updated = prev.map((invItem) => {
           const totalSold = target.items
             .filter(
               (it) =>
                 it.product?.id === invItem.id ||
-                (it.product?.name && it.product.name.trim().toLowerCase() === invItem.varietyName.trim().toLowerCase())
+                (it.product?.name && it.product.name.trim().toLowerCase() === invItem.varietyName.trim().toLowerCase()) ||
+                (it.product?.urduName && invItem.urduName && it.product.urduName.trim() === invItem.urduName.trim())
             )
             .reduce((sum, it) => sum + (it.netWeight || 0), 0);
 
           if (totalSold > 0) {
             const restoredQty = invItem.physicalStockKg + totalSold;
             const packWeight = invItem.unitsPerPack && invItem.unitsPerPack > 0 ? invItem.unitsPerPack : 25;
-            const newBags = Math.floor(restoredQty / packWeight);
+            const isLoose = invItem.packagingStandard?.includes('Loose') || invItem.packagingStandard?.includes('Minor') || invItem.packagingStandard === 'loose_minor';
+            const newBags = isLoose ? 0 : Math.floor(restoredQty / packWeight);
             const threshold = invItem.minStockThreshold !== undefined ? invItem.minStockThreshold : 20;
+            const computedStatus: InventoryItem['lotStatus'] = restoredQty <= 0 ? 'Out of Stock' : restoredQty <= (threshold / 2) ? 'Critical Low' : restoredQty <= threshold ? 'Low Stock' : 'In Stock';
             return {
               ...invItem,
               physicalStockKg: Math.round(restoredQty * 100) / 100,
               bagsCount: newBags,
-              lotStatus: restoredQty <= 0 ? 'Out of Stock' : restoredQty <= (threshold / 2) ? 'Critical Low' : restoredQty <= threshold ? 'Low Stock' : 'In Stock'
+              lotStatus: computedStatus
             };
           }
           return invItem;
-        })
-      );
+        });
+        try {
+          localStorage.setItem('ricecms_cached_inventory', JSON.stringify(updated));
+        } catch (_) {}
+        return updated;
+      });
 
-      setProducts((prev) =>
-        prev.map((prod) => {
+      setProducts((prev) => {
+        const updated = prev.map((prod) => {
           const totalSold = target.items
             .filter(
               (it) =>
                 it.product?.id === prod.id ||
-                (it.product?.name && it.product.name.trim().toLowerCase() === prod.name.trim().toLowerCase())
+                (it.product?.name && it.product.name.trim().toLowerCase() === prod.name.trim().toLowerCase()) ||
+                (it.product?.urduName && prod.urduName && it.product.urduName.trim() === prod.urduName.trim())
             )
             .reduce((sum, it) => sum + (it.netWeight || 0), 0);
 
           if (totalSold > 0) {
-            const restoredAvail = prod.availableKg + totalSold;
+            const restoredAvail = (prod.availableKg || 0) + totalSold;
             const threshold = prod.minStockThreshold !== undefined ? prod.minStockThreshold : 20;
+            const isPcs = prod.unitLabel?.includes('pc') || prod.unitLabel?.includes('piece') || prod.unitLabel?.includes('pkt') || prod.unitLabel?.includes('can') || prod.unitLabel?.includes('tin');
+            const isLiter = prod.unitLabel?.includes('liter') || prod.unitLabel?.includes('L');
+            const roundedAvail = Math.round(restoredAvail * 100) / 100;
+            const stockLabel = isPcs
+              ? `${Math.round(roundedAvail)} Pcs`
+              : isLiter
+              ? `${roundedAvail} L`
+              : (roundedAvail < 1 && roundedAvail > 0 ? `${Math.round(roundedAvail * 1000)}g (${roundedAvail} kg)` : `${roundedAvail} KG`);
             return {
               ...prod,
-              availableKg: Math.round(restoredAvail * 100) / 100,
-              availableStockLabel: `${Math.round(restoredAvail)} KG`,
+              availableKg: roundedAvail,
+              availableStockLabel: stockLabel,
               isLowStock: restoredAvail <= threshold
             };
           }
           return prod;
-        })
-      );
+        });
+        try {
+          localStorage.setItem('ricecms_cached_products', JSON.stringify(updated));
+        } catch (_) {}
+        return updated;
+      });
     }
 
     // 3. If Khata memo, reverse Khata ledger and customer balance
@@ -1538,67 +1634,99 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!oldMemo) return;
 
     // Calculate stock adjustments: weightDiff = newWeight - oldWeight
-    const stockAdjustments: { productId: string; weightDiff: number }[] = [];
+    const stockAdjustments: { productId: string; productName?: string; weightDiff: number }[] = [];
 
     for (const oldItem of oldMemo.items) {
-      const newItem = updatedMemo.items.find((it) => it.id === oldItem.id || it.product.id === oldItem.product.id);
+      const newItem = updatedMemo.items.find(
+        (it) => it.id === oldItem.id || it.product.id === oldItem.product.id || (it.product.name && oldItem.product.name && it.product.name.trim().toLowerCase() === oldItem.product.name.trim().toLowerCase())
+      );
       const newWeight = newItem ? newItem.netWeight : 0;
       const diff = newWeight - oldItem.netWeight;
       if (diff !== 0) {
-        stockAdjustments.push({ productId: oldItem.product.id, weightDiff: diff });
+        stockAdjustments.push({ productId: oldItem.product.id, productName: oldItem.product.name, weightDiff: diff });
       }
     }
 
     for (const newItem of updatedMemo.items) {
-      const existedInOld = oldMemo.items.some((it) => it.id === newItem.id || it.product.id === newItem.product.id);
+      const existedInOld = oldMemo.items.some(
+        (it) => it.id === newItem.id || it.product.id === newItem.product.id || (it.product.name && newItem.product.name && it.product.name.trim().toLowerCase() === newItem.product.name.trim().toLowerCase())
+      );
       if (!existedInOld) {
-        stockAdjustments.push({ productId: newItem.product.id, weightDiff: newItem.netWeight });
+        stockAdjustments.push({ productId: newItem.product.id, productName: newItem.product.name, weightDiff: newItem.netWeight });
       }
     }
 
     // 1. Update local memos state
-    setMemos((prev) => prev.map((m) => (m.id === updatedMemo.id ? updatedMemo : m)));
+    setMemos((prev) => {
+      const updated = prev.map((m) => (m.id === updatedMemo.id ? updatedMemo : m));
+      try {
+        localStorage.setItem('ricecms_cached_memos', JSON.stringify(updated));
+      } catch (_) {}
+      return updated;
+    });
     if (activeReceipt?.id === updatedMemo.id) {
       setActiveReceipt(updatedMemo);
     }
 
     // 2. Adjust local inventory & products
     if (stockAdjustments.length > 0) {
-      setInventory((prev) =>
-        prev.map((invItem) => {
-          const adj = stockAdjustments.find((a) => a.productId === invItem.id);
+      setInventory((prev) => {
+        const updated = prev.map((invItem) => {
+          const adj = stockAdjustments.find(
+            (a) => a.productId === invItem.id || (a.productName && invItem.varietyName && a.productName.trim().toLowerCase() === invItem.varietyName.trim().toLowerCase())
+          );
           if (adj) {
             const newQty = Math.max(0, invItem.physicalStockKg - adj.weightDiff);
             const packWeight = invItem.unitsPerPack && invItem.unitsPerPack > 0 ? invItem.unitsPerPack : 25;
-            const newBags = Math.floor(newQty / packWeight);
+            const isLoose = invItem.packagingStandard?.includes('Loose') || invItem.packagingStandard?.includes('Minor') || invItem.packagingStandard === 'loose_minor';
+            const newBags = isLoose ? 0 : Math.floor(newQty / packWeight);
             const threshold = invItem.minStockThreshold !== undefined ? invItem.minStockThreshold : 20;
+            const computedStatus: InventoryItem['lotStatus'] = newQty <= 0 ? 'Out of Stock' : newQty <= (threshold / 2) ? 'Critical Low' : newQty <= threshold ? 'Low Stock' : 'In Stock';
             return {
               ...invItem,
               physicalStockKg: Math.round(newQty * 100) / 100,
               bagsCount: newBags,
-              lotStatus: newQty <= 0 ? 'Out of Stock' : newQty <= (threshold / 2) ? 'Critical Low' : newQty <= threshold ? 'Low Stock' : 'In Stock'
+              lotStatus: computedStatus
             };
           }
           return invItem;
-        })
-      );
+        });
+        try {
+          localStorage.setItem('ricecms_cached_inventory', JSON.stringify(updated));
+        } catch (_) {}
+        return updated;
+      });
 
-      setProducts((prev) =>
-        prev.map((prod) => {
-          const adj = stockAdjustments.find((a) => a.productId === prod.id);
+      setProducts((prev) => {
+        const updated = prev.map((prod) => {
+          const adj = stockAdjustments.find(
+            (a) => a.productId === prod.id || (a.productName && prod.name && a.productName.trim().toLowerCase() === prod.name.trim().toLowerCase())
+          );
           if (adj) {
-            const newAvail = Math.max(0, prod.availableKg - adj.weightDiff);
+            const newAvail = Math.max(0, (prod.availableKg || 0) - adj.weightDiff);
             const threshold = prod.minStockThreshold !== undefined ? prod.minStockThreshold : 20;
+            const isPcs = prod.unitLabel?.includes('pc') || prod.unitLabel?.includes('piece') || prod.unitLabel?.includes('pkt') || prod.unitLabel?.includes('can') || prod.unitLabel?.includes('tin');
+            const isLiter = prod.unitLabel?.includes('liter') || prod.unitLabel?.includes('L');
+            const roundedAvail = Math.round(newAvail * 100) / 100;
+            const stockLabel = isPcs
+              ? `${Math.round(roundedAvail)} Pcs`
+              : isLiter
+              ? `${roundedAvail} L`
+              : (roundedAvail < 1 && roundedAvail > 0 ? `${Math.round(roundedAvail * 1000)}g (${roundedAvail} kg)` : `${roundedAvail} KG`);
             return {
               ...prod,
-              availableKg: Math.round(newAvail * 100) / 100,
-              availableStockLabel: `${Math.round(newAvail)} KG`,
-              isLowStock: newAvail <= threshold
+              availableKg: roundedAvail,
+              availableStockLabel: stockLabel,
+              isLowStock: roundedAvail <= threshold
             };
           }
           return prod;
-        })
-      );
+        });
+        try {
+          localStorage.setItem('ricecms_cached_products', JSON.stringify(updated));
+        } catch (_) {}
+        return updated;
+      });
     }
 
     // 3. Persist to Firestore

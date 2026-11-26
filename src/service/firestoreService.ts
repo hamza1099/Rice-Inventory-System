@@ -8,6 +8,7 @@ import {
   deleteDoc,
   onSnapshot,
   query,
+  where,
   orderBy,
   runTransaction
 } from 'firebase/firestore';
@@ -263,6 +264,18 @@ export const subscribeToMemos = (callback: (memos: MemoRecord[]) => void) => {
   );
 };
 
+// Helper to format available stock label accurately with unit and decimals
+const formatProductStockLabel = (qty: number, unitLabel?: string): string => {
+  const rounded = Math.round(qty * 100) / 100;
+  if (rounded <= 0) return '0 KG';
+  const isPcs = unitLabel?.includes('pc') || unitLabel?.includes('piece') || unitLabel?.includes('pkt') || unitLabel?.includes('can') || unitLabel?.includes('tin');
+  const isLiter = unitLabel?.includes('liter') || unitLabel?.includes('L');
+  if (isPcs) return `${Math.round(rounded)} Pcs`;
+  if (isLiter) return `${rounded} L`;
+  if (rounded < 1) return `${Math.round(rounded * 1000)}g (${rounded} kg)`;
+  return `${rounded} KG`;
+};
+
 export const createMemoDoc = async (memo: MemoRecord): Promise<void> => {
   const memoRef = doc(db, MEMOS_COLLECTION, memo.id);
   await setDoc(memoRef, {
@@ -272,17 +285,38 @@ export const createMemoDoc = async (memo: MemoRecord): Promise<void> => {
 
   // Decrement inventory in Firestore for sold items
   for (const item of memo.items) {
-    if (item.product?.id) {
+    if (item.product) {
       try {
-        const invRef = doc(db, INVENTORY_COLLECTION, item.product.id);
-        const invSnap = await getDoc(invRef);
-        if (invSnap.exists()) {
+        // 1. Locate and update Inventory doc (try ID lookup first, then fallback to varietyName)
+        let invSnap = null;
+        let invRef = null;
+
+        if (item.product.id) {
+          const directRef = doc(db, INVENTORY_COLLECTION, item.product.id);
+          const snap = await getDoc(directRef);
+          if (snap.exists()) {
+            invSnap = snap;
+            invRef = directRef;
+          }
+        }
+
+        if (!invSnap && item.product.name) {
+          const q = query(collection(db, INVENTORY_COLLECTION), where('varietyName', '==', item.product.name));
+          const qSnap = await getDocs(q);
+          if (!qSnap.empty) {
+            invSnap = qSnap.docs[0];
+            invRef = invSnap.ref;
+          }
+        }
+
+        if (invSnap && invRef) {
           const invData = invSnap.data() as InventoryItem;
           const newQty = Math.max(0, invData.physicalStockKg - item.netWeight);
           const packWeight = invData.unitsPerPack && invData.unitsPerPack > 0 ? invData.unitsPerPack : 25;
-          const newBags = Math.floor(newQty / packWeight);
-
+          const isLoose = invData.packagingStandard?.includes('Loose') || invData.packagingStandard?.includes('Minor') || invData.packagingStandard === 'loose_minor';
+          const newBags = isLoose ? 0 : Math.floor(newQty / packWeight);
           const threshold = invData.minStockThreshold !== undefined ? invData.minStockThreshold : 20;
+
           await updateDoc(invRef, {
             physicalStockKg: Math.round(newQty * 100) / 100,
             bagsCount: newBags,
@@ -291,20 +325,43 @@ export const createMemoDoc = async (memo: MemoRecord): Promise<void> => {
           });
         }
 
-        const prodRef = doc(db, PRODUCTS_COLLECTION, item.product.id);
-        const prodSnap = await getDoc(prodRef);
-        if (prodSnap.exists()) {
+        // 2. Locate and update Product doc (try ID lookup first, then fallback to name)
+        let prodSnap = null;
+        let prodRef = null;
+
+        if (item.product.id) {
+          const directProdRef = doc(db, PRODUCTS_COLLECTION, item.product.id);
+          const snap = await getDoc(directProdRef);
+          if (snap.exists()) {
+            prodSnap = snap;
+            prodRef = directProdRef;
+          }
+        }
+
+        if (!prodSnap && item.product.name) {
+          const qProd = query(collection(db, PRODUCTS_COLLECTION), where('name', '==', item.product.name));
+          const qProdSnap = await getDocs(qProd);
+          if (!qProdSnap.empty) {
+            prodSnap = qProdSnap.docs[0];
+            prodRef = prodSnap.ref;
+          }
+        }
+
+        if (prodSnap && prodRef) {
           const prodData = prodSnap.data() as Product;
-          const newAvail = Math.max(0, prodData.availableKg - item.netWeight);
+          const newAvail = Math.max(0, (prodData.availableKg ?? 0) - item.netWeight);
           const threshold = prodData.minStockThreshold !== undefined ? prodData.minStockThreshold : 20;
+          const roundedAvail = Math.round(newAvail * 100) / 100;
+          const stockLabel = formatProductStockLabel(roundedAvail, prodData.unitLabel);
+
           await updateDoc(prodRef, {
-            availableKg: Math.round(newAvail * 100) / 100,
-            availableStockLabel: `${Math.round(newAvail)} KG`,
-            isLowStock: newAvail <= threshold
+            availableKg: roundedAvail,
+            availableStockLabel: stockLabel,
+            isLowStock: roundedAvail <= threshold
           });
         }
       } catch (err) {
-        console.warn(`Failed to decrement stock for item ${item.product.id}:`, err);
+        console.warn(`Failed to decrement stock for item ${item.product.id || item.product.name}:`, err);
       }
     }
   }
@@ -317,17 +374,37 @@ export const deleteMemoDoc = async (memoId: string, items?: CartItem[]): Promise
   // 2. Restore inventory and product stock for sold items
   if (items && items.length > 0) {
     for (const item of items) {
-      if (item.product?.id) {
+      if (item.product) {
         try {
-          const invRef = doc(db, INVENTORY_COLLECTION, item.product.id);
-          const invSnap = await getDoc(invRef);
-          if (invSnap.exists()) {
+          let invSnap = null;
+          let invRef = null;
+
+          if (item.product.id) {
+            const directRef = doc(db, INVENTORY_COLLECTION, item.product.id);
+            const snap = await getDoc(directRef);
+            if (snap.exists()) {
+              invSnap = snap;
+              invRef = directRef;
+            }
+          }
+
+          if (!invSnap && item.product.name) {
+            const q = query(collection(db, INVENTORY_COLLECTION), where('varietyName', '==', item.product.name));
+            const qSnap = await getDocs(q);
+            if (!qSnap.empty) {
+              invSnap = qSnap.docs[0];
+              invRef = invSnap.ref;
+            }
+          }
+
+          if (invSnap && invRef) {
             const invData = invSnap.data() as InventoryItem;
             const restoredQty = invData.physicalStockKg + item.netWeight;
             const packWeight = invData.unitsPerPack && invData.unitsPerPack > 0 ? invData.unitsPerPack : 25;
-            const newBags = Math.floor(restoredQty / packWeight);
-
+            const isLoose = invData.packagingStandard?.includes('Loose') || invData.packagingStandard?.includes('Minor') || invData.packagingStandard === 'loose_minor';
+            const newBags = isLoose ? 0 : Math.floor(restoredQty / packWeight);
             const threshold = invData.minStockThreshold !== undefined ? invData.minStockThreshold : 20;
+
             await updateDoc(invRef, {
               physicalStockKg: Math.round(restoredQty * 100) / 100,
               bagsCount: newBags,
@@ -336,20 +413,42 @@ export const deleteMemoDoc = async (memoId: string, items?: CartItem[]): Promise
             });
           }
 
-          const prodRef = doc(db, PRODUCTS_COLLECTION, item.product.id);
-          const prodSnap = await getDoc(prodRef);
-          if (prodSnap.exists()) {
+          let prodSnap = null;
+          let prodRef = null;
+
+          if (item.product.id) {
+            const directProdRef = doc(db, PRODUCTS_COLLECTION, item.product.id);
+            const snap = await getDoc(directProdRef);
+            if (snap.exists()) {
+              prodSnap = snap;
+              prodRef = directProdRef;
+            }
+          }
+
+          if (!prodSnap && item.product.name) {
+            const qProd = query(collection(db, PRODUCTS_COLLECTION), where('name', '==', item.product.name));
+            const qProdSnap = await getDocs(qProd);
+            if (!qProdSnap.empty) {
+              prodSnap = qProdSnap.docs[0];
+              prodRef = prodSnap.ref;
+            }
+          }
+
+          if (prodSnap && prodRef) {
             const prodData = prodSnap.data() as Product;
-            const restoredAvail = prodData.availableKg + item.netWeight;
+            const restoredAvail = (prodData.availableKg ?? 0) + item.netWeight;
             const threshold = prodData.minStockThreshold !== undefined ? prodData.minStockThreshold : 20;
+            const roundedAvail = Math.round(restoredAvail * 100) / 100;
+            const stockLabel = formatProductStockLabel(roundedAvail, prodData.unitLabel);
+
             await updateDoc(prodRef, {
-              availableKg: Math.round(restoredAvail * 100) / 100,
-              availableStockLabel: `${Math.round(restoredAvail)} KG`,
-              isLowStock: restoredAvail <= threshold
+              availableKg: roundedAvail,
+              availableStockLabel: stockLabel,
+              isLowStock: roundedAvail <= threshold
             });
           }
         } catch (err) {
-          console.warn(`Failed to restore stock for item ${item.product.id}:`, err);
+          console.warn(`Failed to restore stock for item ${item.product.id || item.product.name}:`, err);
         }
       }
     }
@@ -358,7 +457,7 @@ export const deleteMemoDoc = async (memoId: string, items?: CartItem[]): Promise
 
 export const updateMemoDoc = async (
   updatedMemo: MemoRecord,
-  stockAdjustments?: { productId: string; weightDiff: number }[]
+  stockAdjustments?: { productId: string; productName?: string; weightDiff: number }[]
 ): Promise<void> => {
   const memoRef = doc(db, MEMOS_COLLECTION, updatedMemo.id);
   await setDoc(memoRef, {
@@ -368,16 +467,37 @@ export const updateMemoDoc = async (
 
   if (stockAdjustments && stockAdjustments.length > 0) {
     for (const adj of stockAdjustments) {
-      if (!adj.productId || adj.weightDiff === 0) continue;
+      if ((!adj.productId && !adj.productName) || adj.weightDiff === 0) continue;
       try {
-        const invRef = doc(db, INVENTORY_COLLECTION, adj.productId);
-        const invSnap = await getDoc(invRef);
-        if (invSnap.exists()) {
+        let invSnap = null;
+        let invRef = null;
+
+        if (adj.productId) {
+          const directRef = doc(db, INVENTORY_COLLECTION, adj.productId);
+          const snap = await getDoc(directRef);
+          if (snap.exists()) {
+            invSnap = snap;
+            invRef = directRef;
+          }
+        }
+
+        if (!invSnap && adj.productName) {
+          const q = query(collection(db, INVENTORY_COLLECTION), where('varietyName', '==', adj.productName));
+          const qSnap = await getDocs(q);
+          if (!qSnap.empty) {
+            invSnap = qSnap.docs[0];
+            invRef = invSnap.ref;
+          }
+        }
+
+        if (invSnap && invRef) {
           const invData = invSnap.data() as InventoryItem;
           const newQty = Math.max(0, invData.physicalStockKg - adj.weightDiff);
           const packWeight = invData.unitsPerPack && invData.unitsPerPack > 0 ? invData.unitsPerPack : 25;
-          const newBags = Math.floor(newQty / packWeight);
+          const isLoose = invData.packagingStandard?.includes('Loose') || invData.packagingStandard?.includes('Minor') || invData.packagingStandard === 'loose_minor';
+          const newBags = isLoose ? 0 : Math.floor(newQty / packWeight);
           const threshold = invData.minStockThreshold !== undefined ? invData.minStockThreshold : 20;
+
           await updateDoc(invRef, {
             physicalStockKg: Math.round(newQty * 100) / 100,
             bagsCount: newBags,
@@ -386,20 +506,42 @@ export const updateMemoDoc = async (
           });
         }
 
-        const prodRef = doc(db, PRODUCTS_COLLECTION, adj.productId);
-        const prodSnap = await getDoc(prodRef);
-        if (prodSnap.exists()) {
+        let prodSnap = null;
+        let prodRef = null;
+
+        if (adj.productId) {
+          const directProdRef = doc(db, PRODUCTS_COLLECTION, adj.productId);
+          const snap = await getDoc(directProdRef);
+          if (snap.exists()) {
+            prodSnap = snap;
+            prodRef = directProdRef;
+          }
+        }
+
+        if (!prodSnap && adj.productName) {
+          const qProd = query(collection(db, PRODUCTS_COLLECTION), where('name', '==', adj.productName));
+          const qProdSnap = await getDocs(qProd);
+          if (!qProdSnap.empty) {
+            prodSnap = qProdSnap.docs[0];
+            prodRef = prodSnap.ref;
+          }
+        }
+
+        if (prodSnap && prodRef) {
           const prodData = prodSnap.data() as Product;
-          const newAvail = Math.max(0, prodData.availableKg - adj.weightDiff);
+          const newAvail = Math.max(0, (prodData.availableKg ?? 0) - adj.weightDiff);
           const threshold = prodData.minStockThreshold !== undefined ? prodData.minStockThreshold : 20;
+          const roundedAvail = Math.round(newAvail * 100) / 100;
+          const stockLabel = formatProductStockLabel(roundedAvail, prodData.unitLabel);
+
           await updateDoc(prodRef, {
-            availableKg: Math.round(newAvail * 100) / 100,
-            availableStockLabel: `${Math.round(newAvail)} KG`,
-            isLowStock: newAvail <= threshold
+            availableKg: roundedAvail,
+            availableStockLabel: stockLabel,
+            isLowStock: roundedAvail <= threshold
           });
         }
       } catch (err) {
-        console.warn(`Failed to adjust stock for item ${adj.productId}:`, err);
+        console.warn(`Failed to adjust stock for item ${adj.productId || adj.productName}:`, err);
       }
     }
   }
