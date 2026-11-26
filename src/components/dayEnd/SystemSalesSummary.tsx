@@ -3,19 +3,22 @@ import { DollarSign, ShieldCheck, CheckCircle2, QrCode } from 'lucide-react';
 import { usePos } from '../../context/PosContext';
 
 export const SystemSalesSummary: React.FC = () => {
-  const { openingFloat, memos, language } = usePos();
+  const { openingFloat, sessionMemos, language } = usePos();
   const isUr = language === 'ur';
 
-  const spotMemos = memos.filter((m) => m.paymentMode === 'SPOT CASH');
+  const spotMemos = sessionMemos.filter((m) => m.paymentMode === 'SPOT CASH');
   const spotCashCollected = spotMemos.reduce((sum, m) => sum + m.netAmount, 0);
   const spotMemosCount = spotMemos.length;
 
-  const raastMemos = memos.filter((m) => m.paymentMode === 'RAAST ONLINE');
+  const raastMemos = sessionMemos.filter((m) => m.paymentMode === 'RAAST ONLINE');
   const onlineRaastTransfers = raastMemos.reduce((sum, m) => sum + m.netAmount, 0);
   const raastTransCount = raastMemos.length;
 
+  const khataMemos = sessionMemos.filter((m) => m.paymentMode === 'KHATA / CREDIT');
+  const khataCreditSales = khataMemos.reduce((sum, m) => sum + m.netAmount, 0);
+
   const expectedDrawerCash = openingFloat + spotCashCollected;
-  const totalGrossBusiness = spotCashCollected + onlineRaastTransfers;
+  const totalGrossBusiness = spotCashCollected + onlineRaastTransfers + khataCreditSales;
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs space-y-3.5 text-xs">
@@ -87,7 +90,7 @@ export const SystemSalesSummary: React.FC = () => {
             {isUr ? 'نقد فروخت پالیسی لاگو' : 'Spot Only Policy Enforced'}
           </span>
           <span className="text-amber-800 font-bold bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
-            {isUr ? 'ادھار: PKR 0' : 'CREDIT: PKR 0'}
+            {isUr ? `ادھار: PKR ${khataCreditSales.toLocaleString()}` : `CREDIT: PKR ${khataCreditSales.toLocaleString()}`}
           </span>
         </div>
       </div>

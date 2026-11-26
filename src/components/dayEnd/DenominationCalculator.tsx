@@ -4,10 +4,10 @@ import { usePos } from '../../context/PosContext';
 import { NumberInput } from '../common/NumberInput';
 
 export const DenominationCalculator: React.FC = () => {
-  const { denominations, updateDenominationCount, openingFloat, memos, language } = usePos();
+  const { denominations, updateDenominationCount, openingFloat, sessionMemos, language } = usePos();
   const isUr = language === 'ur';
 
-  const spotCashCollected = memos
+  const spotCashCollected = sessionMemos
     .filter((m) => m.paymentMode === 'SPOT CASH')
     .reduce((sum, m) => sum + m.netAmount, 0);
 

@@ -93,20 +93,23 @@ export const HandoverAuthCard: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+      <div className="flex items-center justify-between border-t border-slate-100 pt-3 flex-wrap gap-2">
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => notifyInfo("Printing Z-Report & Audit Slip to thermal printer...")}
+            onClick={() => {
+              notifyInfo(isUr ? 'Z-رپورٹ پرنٹ ہو رہی ہے...' : 'Printing Z-Report & Audit Slip...');
+              window.print();
+            }}
             className="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center space-x-1.5 transition-colors cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5 text-slate-500" />
-            <span>Print Z-Report & Audit Slip [F5]</span>
+            <span>{isUr ? 'Z-رپورٹ پرنٹ کریں [F5]' : 'Print Z-Report & Audit Slip [F5]'}</span>
           </button>
           <button
-            onClick={() => notifySuccess("Kick pulse sent to cash drawer successfully!")}
+            onClick={() => notifySuccess(isUr ? 'کیش ڈراور کھولنے کا سگنل بھیج دیا گیا!' : 'Kick pulse sent to cash drawer successfully!')}
             className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold text-xs transition-colors cursor-pointer"
           >
-            Test Drawer Eject
+            {isUr ? 'گلہ ٹیسٹ کریں' : 'Test Drawer Eject'}
           </button>
         </div>
 

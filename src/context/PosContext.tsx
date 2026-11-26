@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
 import type {
   Product,
   CartItem,
@@ -54,7 +54,7 @@ import {
   getOrCreateUserDoc,
   clearMockDataIfPresent
 } from '../service/firestoreService';
-import { getPakistanDateIso, parseDateStrToIso } from '../utils/dateUtils';
+import { getPakistanDateIso, getPakistanDateStr, parseDateStrToIso, formatIsoToHuman } from '../utils/dateUtils';
 import { getPackagingPreset } from '../utils/packaging';
 
 interface PosContextType {
@@ -121,6 +121,9 @@ interface PosContextType {
   ) => void;
 
   // Day-End Reconciliation & Cash Drawer Float
+  sessionMemos: MemoRecord[];
+  sessionDateIso: string;
+  sessionDateStr: string;
   denominations: DenominationRow[];
   updateDenominationCount: (index: number, count: number) => void;
   openingFloat: number;
@@ -399,6 +402,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsUnclosedModalOpen(false);
     setDrawerOpenedAt(now);
     setIsOpeningModalOpen(false);
+    localStorage.removeItem('ricecms_day_closed_date');
     localStorage.setItem('ricecms_opening_float', amount.toString());
     localStorage.setItem('ricecms_drawer_active', 'true');
     localStorage.setItem('ricecms_drawer_opened_at', now);
@@ -420,6 +424,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsPreviousSessionUnclosed(false);
     setIsUnclosedModalOpen(false);
     localStorage.setItem('ricecms_drawer_active', 'false');
+    localStorage.removeItem('ricecms_day_closed_date');
     setOpeningFloatState(0);
     setDenominations(INITIAL_DENOMINATIONS);
     setCart([]);
@@ -430,7 +435,32 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [supervisorPin, setSupervisorPin] = useState<string>('');
   const [handoverNotes, setHandoverNotes] = useState<string>('');
-  const [isDayClosed, setIsDayClosed] = useState<boolean>(false);
+  const [isDayClosed, setIsDayClosed] = useState<boolean>(() => {
+    const closedDate = localStorage.getItem('ricecms_day_closed_date');
+    const todayPkt = getPakistanDateIso();
+    return closedDate === todayPkt;
+  });
+
+  // Calculate current session date and session memos (Only memos belonging to this shift / day)
+  const sessionDateIso = useMemo(() => {
+    if (isPreviousSessionUnclosed && drawerOpenedAt) {
+      const parsed = drawerOpenedAt.includes('T') ? drawerOpenedAt.split('T')[0] : parseDateStrToIso(drawerOpenedAt);
+      if (parsed) return parsed;
+    }
+    return getPakistanDateIso();
+  }, [isPreviousSessionUnclosed, drawerOpenedAt]);
+
+  const sessionDateStr = useMemo(() => {
+    return formatIsoToHuman(sessionDateIso) || getPakistanDateStr();
+  }, [sessionDateIso]);
+
+  const sessionMemos = useMemo(() => {
+    return memos.filter((m) => {
+      const memoIso = parseDateStrToIso(m.dateStr);
+      return memoIso === sessionDateIso;
+    });
+  }, [memos, sessionDateIso]);
+
   const [isMandiChitOpen, setIsMandiChitOpen] = useState<boolean>(false);
 
   // Global Image Preview Lightbox
@@ -1833,25 +1863,41 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const finalizeDayEnd = (): boolean => {
     if (supervisorPin.trim().length > 0) {
+      const todayPkt = getPakistanDateIso();
       setIsDayClosed(true);
       setIsDrawerOpen(false);
       setIsPreviousSessionUnclosed(false);
       setIsUnclosedModalOpen(false);
       localStorage.setItem('ricecms_drawer_active', 'false');
       localStorage.removeItem('ricecms_drawer_opened_at');
-      localStorage.setItem('ricecms_opening_float', '0');
-      setOpeningFloatState(0);
-      setDrawerOpenedAt(null);
+      localStorage.setItem('ricecms_day_closed_date', todayPkt);
       setCart([]);
 
-      // Persist day closing record to Firestore
+      // Persist day closing record to Firestore with accurate session statistics
+      const sessionSpotMemos = sessionMemos.filter((m) => m.paymentMode === 'SPOT CASH');
+      const sessionSpotCash = sessionSpotMemos.reduce((sum, m) => sum + m.netAmount, 0);
+      const sessionRaastMemos = sessionMemos.filter((m) => m.paymentMode === 'RAAST ONLINE');
+      const sessionRaast = sessionRaastMemos.reduce((sum, m) => sum + m.netAmount, 0);
+      const sessionGrossBusiness = sessionMemos.reduce((sum, m) => sum + m.netAmount, 0);
+      const totalCounted = denominations.reduce((sum, d) => sum + d.subtotal, 0);
+      const expectedPhysicalCash = openingFloat + sessionSpotCash;
+      const variance = totalCounted - expectedPhysicalCash;
+
       saveDayClosingDoc({
         closedAt: new Date().toISOString(),
+        closingDateStr: sessionDateStr,
+        closingDateIso: sessionDateIso,
         openingFloat,
         denominations,
         handoverNotes,
         supervisorPin,
-        memosCount: memos.length
+        memosCount: sessionMemos.length,
+        totalSales: sessionGrossBusiness,
+        spotCash: sessionSpotCash,
+        onlineRaast: sessionRaast,
+        countedCash: totalCounted,
+        expectedCash: expectedPhysicalCash,
+        variance: variance
       }).catch(console.error);
 
       // Close drawer in Firestore so next session starts fresh with clean 0 float
@@ -1910,6 +1956,9 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addStockInward,
         denominations,
         updateDenominationCount,
+        sessionMemos,
+        sessionDateIso,
+        sessionDateStr,
         openingFloat,
         setOpeningFloat,
         isDrawerOpen,
